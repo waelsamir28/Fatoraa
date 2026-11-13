@@ -20,7 +20,8 @@ jobs:
           node-version: 22
 
       - name: Install app dependencies
-        run: npm ci
+         run: npm install --no-audit --no-fund
+
 
       - name: Install desktop tooling (Electron)
         working-directory: desktop
