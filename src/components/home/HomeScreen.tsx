@@ -196,7 +196,7 @@ export function HomeScreen() {
         )}
 
         <div className="relative z-10 flex h-full w-full flex-col overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.98] to-[#eaf3ff]/[0.97] shadow-[0_14px_38px_rgba(0,0,0,0.35)]">
-          {/* ===== مكان البانر المصمم (يحل محل اللوجو والنص وصورة الكاشير بالكامل) ===== */}
+          {/* ===== مكان البانر المصمم ===== */}
           <div className="relative flex shrink-0 flex-col">
             <div className="relative h-[196px] w-full overflow-hidden">
               <Image
