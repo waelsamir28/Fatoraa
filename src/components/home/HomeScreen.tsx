@@ -235,3 +235,95 @@ export function HomeScreen() {
                       <div className="phone-num num !text-[26px]">{settings?.phone || SUPPORT_PHONE}</div>
                     </div>
                     <span className="phone-ico !h-[38px] !w-[38px]">
+                      <Phone className="h-4 w-4 fill-white text-white" />
+                    </span>
+                  </a>
+
+                  {settings?.phone2 ? (
+                    <a
+                      href={`tel:${settings.phone2.replace(/\s+/g, "")}`}
+                      className="phone-pill !gap-3 !px-3 !py-1"
+                      style={{ background: "linear-gradient(180deg,#22c55e 0%,#12a150 52%,#0b7a3b 100%)", boxShadow: "0 0 0 2px #0a6a33, 0 6px 16px rgba(6,60,30,.3)" }}
+                      title="اتصال بالهاتف الإضافي"
+                    >
+                      <div className="text-right leading-tight">
+                        <div className="text-[10.5px] font-bold opacity-90">هاتف إضافي</div>
+                        <div className="phone-num num !text-[26px]">{settings.phone2}</div>
+                      </div>
+                      <span className="phone-ico !h-[38px] !w-[38px]">
+                        <Phone className="h-4 w-4 fill-white text-white" />
+                      </span>
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== Body: Sidebar + Tiles ===== */}
+          <div className="relative flex min-h-0 flex-1 gap-3 px-3 pb-1.5 pt-1">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title={sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية"}
+              className="absolute top-1 z-30 grid h-7 w-7 place-items-center rounded-full border border-white bg-white text-blue-800 shadow-md transition hover:bg-blue-50"
+              style={{ right: sidebarOpen ? 199 : 4 }}
+            >
+              {sidebarOpen ? <PanelRightClose className="h-4 w-4" strokeWidth={2.6} /> : <PanelRightOpen className="h-4 w-4" strokeWidth={2.6} />}
+            </button>
+
+            <nav className={`side-nav ${sidebarOpen ? "" : "side-collapsed"} flex w-[190px] shrink-0 flex-col justify-center gap-1`}>
+              {NAV.map((n, i) => (
+                <Link key={n.label} href={n.href} className={`side-btn !h-[34px] !text-[15px] ${i === 0 ? "active" : ""}`}>
+                  <n.Icon />
+                  <span className="flex-1 truncate text-center">{n.label}</span>
+                </Link>
+              ))}
+            </nav>
+
+            <div className={`grid flex-1 gap-2 pe-1 ${sidebarOpen ? "grid-cols-6 grid-rows-3" : "grid-cols-8 grid-rows-3"}`}>
+              {TILES.slice(0, sidebarOpen ? 18 : 24).map((t) =>
+                t.href ? (
+                  <Link key={t.label} href={t.href} className="tile group relative !p-1">
+                    {t.badge && (
+                      <span className="absolute left-1 top-1 rounded bg-blue-600 px-1 py-[1px] text-[9px] font-black text-white shadow-sm">
+                        {t.badge}
+                      </span>
+                    )}
+                    <t.Icon />
+                    <span className="px-0.5 text-[13.5px] leading-tight">{t.label}</span>
+                  </Link>
+                ) : (
+                  <button key={t.label} type="button" onClick={exit} className="tile group relative !p-1">
+                    <t.Icon />
+                    <span className="px-0.5 text-[13.5px] leading-tight">{t.label}</span>
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+
+          {/* ===== Footnote صغير أسفل الشاشة ===== */}
+          <div className="relative flex h-[34px] shrink-0 items-center justify-between border-t border-[#dbe7f5] bg-gradient-to-b from-white to-[#eef4fb] px-4 text-[12px] font-bold text-[#274b74]">
+            <span className="flex items-center gap-2">
+              <CheckSquare className="h-3.5 w-3.5 text-green-600" strokeWidth={3} />
+              سهل الاستخدام • دعم فني وتدريب مجاني • مناسب لجميع الأنشطة التجارية
+            </span>
+            <span className="flex items-center gap-2">
+              <span>الإصدار {APP_VERSION}</span>
+              <span className="h-3 w-px bg-[#c2d6ea]" />
+              <span>الدعم الفني:</span>
+              <b className="num font-black text-blue-800">{settings?.phone || SUPPORT_PHONE}</b>
+              {settings?.phone2 ? (
+                <>
+                  <span className="h-3 w-px bg-[#c2d6ea]" />
+                  <b className="num font-black text-green-700">{settings.phone2}</b>
+                </>
+              ) : null}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Window>
+  );
+}
