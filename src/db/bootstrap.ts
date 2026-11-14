@@ -137,6 +137,46 @@ CREATE TABLE IF NOT EXISTS "purchase_orders" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "app_config" (
+	"key" text PRIMARY KEY NOT NULL,
+	"value" text DEFAULT '' NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"username" text NOT NULL,
+	"password_hash" text NOT NULL,
+	"full_name" text DEFAULT '' NOT NULL,
+	"role" text DEFAULT 'cashier' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"branch_id" integer,
+	"last_login_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "branches" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"code" text NOT NULL,
+	"name" text NOT NULL,
+	"address" text DEFAULT '' NOT NULL,
+	"phone" text DEFAULT '' NOT NULL,
+	"active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "backups" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"kind" text DEFAULT 'auto' NOT NULL,
+	"location" text DEFAULT 'local' NOT NULL,
+	"file_name" text DEFAULT '' NOT NULL,
+	"size_bytes" double precision DEFAULT 0 NOT NULL,
+	"counts" text DEFAULT '{}' NOT NULL,
+	"status" text DEFAULT 'ok' NOT NULL,
+	"message" text DEFAULT '' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS "settings" (
 	"id" integer PRIMARY KEY NOT NULL,
 	"store_name" text DEFAULT 'برنامج FATORA' NOT NULL,
@@ -196,6 +236,10 @@ CREATE INDEX IF NOT EXISTS "parties_type_idx" ON "parties" USING btree ("type");
 CREATE UNIQUE INDEX IF NOT EXISTS "parties_type_code_idx" ON "parties" USING btree ("type","code");
 CREATE INDEX IF NOT EXISTS "payments_party_idx" ON "payments" USING btree ("party_id");
 CREATE UNIQUE INDEX IF NOT EXISTS "products_code_idx" ON "products" USING btree ("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "users_username_idx" ON "users" USING btree ("username");
+CREATE UNIQUE INDEX IF NOT EXISTS "branches_code_idx" ON "branches" USING btree ("code");
+CREATE INDEX IF NOT EXISTS "backups_created_idx" ON "backups" USING btree ("created_at");
+
 CREATE INDEX IF NOT EXISTS "products_name_idx" ON "products" USING btree ("name");
 CREATE INDEX IF NOT EXISTS "po_items_order_idx" ON "purchase_order_items" USING btree ("order_id");
 CREATE INDEX IF NOT EXISTS "purchase_orders_supplier_idx" ON "purchase_orders" USING btree ("supplier_id");
@@ -220,5 +264,7 @@ ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "expenses" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "cash_moves" ADD COLUMN IF NOT EXISTS "shift_id" integer;
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "branch_id" integer;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 
 `;

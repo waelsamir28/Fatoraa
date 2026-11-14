@@ -1,7 +1,7 @@
 {
   "name": "algamal-desktop",
   "productName": "FATORA",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "برنامج FATORA - لإدارة المحلات التجارية",
   "author": "برنامج FATORA - 01222355769",
   "license": "UNLICENSED",
@@ -11,8 +11,9 @@
     "prepare-app": "node scripts/prepare.cjs",
     "start": "npm run prepare-app && electron .",
     "dev": "electron . --dev",
-    "dist": "npm run prepare-app && electron-builder --win --x64 --publish never",
-    "dist:portable": "npm run prepare-app && electron-builder --win portable --x64 --publish never"
+    "dist": "npm run prepare-app && electron-builder --win --x64 --publish always",
+    "dist:portable": "npm run prepare-app && electron-builder --win portable --x64 --publish never",
+    "dist:local": "npm run prepare-app && electron-builder --win --x64 --publish never"
   },
   "devDependencies": {
     "electron": "^33.2.0",
@@ -27,20 +28,40 @@
       "output": "dist",
       "buildResources": "build"
     },
-    "files": ["main.cjs", "preload.cjs", "splash.html", "build/icon.png", "build/logo-fatora.png", "package.json"],
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "splash.html",
+      "cloud.json",
+      "build/icon.png",
+      "build/logo-fatora.png",
+      "package.json"
+    ],
     "extraResources": [
       {
         "from": "app-server",
         "to": "app-server",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "asar": true,
     "win": {
       "icon": "build/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -56,6 +77,19 @@
     },
     "portable": {
       "artifactName": "AlGamal-Portable-${version}.${ext}"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "waelsamir28",
+        "repo": "Fatoraa",
+        "releaseType": "release"
+      }
+    ],
+    "generateUpdatesFilesForAllChannels": true
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9",
+    "pg": "^8.20.0"
   }
 }

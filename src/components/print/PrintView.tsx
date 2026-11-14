@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { InvoiceQr } from "./InvoiceQr";
 import { Eye, Printer, X } from "lucide-react";
 import { api, errMsg } from "@/lib/client";
 import { APP_NAME, INVOICE_LABELS, SUPPORT_PHONE, paymentMethodLabel, paymentTypeLabel } from "@/lib/constants";
@@ -235,10 +236,19 @@ export function PrintView({
           </div>
         </div>
 
-        {/* فوتر مصغر ومختصر */}
-        <div className="mt-4 border-t border-slate-300 pt-1.5 text-center text-[10.5px] font-bold text-slate-500">
-          {s.invoiceFooter && <div className="text-slate-700 font-black">{s.invoiceFooter}</div>}
-          <div>نظام نقاط البيع وإدارة المحلات - {APP_NAME} — {SUPPORT_PHONE}</div>
+        {/* فوتر مصغر ومختصر + رمز QR للفاتورة الإلكترونية */}
+        <div className="mt-4 flex items-start justify-between gap-3 border-t border-slate-300 pt-2">
+          <div className="flex-1 text-center text-[10.5px] font-bold text-slate-500">
+            {s.invoiceFooter && <div className="text-slate-700 font-black">{s.invoiceFooter}</div>}
+            <div>نظام نقاط البيع وإدارة المحلات - {APP_NAME} — {SUPPORT_PHONE}</div>
+          </div>
+          <InvoiceQr
+            invoiceId={inv.id}
+            number={inv.number}
+            size={currentTemplate === "template-pos-thermal" ? 62 : 84}
+            thermal={currentTemplate === "template-pos-thermal"}
+            label="امسح لعرض الفاتورة"
+          />
         </div>
       </div>
     </div>

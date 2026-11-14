@@ -22,24 +22,42 @@ jobs:
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
 
-
       - name: Install desktop tooling (Electron)
         working-directory: desktop
         run: npm install --no-audit --no-fund
 
-      - name: Build برنامج الجمال (Setup + Portable EXE)
+      - name: Build برنامج FATORA (Setup + Portable EXE)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         working-directory: desktop
+        run: npm run dist:local
+
+      - name: Build + publish (on version tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # تحديث التلقائي يحتاج أن تكون النسخة موقّعة/مطابقة لرقم الوسم
+          EP_GH_IGNORE_TIME: "true"
         run: npm run dist
 
       - name: Upload EXE files
         uses: actions/upload-artifact@v4
         with:
-          name: AlGamal-Windows-EXE
-          path: desktop/dist/*.exe
+          name: Fatora-Windows-EXE
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.blockmap
+            desktop/dist/latest.yml
           if-no-files-found: error
 
       - name: Publish GitHub Release (on version tag)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: desktop/dist/*.exe
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/*.blockmap
+            desktop/dist/latest.yml
+          generate_release_notes: true
+          draft: false
+          prerelease: false

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "regions": [
+    "fra1"
+  ],
+  "functions": {
+    "src/app/api/**/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/backups/run/route.ts": {
+      "maxDuration": 120,
+      "memory": 1024
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/backups/run",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

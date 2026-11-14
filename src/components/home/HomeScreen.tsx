@@ -4,7 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
-import { CheckSquare, PanelRightClose, PanelRightOpen } from "lucide-react";
+import {
+  Building2 as IconBranches,
+  CheckSquare,
+  Cloud as IconCloud,
+  LayoutDashboard as IconDashboard,
+  PanelRightClose,
+  PanelRightOpen,
+  TrendingUp as IconProfit,
+  Users as IconUsers,
+} from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import {
@@ -71,6 +80,12 @@ const TILES: Array<{ href: string | null; label: string; Icon: Icon; badge?: str
   { href: "/barcode", label: "طباعة الباركود", Icon: IconBarcode },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: IconBackup },
   { href: "/settings", label: "الإعدادات والمظهر", Icon: IconSettings },
+  { href: "/dashboard", label: "لوحة المالك", Icon: IconDashboard },
+  { href: "/profit", label: "تقرير الأرباح", Icon: IconProfit },
+  { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IconBackup },
+  { href: "/users", label: "المستخدمون", Icon: IconUsers },
+  { href: "/branches", label: "الفروع", Icon: IconBranches },
+  { href: "/connection", label: "إعدادات الاتصال", Icon: IconCloud },
   { href: "/support", label: "الدعم الفني", Icon: IconSupport },
   { href: "/about", label: "معلومات البرنامج", Icon: IconInfo },
   { href: null, label: "خروج", Icon: IconExit },
@@ -88,6 +103,11 @@ const NAV: Array<{ href: string; label: string; Icon: Icon }> = [
   { href: "/price-checker", label: "استعلام الأسعار", Icon: IconInfo },
   { href: "/reports", label: "التقارير", Icon: IconReports },
   { href: "/settings", label: "الإعدادات", Icon: IconSettings },
+  { href: "/connection", label: "إعدادات الاتصال", Icon: IconCloud },
+  { href: "/dashboard", label: "لوحة المالك", Icon: IconDashboard },
+  { href: "/profit", label: "الأرباح", Icon: IconProfit },
+  { href: "/users", label: "المستخدمون", Icon: IconUsers },
+  { href: "/branches", label: "الفروع", Icon: IconBranches },
 ];
 
 export function HomeScreen() {

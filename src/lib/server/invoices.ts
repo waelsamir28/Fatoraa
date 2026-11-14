@@ -35,6 +35,8 @@ export interface InvoiceInput {
   paid: number;
   notes: string;
   userName: string;
+  /** الفرع (يأتي من جلسة المستخدم إن لم يُحدَّد) */
+  branchId?: number | null;
   items: ItemInput[];
 }
 
@@ -246,6 +248,7 @@ export async function createInvoice(input: InvoiceInput) {
         cost: round2(items.reduce((s, it) => s + it.qty * it.cost, 0)),
         notes: input.notes,
         userName: input.userName,
+        branchId: input.branchId ?? null,
         createdAt: now,
         updatedAt: now,
       })

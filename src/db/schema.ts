@@ -108,6 +108,8 @@ export const invoices = pgTable(
     userName: text("user_name").notNull().default(""),
     template: text("template").notNull().default("template-modern-a5"),
     shiftId: integer("shift_id"),
+    /** الفرع الذي صدرت منه الفاتورة */
+    branchId: integer("branch_id"),
     createdAt: ts("created_at"),
     updatedAt: ts("updated_at"),
   },
@@ -266,3 +268,59 @@ export const purchaseOrderItems = pgTable(
   },
   (t) => [index("po_items_order_idx").on(t.orderId)],
 );
+
+/** مستخدمو البرنامج (المالك / مدير / كاشير) */
+export const users = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    username: text("username").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    fullName: text("full_name").notNull().default(""),
+    role: text("role").notNull().default("cashier"), // owner | manager | cashier
+    active: boolean("active").notNull().default(true),
+    branchId: integer("branch_id"),
+    lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: "date" }),
+    createdAt: ts("created_at"),
+  },
+  (t) => [uniqueIndex("users_username_idx").on(t.username)],
+);
+
+/** الفروع */
+export const branches = pgTable(
+  "branches",
+  {
+    id: serial("id").primaryKey(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    address: text("address").notNull().default(""),
+    phone: text("phone").notNull().default(""),
+    active: boolean("active").notNull().default(true),
+    createdAt: ts("created_at"),
+  },
+  (t) => [uniqueIndex("branches_code_idx").on(t.code)],
+);
+
+/** سجل النسخ الاحتياطية التلقائية */
+export const backups = pgTable(
+  "backups",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").notNull().default("auto"), // auto | manual
+    location: text("location").notNull().default("local"), // local | cloud | telegram
+    fileName: text("file_name").notNull().default(""),
+    sizeBytes: doublePrecision("size_bytes").notNull().default(0),
+    counts: text("counts").notNull().default("{}"),
+    status: text("status").notNull().default("ok"), // ok | failed
+    message: text("message").notNull().default(""),
+    createdAt: ts("created_at"),
+  },
+  (t) => [index("backups_created_idx").on(t.createdAt)],
+);
+
+/** إعدادات تشغيل حساسة (مثل توكن تيليجرام) — لا تُعرض للواجهة كنص صريح */
+export const appConfig = pgTable("app_config", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull().default(""),
+  updatedAt: ts("updated_at"),
+});

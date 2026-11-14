@@ -1,39 +1,9 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import os from "os";
 import { checkLicense, verifyActivationCode, getMachineId } from "@/lib/license";
+import { readLicenseData, writeLicenseData } from "@/lib/license-store";
 
-// حفظ ملف الترخيص في مجلد AppData المخفي بعيداً عن مجلد البرنامج
-function getLicenseFilePath() {
-  const appData = process.env.APPDATA || os.homedir();
-  const dir = path.join(appData, ".fatora-sys");
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  return path.join(dir, "lic.dat");
-}
-
-function readLicenseData() {
-  const file = getLicenseFilePath();
-  const now = new Date().toISOString();
-  if (!fs.existsSync(file)) {
-    const initial = { firstRunAt: now, lastRunAt: now, activationKey: "" };
-    fs.writeFileSync(file, JSON.stringify(initial), "utf8");
-    return initial;
-  }
-  try {
-    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
-    // تحديث آخر وقت فتح للبرنامج إذا كان التاريخ طبيعياً
-    if (new Date(now).getTime() >= new Date(parsed.lastRunAt || now).getTime()) {
-      parsed.lastRunAt = now;
-      fs.writeFileSync(file, JSON.stringify(parsed), "utf8");
-    }
-    return parsed;
-  } catch {
-    return { firstRunAt: now, lastRunAt: now, activationKey: "" };
-  }
-}
+// حالة الترخيص شخصية لكل زيارة - لا تُخزَّن مؤقتاً
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const data = readLicenseData();
@@ -54,10 +24,10 @@ export async function POST(req: Request) {
     }
 
     const data = readLicenseData();
-    data.activationKey = activationKey.trim().toUpperCase();
-    fs.writeFileSync(getLicenseFilePath(), JSON.stringify(data), "utf8");
+    data.activationKey = String(activationKey).trim().toUpperCase();
+    const saved = writeLicenseData(data);
 
-    return NextResponse.json({ ok: true, status: checkLicense(data) });
+    return NextResponse.json({ ok: true, saved, status: checkLicense(data) });
   } catch {
     return NextResponse.json({ ok: false, error: "حدث خطأ أثناء التفعيل" }, { status: 500 });
   }

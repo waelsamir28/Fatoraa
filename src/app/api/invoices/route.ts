@@ -1,28 +1,11 @@
 import { and, desc, eq, getTableColumns, gte, ilike, lt, or, sql, type SQL } from "drizzle-orm";
-import fs from "fs";
-import os from "os";
-import path from "path";
 import { db } from "@/db";
 import { invoiceItems, invoices } from "@/db/schema";
-import { checkLicense } from "@/lib/license";
+import { getCurrentLicense } from "@/lib/license-store";
 import { handle, num, parseDate, readJson, str } from "@/lib/server/http";
 import { createInvoice, parseInvoiceInput, parseType } from "@/lib/server/invoices";
 
 export const dynamic = "force-dynamic";
-
-function getCurrentLicense() {
-  try {
-    const appData = process.env.APPDATA || os.homedir();
-    const file = path.join(appData, ".fatora-sys", "lic.dat");
-    if (!fs.existsSync(file)) {
-      return checkLicense({});
-    }
-    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
-    return checkLicense(parsed);
-  } catch {
-    return checkLicense({});
-  }
-}
 
 export function GET(req: Request) {
   return handle(async () => {
@@ -92,6 +75,19 @@ export function POST(req: Request) {
     }
 
     const input = parseInvoiceInput(await readJson(req));
+
+    // ربط الفاتورة بالفرع والمستخدم من الجلسة (لو موجودة)
+    try {
+      const { getSession } = await import("@/lib/server/session");
+      const session = await getSession();
+      if (session) {
+        if (input.branchId == null && session.branchId != null) input.branchId = session.branchId;
+        if (!input.userName) input.userName = session.name;
+      }
+    } catch {
+      /* ignore */
+    }
+
     return createInvoice(input);
   });
 }

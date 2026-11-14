@@ -1,28 +1,11 @@
 import { and, asc, eq, ilike, lte, or, sql, type SQL } from "drizzle-orm";
-import fs from "fs";
-import os from "os";
-import path from "path";
 import { db } from "@/db";
 import { products } from "@/db/schema";
-import { checkLicense } from "@/lib/license";
+import { getCurrentLicense } from "@/lib/license-store";
 import { handle, num, readJson, str } from "@/lib/server/http";
 import { generateProductCode, parseProduct } from "@/lib/server/parsers";
 
 export const dynamic = "force-dynamic";
-
-function getCurrentLicense() {
-  try {
-    const appData = process.env.APPDATA || os.homedir();
-    const file = path.join(appData, ".fatora-sys", "lic.dat");
-    if (!fs.existsSync(file)) {
-      return checkLicense({});
-    }
-    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
-    return checkLicense(parsed);
-  } catch {
-    return checkLicense({});
-  }
-}
 
 export function GET(req: Request) {
   return handle(async () => {
