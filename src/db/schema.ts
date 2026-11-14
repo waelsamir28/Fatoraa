@@ -110,6 +110,10 @@ export const invoices = pgTable(
     shiftId: integer("shift_id"),
     /** الفرع الذي صدرت منه الفاتورة */
     branchId: integer("branch_id"),
+    /** حذف آمن (soft delete): الفاتورة تبقى في السجل لكن لا تُحتسب في التقارير والأرصدة */
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
+    deletedBy: text("deleted_by").notNull().default(""),
+    deleteReason: text("delete_reason").notNull().default(""),
     createdAt: ts("created_at"),
     updatedAt: ts("updated_at"),
   },
@@ -155,6 +159,31 @@ export const payments = pgTable(
     createdAt: ts("created_at"),
   },
   (t) => [index("payments_party_idx").on(t.partyId)],
+);
+
+/** حركات المخزون: كل تغيير في رصيد صنف مسجّل هنا (فاتورة، تعديل يدوي، جرد) */
+export const stockMovements = pgTable(
+  "stock_movements",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id").notNull(),
+    productName: text("product_name").notNull().default(""),
+    /** نوع الحركة: sale | purchase | sale_return | purchase_return | adjust */
+    kind: text("kind").notNull(),
+    /** موجب = دخول للمخزن، سالب = خروج */
+    qty: doublePrecision("qty").notNull(),
+    /** الرصيد بعد الحركة */
+    balanceAfter: doublePrecision("balance_after").notNull().default(0),
+    refId: integer("ref_id"),
+    refLabel: text("ref_label").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    userName: text("user_name").notNull().default(""),
+    createdAt: ts("created_at"),
+  },
+  (t) => [
+    index("stock_moves_product_idx").on(t.productId),
+    index("stock_moves_date_idx").on(t.createdAt),
+  ],
 );
 
 /** المصروفات */

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, lt, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { expenses, invoiceItems, invoices, parties, products } from "@/db/schema";
 import { handle, num, parseDate } from "@/lib/server/http";
@@ -14,7 +14,9 @@ export function GET(req: Request) {
     const now = new Date();
     const from = parseDate(u.searchParams.get("from")) ?? new Date(now.getFullYear(), now.getMonth(), 1);
     const to = parseDate(u.searchParams.get("to")) ?? new Date(now.getTime() + 86400000);
-    const inRange = (type: string) => and(eq(invoices.type, type), gte(invoices.date, from), lt(invoices.date, to));
+    // الفواتير المحذوفة (soft delete) لا تُحتسب في أي تقرير
+    const inRange = (type: string) =>
+      and(eq(invoices.type, type), isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to));
 
     const agg = (type: string) =>
       db
@@ -73,7 +75,7 @@ export function GET(req: Request) {
         count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(invoices)
-      .where(and(gte(invoices.date, from), lt(invoices.date, to)))
+      .where(and(isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to)))
       .groupBy(dayExpr, invoices.type)
       .orderBy(dayExpr);
 

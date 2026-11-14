@@ -8,10 +8,29 @@ import { api, errMsg } from "@/lib/client";
 import { fmt, fmtDate, fmtTime } from "@/lib/format";
 import type { Shift } from "@/lib/types";
 
+export interface ShiftCashSummary {
+  startingCash: number;
+  cashSales: number;
+  creditPaid: number;
+  customerPayments: number;
+  deposits: number;
+  purchaseReturns: number;
+  purchases: number;
+  salesReturns: number;
+  supplierPayments: number;
+  expenses: number;
+  withdrawals: number;
+  cashIn: number;
+  cashOut: number;
+  expectedCash: number;
+  invoicesCount: number;
+}
+
 export function ShiftsView() {
   const { toast } = useDesktop();
   const [current, setCurrent] = useState<Shift | null>(null);
   const [items, setItems] = useState<Shift[]>([]);
+  const [live, setLive] = useState<ShiftCashSummary | null>(null);
   const [openModal, setOpenModal] = useState(false);
   const [closeModal, setCloseModal] = useState(false);
   const [cashierName, setCashierName] = useState("كاشير 1");
@@ -22,9 +41,10 @@ export function ShiftsView() {
 
   const load = async () => {
     try {
-      const r = await api<{ current: Shift | null; items: Shift[] }>("/api/shifts");
+      const r = await api<{ current: Shift | null; items: Shift[]; live: ShiftCashSummary | null }>("/api/shifts");
       setCurrent(r.current);
       setItems(r.items);
+      setLive(r.live);
     } catch (e) {
       toast(errMsg(e), "error");
     }
@@ -106,7 +126,8 @@ export function ShiftsView() {
                 type="button"
                 className="btn btn-red h-10 px-5 text-[15px] font-black"
                 onClick={() => {
-                  setActualCash(String(current.startingCash));
+                  // نبدأ بالمبلغ المتوقع من حركات الوردية — الكاشير يعدّل لو الدرج مختلف
+                  setActualCash(String(live?.expectedCash ?? current.startingCash));
                   setCloseModal(true);
                 }}
               >
@@ -227,7 +248,32 @@ export function ShiftsView() {
           <div className="grid gap-3">
             <div className="rounded-lg bg-blue-50 p-2.5 text-center text-[13px] font-bold text-blue-900">
               الكاشير: {current.cashierName} — نقدية البداية: {fmt(current.startingCash)} ج.م
+              {live ? ` — عدد الفواتير: ${live.invoicesCount}` : ""}
             </div>
+
+            {/* تفصيل حركة الدرج: من هنا الرقم المتوقع بيطلع صح */}
+            {live && (
+              <div className="overflow-hidden rounded-lg border border-slate-200">
+                <div className="bg-[#0f2942] px-3 py-1.5 text-[12.5px] font-black text-white">حركة الدرج في الوردية</div>
+                <div className="divide-y divide-slate-100">
+                  <CashRow label="نقدية بداية الوردية" value={live.startingCash} plus />
+                  <CashRow label="مبيعات نقدية" value={live.cashSales} plus />
+                  {live.creditPaid > 0 && <CashRow label="مدفوع من فواتير آجلة" value={live.creditPaid} plus />}
+                  {live.customerPayments > 0 && <CashRow label="تحصيلات من العملاء" value={live.customerPayments} plus />}
+                  {live.deposits > 0 && <CashRow label="إيداعات خزينة" value={live.deposits} plus />}
+                  {live.purchaseReturns > 0 && <CashRow label="مرتجعات مشتريات (نقدية راجعة)" value={live.purchaseReturns} plus />}
+                  {live.purchases > 0 && <CashRow label="مشتريات نقدية" value={-live.purchases} />}
+                  {live.salesReturns > 0 && <CashRow label="مرتجعات مبيعات (نقدية خارجة)" value={-live.salesReturns} />}
+                  {live.supplierPayments > 0 && <CashRow label="سداد للموردين" value={-live.supplierPayments} />}
+                  {live.expenses > 0 && <CashRow label="مصروفات" value={-live.expenses} />}
+                  {live.withdrawals > 0 && <CashRow label="سحب من الخزينة" value={-live.withdrawals} />}
+                  <div className="flex items-center justify-between bg-emerald-50 px-3 py-2">
+                    <span className="text-[13px] font-black text-emerald-900">المتوقع في الدرج</span>
+                    <span className="num text-[18px] font-black text-emerald-700">{fmt(live.expectedCash)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Field label="النقدية الفعلية بعد الجرد بالدرج *">
               <input
@@ -238,6 +284,22 @@ export function ShiftsView() {
                 onChange={(e) => setActualCash(e.target.value)}
               />
             </Field>
+
+            {/* الفرق فوراً قبل التأكيد */}
+            {live && (
+              (() => {
+                const diff = Math.round((Number(actualCash) || 0) - live.expectedCash);
+                const cls = diff < 0 ? "bg-red-50 text-red-700 border-red-300" : diff > 0 ? "bg-amber-50 text-amber-800 border-amber-300" : "bg-emerald-50 text-emerald-700 border-emerald-300";
+                return (
+                  <div className={`rounded-lg border px-3 py-2 text-center ${cls}`}>
+                    <div className="text-[12px] font-bold">
+                      {diff < 0 ? "عجز في الدرج" : diff > 0 ? "زيادة في الدرج" : "الدرج مطابق تماماً"}
+                    </div>
+                    <div className="num text-[20px] font-black">{fmt(Math.abs(diff))} ج.م</div>
+                  </div>
+                );
+              })()
+            )}
 
             <Field label="ملاحظات تقفيل الوردية">
               <input className="win-input w-full" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -260,5 +322,19 @@ export function ShiftsView() {
         </Dialog>
       )}
     </Window>
+  );
+}
+
+/** سطر في تفصيل حركة الدرج */
+function CashRow({ label, value, plus }: { label: string; value: number; plus?: boolean }) {
+  return (
+    <div className="flex items-center justify-between px-3 py-1.5">
+      <span className="text-[12.5px] font-bold text-slate-600">
+        {plus ? "+" : "−"} {label}
+      </span>
+      <span className={`num text-[13.5px] font-black ${plus ? "text-emerald-700" : "text-red-600"}`}>
+        {fmt(Math.abs(value))}
+      </span>
+    </div>
   );
 }

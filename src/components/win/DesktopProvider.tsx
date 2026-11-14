@@ -129,6 +129,8 @@ const TASK_APPS = [
   { href: "/customers", label: "العملاء", Icon: IconCustomers },
   { href: "/treasury", label: "الخزينة", Icon: IconTreasury },
   { href: "/shifts", label: "الورديات", Icon: IconShifts },
+  { href: "/stock-movements", label: "حركات المخزون", Icon: IconWarehouse },
+  { href: "/deleted-invoices", label: "سجل المحذوفات", Icon: IconReports },
   { href: "/installments", label: "الأقساط", Icon: IconInstallments },
   { href: "/smart-orders", label: "طلبات الشراء الذكية", Icon: IconSmartOrders },
   { href: "/reports", label: "التقارير", Icon: IconReports },

@@ -1,4 +1,4 @@
-import { and, desc, eq, getTableColumns, gte, ilike, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, gte, ilike, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { invoiceItems, invoices } from "@/db/schema";
 import { getCurrentLicense } from "@/lib/license-store";
@@ -17,7 +17,8 @@ export function GET(req: Request) {
     const partyId = num(u.searchParams.get("partyId"), 0);
     const limit = Math.min(2000, Math.max(1, num(u.searchParams.get("limit"), 500)));
 
-    const conds: SQL[] = [eq(invoices.type, type)];
+    // الفواتير المحذوفة (soft delete) لا تظهر في القوائم الافتراضية
+    const conds: SQL[] = [eq(invoices.type, type), isNull(invoices.deletedAt)];
     if (from) conds.push(gte(invoices.date, from));
     if (to) conds.push(lt(invoices.date, to));
     if (partyId > 0) conds.push(eq(invoices.partyId, partyId));
@@ -65,7 +66,8 @@ export function POST(req: Request) {
       }
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
-        .from(invoices);
+        .from(invoices)
+        .where(isNull(invoices.deletedAt));
 
       if (count >= license.limits.maxInvoices) {
         throw new Error(
