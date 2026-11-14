@@ -7,6 +7,7 @@ import { APP_BRAND, APP_NAME } from "@/lib/constants";
 import { api, errMsg } from "@/lib/client";
 import { resolveLogo } from "@/lib/logo";
 import { useAuth, type SessionUser } from "./AuthProvider";
+import { SetupWizard } from "./SetupWizard";
 
 /**
  * شاشة الدخول الحقيقية:
@@ -77,6 +78,17 @@ export function LoginGate() {
       setBusy(false);
     }
   };
+
+  // أول مرة: شاشة إعداد مبسطة في 3 خطوات (بدون أكواد)
+  if (mode === "setup" && !loading) {
+    return (
+      <SetupWizard
+        onDone={async () => {
+          await refresh();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#0f2942] to-[#081a2b] p-3" dir="rtl">

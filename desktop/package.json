@@ -35,7 +35,9 @@
       "cloud.json",
       "build/icon.png",
       "build/logo-fatora.png",
-      "package.json"
+      "package.json",
+      "splash.png",
+      "build/splash.png"
     ],
     "extraResources": [
       {

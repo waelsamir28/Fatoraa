@@ -276,19 +276,38 @@ async function startServer() {
 
 function createSplash() {
   splash = new BrowserWindow({
-    width: 540,
-    height: 330,
+    width: 600,
+    height: 360,
     frame: false,
     resizable: false,
     center: true,
     show: true,
     alwaysOnTop: true,
     skipTaskbar: false,
-    backgroundColor: "#0b3a8c",
+    // نفس خلفية شاشة البداية الكحلي: لا وميض أبيض قبل تحميل الصورة
+    backgroundColor: "#0f3a5f",
     icon: iconPath(),
     title: APP_TITLE,
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
   });
-  splash.loadFile(path.join(__dirname, "splash.html"));
+  const splashFile = path.join(__dirname, "splash.html");
+  splash.loadFile(splashFile).catch(() => showSplashFallback());
+
+  // لو الملف نفسه مش موجود في الحزمة، نعرض صفحة بديلة بدل نافذة فاضية
+  splash.webContents.on("did-fail-load", () => showSplashFallback());
+}
+
+/** صفحة بديلة بسيطة لو splash.html أو صورته مش موجودة */
+function showSplashFallback() {
+  if (!splash || splash.isDestroyed()) return;
+  const html =
+    '<html dir="rtl"><body style="margin:0;height:100vh;display:flex;flex-direction:column;' +
+    "align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#16548f,#081a2b);" +
+    'color:#fff;font-family:Segoe UI,Tahoma,sans-serif">' +
+    '<div style="font-size:36px;font-weight:900;letter-spacing:3px">FATORA</div>' +
+    '<div style="margin-top:10px;font-size:13px;color:#bfe3ff">جاري تشغيل البرنامج...</div>' +
+    "</body></html>";
+  splash.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html)).catch(() => undefined);
 }
 
 function createMainWindow() {
