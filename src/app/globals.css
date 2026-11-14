@@ -65,10 +65,10 @@
   --ui-side-to: #0e4398;
 }
 
-html,
-body {
-  height: 100%;
+html, body {
+  touch-action: manipulation;
 }
+
 
 body {
   margin: 0;
@@ -1304,4 +1304,32 @@ html[data-font="cairo-play"] body {
     border: 0 !important;
     max-width: none !important;
   }
+}
+/* ===== تسريع البرنامج وإلغاء حركة ارتفاع الأزرار ===== */
+
+/* 1. إلغاء حركة الارتفاع للأعلى عند تمرير الماوس على أي زر أو مربع */
+.tile,
+.tile:hover,
+.side-btn,
+.side-btn:hover,
+button,
+button:hover,
+a,
+a:hover {
+  transform: none !important;
+  translate: none !important;
+}
+
+/* 2. تسريع استجابة الأزرار والانتقالات وإلغاء البطء الحركي */
+*,
+*::before,
+*::after {
+  transition-duration: 0.05s !important;
+  animation-duration: 0.05s !important;
+  scroll-behavior: auto !important;
+}
+
+/* 3. استثناء شريط تحميل ويندوز 11 ليبقى متحركاً بانسيابية */
+.win11-bar {
+  animation-duration: 1.8s !important;
 }
