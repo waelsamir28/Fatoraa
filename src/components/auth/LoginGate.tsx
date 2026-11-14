@@ -14,7 +14,7 @@ import { useAuth, type SessionUser } from "./AuthProvider";
  * - بعد كده تطلب يوزر/باسورد وتعمل جلسة موقّعة على الخادم.
  */
 export function LoginGate() {
-  const { authEnabled, refresh, setUser, loading } = useAuth();
+  const { authEnabled, refresh, setUser, loading, dbError, dbErrorMessage } = useAuth();
   const [mode, setMode] = useState<"login" | "setup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +25,7 @@ export function LoginGate() {
   const [error, setError] = useState("");
   const [logo, setLogo] = useState(resolveLogo());
 
+  // قبل وجود أي مستخدم لا بد من شاشة «إنشاء حساب المالك» — لا شاشة دخول بلا حساب
   useEffect(() => {
     if (!loading) setMode(authEnabled ? "login" : "setup");
   }, [authEnabled, loading]);
@@ -78,9 +79,9 @@ export function LoginGate() {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#0b3a8c] to-[#061c46] p-3" dir="rtl">
+    <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#0f2942] to-[#081a2b] p-3" dir="rtl">
       <div className="w-full max-w-[430px] overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="bg-gradient-to-l from-[#0b4cc2] to-[#0b2350] px-5 py-4 text-center text-white">
+        <div className="bg-gradient-to-l from-[#164066] to-[#0f2942] px-5 py-4 text-center text-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logo} alt={APP_BRAND} className="mx-auto h-[92px] w-auto object-contain drop-shadow-lg" />
           <div className="mt-1 text-[19px] font-black">{APP_NAME}</div>
@@ -98,7 +99,7 @@ export function LoginGate() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="مثال: وائل الجمال"
-                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-blue-600 focus:outline-none"
+                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
               />
             </Field>
           )}
@@ -111,7 +112,7 @@ export function LoginGate() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="username"
-              className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-blue-600 focus:outline-none"
+              className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
             />
           </Field>
 
@@ -124,7 +125,7 @@ export function LoginGate() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 pl-10 text-[14px] font-bold text-slate-800 focus:border-blue-600 focus:outline-none"
+                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 pl-10 text-[14px] font-bold text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
               />
               <button
                 type="button"
@@ -146,14 +147,14 @@ export function LoginGate() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-blue-600 focus:outline-none"
+                className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
               />
             </Field>
           )}
 
-          {error && (
+          {(error || dbError) && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12.5px] font-bold text-red-700">
-              {error}
+              {dbError ? dbErrorMessage : error}
             </div>
           )}
 

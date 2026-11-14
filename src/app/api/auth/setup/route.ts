@@ -11,7 +11,17 @@ export const dynamic = "force-dynamic";
 /** إنشاء حساب المالك واسم متجر أول مرة (يعمل فقط لو مفيش أي مستخدم) */
 export function POST(req: Request) {
   return handle(async () => {
-    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+    let count = 0;
+    try {
+      const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+      count = Number(row?.count ?? 0);
+    } catch (e) {
+      const { dbErrorMessage } = await import("@/lib/server/session");
+      return NextResponse.json(
+        { error: `تعذّر الاتصال بقاعدة البيانات: ${dbErrorMessage(e)}` },
+        { status: 503 },
+      );
+    }
     if (count > 0) {
       return NextResponse.json({ error: "تم إعداد البرنامج بالفعل — سجّل الدخول بحسابك" }, { status: 409 });
     }
