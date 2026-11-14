@@ -13,9 +13,18 @@ export interface SessionUser {
   permissions: string[];
 }
 
+interface MeResponse {
+  authEnabled: boolean;
+  dbError?: boolean;
+  dbErrorMessage?: string;
+  user: SessionUser | null;
+}
+
 interface AuthState {
   loading: boolean;
   authEnabled: boolean;
+  dbError: boolean;
+  dbErrorMessage: string;
   user: SessionUser | null;
   can: (permission: string) => boolean;
   refresh: () => Promise<void>;
@@ -34,14 +43,32 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authEnabled, setAuthEnabled] = useState(false);
+  const [dbError, setDbError] = useState(false);
+  const [dbErrorMessage, setDbErrorMessage] = useState("");
   const [user, setUser] = useState<SessionUser | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const r = await api<{ authEnabled: boolean; user: SessionUser | null }>("/api/auth/me");
+      // نقرأ الرد الخام لأن 503 يعني خطأ قاعدة بيانات وليس فشل شبكة
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      const r = (await res.json().catch(() => ({}))) as MeResponse;
+
+      if (r.dbError) {
+        setDbError(true);
+        setDbErrorMessage(r.dbErrorMessage || "تعذّر الاتصال بقاعدة البيانات");
+        setAuthEnabled(false);
+        setUser(null);
+        return;
+      }
+
+      setDbError(false);
+      setDbErrorMessage("");
       setAuthEnabled(Boolean(r.authEnabled));
-      setUser(r.user);
+      setUser(r.user ?? null);
     } catch {
+      // فشل شبكة فعلي: لا نفتح البرنامج، نُظهر خطأ
+      setDbError(true);
+      setDbErrorMessage("تعذّر الاتصال بالخادم. تحقّق من الاتصال بالإنترنت.");
       setAuthEnabled(false);
       setUser(null);
     } finally {
@@ -70,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const can = useCallback(
     (permission: string) => {
-      if (!user) return !authEnabled; // قبل تفعيل الحسابات: كله مسموح
+      if (!user) return !authEnabled; // قبل إنشاء الحساب الأول: كله مسموح
       if (user.role === "owner") return true;
       return user.permissions.includes("*") || user.permissions.includes(permission);
     },
@@ -78,8 +105,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ loading, authEnabled, user, can, refresh, logout, setUser }),
-    [loading, authEnabled, user, can, refresh, logout],
+    () => ({
+      loading,
+      authEnabled,
+      dbError,
+      dbErrorMessage,
+      user,
+      can,
+      refresh,
+      logout,
+      setUser,
+    }),
+    [loading, authEnabled, dbError, dbErrorMessage, user, can, refresh, logout],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

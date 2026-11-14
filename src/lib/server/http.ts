@@ -13,6 +13,32 @@ function pgCode(e: unknown): string | undefined {
   return err?.code ?? err?.cause?.code;
 }
 
+/** هل الخطأ سببه عدم الوصول لقاعدة البيانات (شبكة/اعتماد) وليس خطأ منطقي؟ */
+export function isDbConnectionError(e: unknown): boolean {
+  const err = e as
+    | { code?: string; message?: string; cause?: { code?: string; message?: string } }
+    | null;
+  const code = err?.code ?? err?.cause?.code ?? "";
+  const msg = `${err?.message ?? ""} ${err?.cause?.message ?? ""}`;
+
+  const NET_CODES = [
+    "ECONNREFUSED",
+    "ENOTFOUND",
+    "ETIMEDOUT",
+    "ECONNRESET",
+    "EHOSTUNREACH",
+    "EAI_AGAIN",
+    "28P01", // password authentication failed
+    "3D000", // database does not exist
+    "28000", // invalid authorization
+    "57P03", // cannot connect now / starting up
+  ];
+  if (NET_CODES.includes(code)) return true;
+  return /ECONNREFUSED|ENOTFOUND|getaddrinfo|ETIMEDOUT|Connection terminated|ECONNRESET|password authentication failed|does not exist|timeout expired|connect timed out/i.test(
+    msg,
+  );
+}
+
 /** يغلف أي route handler: تهيئة البيانات + معالجة الأخطاء بالعربية */
 export async function handle(fn: () => Promise<unknown>): Promise<Response> {
   try {
@@ -40,6 +66,15 @@ export async function handle(fn: () => Promise<unknown>): Promise<Response> {
       return Response.json(
         { error: "هذا الكود مستخدم من قبل، يرجى اختيار كود آخر" },
         { status: 409 },
+      );
+    }
+    // تعذّر الوصول لقاعدة البيانات: رسالة واضحة بدل «خطأ في الخادم»
+    if (isDbConnectionError(e)) {
+      console.error("DB connection error:", e);
+      const { dbErrorMessage } = await import("./session");
+      return Response.json(
+        { error: dbErrorMessage(e), dbError: true },
+        { status: 503 },
       );
     }
     console.error(e);

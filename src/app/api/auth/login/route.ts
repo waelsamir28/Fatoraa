@@ -4,21 +4,29 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
 import { verifyPassword, createToken, SESSION_COOKIE, SESSION_DAYS, ROLE_LABELS } from "@/lib/server/auth";
-import { isAuthEnabled } from "@/lib/server/session";
+import { getAuthState } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
 /** حالة تسجيل الدخول: هل النظام يحتاج دخول؟ وهل المستخدم مسجّل؟ */
 export async function GET() {
   return handle(async () => {
-    const enabled = await isAuthEnabled();
-    return { authEnabled: enabled };
+    const state = await getAuthState();
+    return { authEnabled: state.enabled, dbError: state.dbError, message: state.message ?? null };
   });
 }
 
 export function POST(req: Request) {
   return handle(async () => {
-    const enabled = await isAuthEnabled();
+    const state = await getAuthState();
+    // تعذّر قراءة قاعدة البيانات: رسالة واضحة بدل «دخول مباشر» كاذب
+    if (state.dbError) {
+      return NextResponse.json(
+        { error: `تعذّر الاتصال بقاعدة البيانات: ${state.message}` },
+        { status: 503 },
+      );
+    }
+    const enabled = state.enabled;
     const b = await readJson(req);
     const username = str(b.username).trim().toLowerCase();
     const password = str(b.password);
