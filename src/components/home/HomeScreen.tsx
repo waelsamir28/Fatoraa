@@ -235,4 +235,3 @@ export function HomeScreen() {
               )}
             </div>
           </div>
-
