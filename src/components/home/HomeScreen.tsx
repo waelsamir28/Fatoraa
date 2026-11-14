@@ -235,3 +235,27 @@ export function HomeScreen() {
               )}
             </div>
           </div>
+          {/* ===== Footnote صغير أسفل الشاشة ===== */}
+          <div className="relative flex h-[34px] shrink-0 items-center justify-between border-t border-[#dbe7f5] bg-gradient-to-b from-white to-[#eef4fb] px-4 text-[12px] font-bold text-[#274b74]">
+            <span className="flex items-center gap-2">
+              <CheckSquare className="h-3.5 w-3.5 text-green-600" strokeWidth={3} />
+              سهل الاستخدام • دعم فني وتدريب مجاني • مناسب لجميع الأنشطة التجارية
+            </span>
+            <span className="flex items-center gap-2">
+              <span>الإصدار {APP_VERSION}</span>
+              <span className="h-3 w-px bg-[#c2d6ea]" />
+              <span>الدعم الفني:</span>
+              <b className="num font-black text-blue-800">{settings?.phone || SUPPORT_PHONE}</b>
+              {settings?.phone2 ? (
+                <>
+                  <span className="h-3 w-px bg-[#c2d6ea]" />
+                  <b className="num font-black text-green-700">{settings.phone2}</b>
+                </>
+              ) : null}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Window>
+  );
+}
