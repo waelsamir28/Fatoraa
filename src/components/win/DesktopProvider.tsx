@@ -46,7 +46,8 @@ import {
 } from "@/components/icons/MoreIcons";
 import { APP_NAME, SUPPORT_PHONE } from "@/lib/constants";
 import { useFullscreen } from "./fullscreen";
-import { LoginDialog } from "@/components/auth/LoginDialog";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { UpdateBanner } from "./UpdateCenter";
 
 interface DesktopBridge {
   isDesktop: boolean;
@@ -55,6 +56,15 @@ interface DesktopBridge {
   quit: () => void;
   isMaximized: () => Promise<boolean>;
   onMaximizedChange: (cb: (v: boolean) => void) => () => void;
+  getRuntimeInfo?: () => Promise<unknown>;
+  checkForUpdates?: (manual?: boolean) => Promise<unknown>;
+  getUpdateState?: () => Promise<unknown>;
+  downloadUpdate?: () => Promise<unknown>;
+  installUpdate?: () => Promise<unknown>;
+  onUpdateState?: (cb: (s: unknown) => void) => () => void;
+  openExternal?: (url: string) => Promise<boolean>;
+  switchMode?: (mode: "cloud" | "local") => Promise<string>;
+  setCloudUrl?: (url: string) => Promise<boolean>;
 }
 
 declare global {
@@ -139,32 +149,10 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
 
-  // تسجيل الدخول
-  const [activeUser, setActiveUser] = useState<string>("FATORA");
-  const [showLogin, setShowLogin] = useState<boolean>(false);
-
-  useEffect(() => {
-    try {
-      const logged = sessionStorage.getItem("aljamal_session_logged");
-      const user = localStorage.getItem("aljamal_active_user");
-      if (user) setActiveUser(user);
-      if (!logged) {
-        setShowLogin(true);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const handleLoginDone = (name: string) => {
-    setActiveUser(name);
-    setShowLogin(false);
-    try {
-      sessionStorage.setItem("aljamal_session_logged", "1");
-    } catch {
-      // ignore
-    }
-  };
+  // المستخدم الحالي: من جلسة الخادم الحقيقية
+  const { user: sessionUser } = useAuth();
+  const activeUser = sessionUser?.name || "FATORA";
+  const setActiveUser = useCallback(() => undefined, []);
 
   useEffect(() => {
     const b = bridge();
@@ -268,7 +256,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
         {!native && <Taskbar minimized={minimized} setMinimized={setMinimizedState} pathname={pathname} />}
       </div>
 
-      {showLogin && <LoginDialog onLoginSuccess={handleLoginDone} />}
+      <UpdateBanner />
       {dialog && <MessageBox dialog={dialog} onClose={closeDialog} />}
 
       <div className="pointer-events-none fixed bottom-[62px] right-4 z-[130] flex flex-col gap-2">

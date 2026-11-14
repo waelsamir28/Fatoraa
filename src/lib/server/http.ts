@@ -17,12 +17,24 @@ function pgCode(e: unknown): string | undefined {
 export async function handle(fn: () => Promise<unknown>): Promise<Response> {
   try {
     await ensureSeeded();
+    // نسخة احتياطية تلقائية مرة واحدة يومياً عند أول استخدام (لا تعطّل الطلب)
+    void import("./backup")
+      .then((m) => m.maybeRunDailyBackup())
+      .catch(() => undefined);
     const data = await fn();
     if (data instanceof Response) return data;
     return Response.json(data ?? { ok: true });
   } catch (e) {
     if (e instanceof HttpError) {
       return Response.json({ error: e.message }, { status: e.status });
+    }
+    // أخطاء المصادقة/الصلاحيات (AuthError من session.ts)
+    const authErr = e as { name?: string; status?: number; message?: string } | null;
+    if (authErr && (authErr.name === "AuthError" || authErr.status === 401 || authErr.status === 403)) {
+      return Response.json(
+        { error: authErr.message || "غير مصرح" },
+        { status: authErr.status === 403 ? 403 : 401 },
+      );
     }
     if (pgCode(e) === "23505") {
       return Response.json(

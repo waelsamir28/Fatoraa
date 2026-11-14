@@ -6,6 +6,7 @@ import { CheckCircle2, Clock, Gift, Loader2, MessageCircle, Phone, Power, Refres
 import { Window } from "@/components/win/Window";
 import { CartLogo, IconInfo, IconSupport } from "@/components/icons/AppIcons";
 import { APP_BRAND, APP_NAME, APP_TAGLINE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PHONE, SUPPORT_TEL, WHATSAPP_URL } from "@/lib/constants";
+import { UpdatePanel } from "@/components/win/UpdateCenter";
 
 const SHORTCUTS: Array<[string, string]> = [
   ["F2", "فاتورة جديدة"],
@@ -129,6 +130,9 @@ export function AboutView() {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="px-6 pb-4">
+            <UpdatePanel />
           </div>
           <div className="border-t border-[#d5deea] bg-[#f3f6fb] px-6 py-3 text-center text-[13px] font-bold text-slate-500">
             جميع الحقوق محفوظة © {new Date().getFullYear()} — {APP_NAME}

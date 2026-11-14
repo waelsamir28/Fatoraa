@@ -1,0 +1,22 @@
+# استثناءات Vercel: تمنع رفع ملفات نسخة الويندوز (desktop) وملفات البناء
+# ملاحظة: Vercel لا يقرأ .gitignore عند الرفع من متصفح الويب أو من الـ CLI،
+# لذلك هذا الملف هو المسؤول عن عدم رفع ملفات سطح المكتب.
+desktop/
+.github/
+.next/
+node_modules/
+out/
+dist/
+build/
+aljamal-data/
+coverage/
+*.tsbuildinfo
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# ملفات مساعدة محلية (لا تُرفع)
+fatoraa-vercel.zip
+fatoraa-vercel/
