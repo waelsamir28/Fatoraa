@@ -5,6 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FATORA - لإدارة المحلات التجارية",
+  icons: { icon: "/icon.png" },
   description:
     "FATORA لإدارة المحلات التجارية: فواتير المبيعات والمشتريات، المخازن، العملاء والموردين، التقارير والنسخ الاحتياطي. للدعم الفني 01222355769",
 };

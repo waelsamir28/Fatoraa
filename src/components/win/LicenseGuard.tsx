@@ -68,6 +68,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
         setInfo(data.status);
         setModalOpen(false);
         setCode("");
+        alert("🎉 تم تفعيل النسخة الكاملة من برنامج FATORA بنجاح!\nشكراً لثقتكم بنا، يمكنك الآن استخدام البرنامج بلا حدود.");
       } else {
         setError(data.error || "كود التفعيل غير صحيح");
       }
@@ -108,8 +109,8 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
                   {info.isClockTampered
                     ? "تم اكتشاف تغيير في تاريخ الجهاز"
                     : info.isExpired
-                    ? "انتهت الفترة التجريبية للبرنامج"
-                    : "تفعيل النسخة الكاملة من FATORA"}
+                      ? "انتهت الفترة التجريبية للبرنامج"
+                      : "تفعيل النسخة الكاملة من FATORA"}
                 </span>
               </div>
               <p className="mt-1 text-xs font-semibold text-blue-100">
