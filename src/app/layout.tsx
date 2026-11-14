@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { LicenseGuard } from "@/components/win/LicenseGuard";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "برنامج FATORA - لإدارة المحلات التجارية",
+  title: "FATORA - لإدارة المحلات التجارية",
   description:
-    "برنامج FATORA لإدارة المحلات التجارية: فواتير المبيعات والمشتريات، المخازن، العملاء والموردين، التقارير والنسخ الاحتياطي. للدعم الفني 01222355769",
+    "FATORA لإدارة المحلات التجارية: فواتير المبيعات والمشتريات، المخازن، العملاء والموردين، التقارير والنسخ الاحتياطي. للدعم الفني 01222355769",
 };
 
 export const viewport: Viewport = {
@@ -29,7 +30,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <LicenseGuard>{children}</LicenseGuard>
+      </body>
     </html>
   );
 }

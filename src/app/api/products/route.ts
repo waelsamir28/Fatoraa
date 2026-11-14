@@ -1,10 +1,28 @@
-import { and, asc, eq, ilike, lte, or, type SQL } from "drizzle-orm";
+import { and, asc, eq, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { db } from "@/db";
 import { products } from "@/db/schema";
+import { checkLicense } from "@/lib/license";
 import { handle, num, readJson, str } from "@/lib/server/http";
 import { generateProductCode, parseProduct } from "@/lib/server/parsers";
 
 export const dynamic = "force-dynamic";
+
+function getCurrentLicense() {
+  try {
+    const appData = process.env.APPDATA || os.homedir();
+    const file = path.join(appData, ".fatora-sys", "lic.dat");
+    if (!fs.existsSync(file)) {
+      return checkLicense({});
+    }
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    return checkLicense(parsed);
+  } catch {
+    return checkLicense({});
+  }
+}
 
 export function GET(req: Request) {
   return handle(async () => {
@@ -42,12 +60,40 @@ export function GET(req: Request) {
 /** إضافة صنف أو إدراج قائمة أصناف مجمعة (Excel Import) */
 export function POST(req: Request) {
   return handle(async () => {
+    const license = getCurrentLicense();
+
+    // التحقق من حالة النسخة التجريبية وحدود الأصناف
+    if (!license.isActivated) {
+      if (license.isExpired) {
+        throw new Error("انتهت الفترة التجريبية (15 يوماً). يرجى تفعيل البرنامج للمتابعة.");
+      }
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(products);
+
+      if (count >= license.limits.maxProducts) {
+        throw new Error(
+          `وصلت للحد الأقصى للأصناف في النسخة التجريبية (${license.limits.maxProducts} صنف). يرجى تفعيل البرنامج لإضافة أصناف بلا حدود.`
+        );
+      }
+    }
+
     const b = await readJson(req);
 
     // إذا كانت مصفوفة أصناف (استيراد إكسيل جماعي)
     if (Array.isArray(b.bulk)) {
+      const [{ count: existingCount }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(products);
+
+      const allowedRemaining = license.isActivated
+        ? Infinity
+        : Math.max(0, license.limits.maxProducts - existingCount);
+
+      const itemsToProcess = license.isActivated ? b.bulk : b.bulk.slice(0, allowedRemaining);
+
       const inserted: Array<typeof products.$inferSelect> = [];
-      for (const item of b.bulk) {
+      for (const item of itemsToProcess) {
         if (!item || typeof item !== "object") continue;
         const raw = item as Record<string, unknown>;
         try {

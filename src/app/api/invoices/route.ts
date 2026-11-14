@@ -1,10 +1,28 @@
 import { and, desc, eq, getTableColumns, gte, ilike, lt, or, sql, type SQL } from "drizzle-orm";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { db } from "@/db";
 import { invoiceItems, invoices } from "@/db/schema";
+import { checkLicense } from "@/lib/license";
 import { handle, num, parseDate, readJson, str } from "@/lib/server/http";
 import { createInvoice, parseInvoiceInput, parseType } from "@/lib/server/invoices";
 
 export const dynamic = "force-dynamic";
+
+function getCurrentLicense() {
+  try {
+    const appData = process.env.APPDATA || os.homedir();
+    const file = path.join(appData, ".fatora-sys", "lic.dat");
+    if (!fs.existsSync(file)) {
+      return checkLicense({});
+    }
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    return checkLicense(parsed);
+  } catch {
+    return checkLicense({});
+  }
+}
 
 export function GET(req: Request) {
   return handle(async () => {
@@ -55,6 +73,24 @@ export function GET(req: Request) {
 
 export function POST(req: Request) {
   return handle(async () => {
+    const license = getCurrentLicense();
+
+    // التحقق من حالة النسخة التجريبية وحدود الفواتير
+    if (!license.isActivated) {
+      if (license.isExpired) {
+        throw new Error("انتهت الفترة التجريبية (15 يوماً). يرجى تفعيل البرنامج للمتابعة.");
+      }
+      const [{ count }] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(invoices);
+
+      if (count >= license.limits.maxInvoices) {
+        throw new Error(
+          `وصلت للحد الأقصى للفواتير في النسخة التجريبية (${license.limits.maxInvoices} فاتورة). يرجى تفعيل البرنامج لإصدار فواتير بلا حدود.`
+        );
+      }
+    }
+
     const input = parseInvoiceInput(await readJson(req));
     return createInvoice(input);
   });
