@@ -5,7 +5,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..", "..");
-const out = path.resolve(__dirname, "..", "app-server");
+const desktopDir = path.resolve(__dirname, "..");
+const out = path.join(desktopDir, "app-server");
 
 function run(cmd, env = {}) {
   console.log(`\n> ${cmd}`);
@@ -28,9 +29,29 @@ console.log("\n• نسخ ملفات الخادم...");
 fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(standalone, out, { recursive: true });
 fs.cpSync(path.join(root, ".next", "static"), path.join(out, ".next", "static"), { recursive: true });
-fs.cpSync(path.join(root, "public"), path.join(out, "public"), { recursive: true });
-// شعار الشركة داخل مجلد البرنامج (للشاشة الافتتاحية)
-fs.cpSync(path.join(root, "public", "images"), path.join(__dirname, "..", "build"), { recursive: true });
+
+if (fs.existsSync(path.join(root, "public"))) {
+  fs.cpSync(path.join(root, "public"), path.join(out, "public"), { recursive: true });
+}
+
+// نسخ صور البداية والأيقونات إلى مجلد build ومجلد desktop لضمان حزمها في البرنامج
+const buildDir = path.join(desktopDir, "build");
+if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
+
+if (fs.existsSync(path.join(root, "public", "images"))) {
+  fs.cpSync(path.join(root, "public", "images"), buildDir, { recursive: true });
+}
+
+// التأكد من وجود splash.png و icon.png في مجلد desktop ومجلد build
+for (const asset of ["splash.png", "icon.png"]) {
+  const inDesktop = path.join(desktopDir, asset);
+  const inBuild = path.join(buildDir, asset);
+  if (fs.existsSync(inDesktop)) {
+    fs.copyFileSync(inDesktop, inBuild);
+  } else if (fs.existsSync(inBuild)) {
+    fs.copyFileSync(inBuild, inDesktop);
+  }
+}
 
 // التأكد من وجود ملفات قاعدة البيانات المدمجة كاملة (wasm / data)
 const pgliteSrc = path.join(root, "node_modules", "@electric-sql", "pglite");

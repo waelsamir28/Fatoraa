@@ -100,13 +100,13 @@ async function startServer() {
     stdio: "pipe",
     serviceName: "AlGamal Server",
     env: {
-    ...process.env,
-    NODE_ENV: "production",
-    PORT: String(port),
-    HOSTNAME: "127.0.0.1",
-    DATABASE_URL: "postgresql://neondb_owner:npg_k37jtJnfoYuB@ep-floral-hill-bej9r8ow-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
-    NEXT_TELEMETRY_DISABLED: "1",
-  },
+      ...process.env,
+      NODE_ENV: "production",
+      PORT: String(port),
+      HOSTNAME: "127.0.0.1",
+      DATABASE_URL: "postgresql://neondb_owner:npg_k37jtJnfoYuB@ep-floral-hill-bej9r8ow-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+      NEXT_TELEMETRY_DISABLED: "1",
+    },
   });
   server.stdout?.on("data", (d) => log(String(d).trim()));
   server.stderr?.on("data", (d) => log(`ERR ${String(d).trim()}`));
