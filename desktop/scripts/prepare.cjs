@@ -43,6 +43,7 @@ if (fs.existsSync(path.join(root, "public", "images"))) {
 }
 
 // التأكد من وجود splash.png و icon.png في مجلد desktop ومجلد build
+// (splash.png لازم يكون موجود جوه حزمة البرنامج، وإلا شاشة البداية تفضل فاضية)
 for (const asset of ["splash.png", "icon.png"]) {
   const inDesktop = path.join(desktopDir, asset);
   const inBuild = path.join(buildDir, asset);
@@ -50,8 +51,13 @@ for (const asset of ["splash.png", "icon.png"]) {
     fs.copyFileSync(inDesktop, inBuild);
   } else if (fs.existsSync(inBuild)) {
     fs.copyFileSync(inBuild, inDesktop);
+  } else {
+    console.warn(`⚠ الملف ${asset} غير موجود — لن يظهر في شاشة البداية`);
   }
 }
+// احتياطي: نسخة من splash.png بجوار main.cjs
+const splashSrc = path.join(desktopDir, "splash.png");
+if (fs.existsSync(splashSrc)) fs.copyFileSync(splashSrc, path.join(buildDir, "splash.png"));
 
 // التأكد من وجود ملفات قاعدة البيانات المدمجة كاملة (wasm / data)
 const pgliteSrc = path.join(root, "node_modules", "@electric-sql", "pglite");

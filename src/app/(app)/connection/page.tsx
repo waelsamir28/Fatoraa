@@ -1,5 +1,5 @@
-import { DesktopSettingsView } from "@/components/settings/DesktopSettingsPanel";
+import { ConnectionHub } from "@/components/settings/ConnectionHub";
 
 export default function ConnectionPage() {
-  return <DesktopSettingsView />;
+  return <ConnectionHub />;
 }
