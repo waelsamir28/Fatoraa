@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
-import { CheckSquare, PanelRightClose, PanelRightOpen, Phone } from "lucide-react";
+import { CheckSquare, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import {
@@ -34,7 +34,7 @@ import {
   IconSmartOrders,
   IconTreasury,
 } from "@/components/icons/MoreIcons";
-import { APP_BRAND, APP_TITLE, APP_VERSION, SUPPORT_PHONE, SUPPORT_TEL } from "@/lib/constants";
+import { APP_TITLE, APP_VERSION, SUPPORT_PHONE } from "@/lib/constants";
 import { api } from "@/lib/client";
 import { fmt, rangeToISO, todayInput, tzOffset } from "@/lib/format";
 import type { Settings } from "@/lib/types";
@@ -90,22 +90,6 @@ const NAV: Array<{ href: string; label: string; Icon: Icon }> = [
   { href: "/settings", label: "الإعدادات", Icon: IconSettings },
 ];
 
-function GoldBadge({ brand }: { brand: string }) {
-  return (
-    <div className="relative shrink-0 pb-2">
-      <div className="badge-gold">
-        <div className="leading-tight">
-          <div className="text-[12px] font-black">برنامج</div>
-          <div className="font-display text-[26px] leading-none text-[#a5150e]">{brand || APP_BRAND}</div>
-        </div>
-      </div>
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#ffd2cc] bg-gradient-to-b from-[#e8261b] to-[#a5120a] px-2.5 py-0.5 text-[11px] font-black text-white shadow-md">
-        الاختيار الأفضل
-      </div>
-    </div>
-  );
-}
-
 export function HomeScreen() {
   const router = useRouter();
   const { confirm, native, quitApp, activeUser } = useDesktop();
@@ -152,7 +136,6 @@ export function HomeScreen() {
     else router.push("/exit");
   };
 
-  const bigTitle = settings?.customBigTitle || "FATORA";
   const customBg = settings?.customBgUrl || "";
 
   return (
@@ -197,8 +180,8 @@ export function HomeScreen() {
 
         <div className="relative z-10 flex h-full w-full flex-col overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.98] to-[#eaf3ff]/[0.97] shadow-[0_14px_38px_rgba(0,0,0,0.35)]">
           {/* ===== مكان البانر المصمم ===== */}
-          <div className="relative flex shrink-0 flex-col">
-            <div className="relative h-[196px] w-full overflow-hidden">
+          <div className="relative flex shrink-0 flex-col border-b-2 border-white shadow-sm">
+            <div className="relative h-[220px] w-full overflow-hidden">
               <Image
                 src="/images/main-banner.jpg"
                 alt="بانر البرنامج"
@@ -208,65 +191,15 @@ export function HomeScreen() {
                 className="object-cover object-center"
               />
             </div>
-
-            {/* البانر الأزرق السفلي + أرقام الهاتف */}
-            <div className="flex items-stretch gap-0">
-              <div
-                className="relative flex min-w-0 flex-1 items-center justify-between gap-4 px-5 py-2 text-white shadow-md"
-                style={{
-                  background: "linear-gradient(180deg,#2f7ff0 0%,#1d63d8 52%,#0f47a8 100%)",
-                  borderTop: "2px solid #ffffff",
-                }}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <GoldBadge brand={bigTitle} />
-                  <div className="min-w-0">
-                    <div className="truncate text-[20px] font-black leading-tight drop-shadow">إدارة احترافية .. لمحل تجاري أكثر نجاحاً</div>
-                    <div className="truncate text-[12.5px] font-bold opacity-90">
-                      أدوات مدرسية • خردوات • طباعة وتصميم • كروت أفراح • دعاية وإعلان
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex shrink-0 items-stretch gap-2">
-                  <a href={SUPPORT_TEL} className="phone-pill !gap-3 !px-3 !py-1" title="اتصال بالدعم الفني">
-                    <div className="text-right leading-tight">
-                      <div className="text-[10.5px] font-bold opacity-90">الدعم الفني</div>
-                      <div className="phone-num num !text-[26px]">{settings?.phone || SUPPORT_PHONE}</div>
-                    </div>
-                    <span className="phone-ico !h-[38px] !w-[38px]">
-                      <Phone className="h-4 w-4 fill-white text-white" />
-                    </span>
-                  </a>
-
-                  {settings?.phone2 ? (
-                    <a
-                      href={`tel:${settings.phone2.replace(/\s+/g, "")}`}
-                      className="phone-pill !gap-3 !px-3 !py-1"
-                      style={{ background: "linear-gradient(180deg,#22c55e 0%,#12a150 52%,#0b7a3b 100%)", boxShadow: "0 0 0 2px #0a6a33, 0 6px 16px rgba(6,60,30,.3)" }}
-                      title="اتصال بالهاتف الإضافي"
-                    >
-                      <div className="text-right leading-tight">
-                        <div className="text-[10.5px] font-bold opacity-90">هاتف إضافي</div>
-                        <div className="phone-num num !text-[26px]">{settings.phone2}</div>
-                      </div>
-                      <span className="phone-ico !h-[38px] !w-[38px]">
-                        <Phone className="h-4 w-4 fill-white text-white" />
-                      </span>
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* ===== Body: Sidebar + Tiles ===== */}
-          <div className="relative flex min-h-0 flex-1 gap-3 px-3 pb-1.5 pt-1">
+          <div className="relative flex min-h-0 flex-1 gap-3 px-3 pb-1.5 pt-2">
             <button
               type="button"
               onClick={toggleSidebar}
               title={sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية"}
-              className="absolute top-1 z-30 grid h-7 w-7 place-items-center rounded-full border border-white bg-white text-blue-800 shadow-md transition hover:bg-blue-50"
+              className="absolute top-2 z-30 grid h-7 w-7 place-items-center rounded-full border border-white bg-white text-blue-800 shadow-md transition hover:bg-blue-50"
               style={{ right: sidebarOpen ? 199 : 4 }}
             >
               {sidebarOpen ? <PanelRightClose className="h-4 w-4" strokeWidth={2.6} /> : <PanelRightOpen className="h-4 w-4" strokeWidth={2.6} />}
@@ -303,27 +236,3 @@ export function HomeScreen() {
             </div>
           </div>
 
-          {/* ===== Footnote صغير أسفل الشاشة ===== */}
-          <div className="relative flex h-[34px] shrink-0 items-center justify-between border-t border-[#dbe7f5] bg-gradient-to-b from-white to-[#eef4fb] px-4 text-[12px] font-bold text-[#274b74]">
-            <span className="flex items-center gap-2">
-              <CheckSquare className="h-3.5 w-3.5 text-green-600" strokeWidth={3} />
-              سهل الاستخدام • دعم فني وتدريب مجاني • مناسب لجميع الأنشطة التجارية
-            </span>
-            <span className="flex items-center gap-2">
-              <span>الإصدار {APP_VERSION}</span>
-              <span className="h-3 w-px bg-[#c2d6ea]" />
-              <span>الدعم الفني:</span>
-              <b className="num font-black text-blue-800">{settings?.phone || SUPPORT_PHONE}</b>
-              {settings?.phone2 ? (
-                <>
-                  <span className="h-3 w-px bg-[#c2d6ea]" />
-                  <b className="num font-black text-green-700">{settings.phone2}</b>
-                </>
-              ) : null}
-            </span>
-          </div>
-        </div>
-      </div>
-    </Window>
-  );
-}
