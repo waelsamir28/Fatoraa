@@ -1,94 +1,103 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <title>برنامج FATORA</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        height: 100%;
-        overflow: hidden;
-        font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+
+<head>
+  <meta charset="utf-8" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      user-select: none;
+      position: relative;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .splash-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* حاوية شريط تحميل ويندوز 11 في المساحة الفارغة أسفل النص */
+    .win11-loader-box {
+      position: absolute;
+      top: 63%;
+      left: 11%;
+      width: 47%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .loading-text {
+      color: #e0f2fe;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* مسار شريط التحميل الشبيه بويندوز 11 */
+    .win11-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* المؤشر المتحرك المتمدد والمنكمش مثل ويندوز 11 */
+    .win11-bar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #38bdf8, #7dd3fc, #ffffff);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+      animation: win11-indeterminate 1.8s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+    }
+
+    @keyframes win11-indeterminate {
+      0% {
+        left: -35%;
+        right: 100%;
       }
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: #fff;
-        background: radial-gradient(ellipse at 70% 25%, #3d8af0, #0b3a8c 58%, #061f57);
-        -webkit-app-region: drag;
-        border: 1px solid #0a2a6e;
-        box-sizing: border-box;
+
+      60% {
+        left: 100%;
+        right: -90%;
       }
-      img {
-        width: 104px;
-        height: 104px;
-        border-radius: 22px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+
+      100% {
+        left: 100%;
+        right: -90%;
       }
-      h1 {
-        margin: 6px 0 0;
-        font-size: 42px;
-        font-weight: 900;
-        text-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-      }
-      h1 span {
-        color: #ff3b30;
-        text-shadow:
-          2px 0 #fff,
-          -2px 0 #fff,
-          0 2px #fff,
-          0 -2px #fff,
-          0 5px 0 #a3150e;
-      }
-      p {
-        margin: 0;
-        font-size: 15px;
-        font-weight: 700;
-        opacity: 0.92;
-      }
-      .bar {
-        width: 270px;
-        height: 7px;
-        margin-top: 8px;
-        border-radius: 7px;
-        background: rgba(255, 255, 255, 0.2);
-        overflow: hidden;
-      }
-      .bar i {
-        display: block;
-        width: 40%;
-        height: 100%;
-        border-radius: 7px;
-        background: linear-gradient(90deg, #ffd43b, #fff);
-        animation: move 1.2s infinite ease-in-out;
-      }
-      @keyframes move {
-        0% {
-          transform: translateX(170%);
-        }
-        100% {
-          transform: translateX(-260%);
-        }
-      }
-      small {
-        position: absolute;
-        bottom: 12px;
-        font-size: 12.5px;
-        font-weight: 700;
-        opacity: 0.8;
-      }
-    </style>
-  </head>
-  <body>
-    <img src="build/logo-fatora.png" alt="" style="background:transparent;width:200px;height:auto;border-radius:0;box-shadow:none;filter:drop-shadow(0 10px 22px rgba(0,0,0,.45))" />
-    <h1 style="font-size:28px;margin-top:2px">برنامج <span>FATORA</span></h1>
-    <p>إدارة احترافية .. لمحل تجاري أكثر نجاحاً</p>
-    <p style="opacity: 0.75">جاري تشغيل البرنامج...</p>
-    <div class="bar"><i></i></div>
-    <small>الدعم الفني: 01222355769</small>
-  </body>
+    }
+  </style>
+</head>
+
+<body>
+  <img src="./splash.png" class="splash-img" alt="FATORA" />
+
+  <div class="win11-loader-box">
+    <div class="loading-text">جاري تشغيل البرنامج...</div>
+    <div class="win11-track">
+      <div class="win11-bar"></div>
+    </div>
+  </div>
+</body>
+
 </html>
