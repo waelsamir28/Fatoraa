@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Eye, FilePlus2, Printer, RefreshCw, Search, Trash2 } from "lucide-react";
+import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 import { Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconBox, IconSales } from "@/components/icons/AppIcons";
@@ -27,13 +28,15 @@ const CFG: Record<InvoiceType, { title: string; partyLabel: string; editorHref: 
 export function InvoiceList({ type }: { type: InvoiceType }) {
   const cfg = CFG[type];
   const router = useRouter();
-  const { confirm, toast } = useDesktop();
+  const { toast } = useDesktop();
   const [from, setFrom] = useState(monthStartInput);
   const [to, setTo] = useState(todayInput);
   const [q, setQ] = useState("");
   const [data, setData] = useState<ListResp | null>(null);
   const [loading, setLoading] = useState(false);
   const [sel, setSel] = useState<number | null>(null);
+  const [toDelete, setToDelete] = useState<Invoice | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(
     async (f: string, t: string, query: string) => {
@@ -64,21 +67,21 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
   };
   const open = (id: number) => router.push(`${cfg.editorHref}?id=${id}`);
   const print = (id: number) => window.open(`/print/${id}?auto=1`, "_blank");
-  const del = async (inv: Invoice) => {
-    const ok = await confirm(`هل تريد حذف الفاتورة رقم ${inv.number}؟\nسيتم عكس تأثيرها على المخزون والأرصدة.`, {
-      title: "حذف فاتورة",
-      danger: true,
-      okText: "حذف",
-      cancelText: "إلغاء",
-      kind: "warning",
-    });
-    if (!ok) return;
+  const del = (inv: Invoice) => setToDelete(inv);
+
+  /** تنفيذ الحذف الآمن مع تسجيل السبب */
+  const confirmDelete = async (reason: string) => {
+    if (!toDelete) return;
+    setDeleting(true);
     try {
-      await api(`/api/invoices/${inv.id}`, { method: "DELETE" });
-      toast(`تم حذف الفاتورة رقم ${inv.number}`);
+      await api(`/api/invoices/${toDelete.id}`, { method: "DELETE", json: { reason } });
+      toast(`تم حذف الفاتورة رقم ${toDelete.number} — يمكن استرجاعها من سجل الحذف`);
+      setToDelete(null);
       void load(from, to, q);
     } catch (e) {
       toast(errMsg(e), "error");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -258,6 +261,15 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
           </table>
         </div>
       </div>
+
+      {toDelete && (
+        <DeleteInvoiceDialog
+          invoiceNumber={toDelete.number}
+          busy={deleting}
+          onCancel={() => setToDelete(null)}
+          onConfirm={(reason) => void confirmDelete(reason)}
+        />
+      )}
     </Window>
   );
 }

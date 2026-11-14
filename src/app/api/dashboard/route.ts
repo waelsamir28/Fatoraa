@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { expenses, installments, invoiceItems, invoices, products, shifts } from "@/db/schema";
 import { handle } from "@/lib/server/http";
@@ -19,8 +19,9 @@ export function GET() {
     const yStart = new Date(dayStart.getTime() - 86400000);
     const mStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // الفواتير المحذوفة لا تُحتسب
     const range = (from: Date, to: Date) =>
-      and(eq(invoices.type, "sale"), gte(invoices.date, from), lt(invoices.date, to));
+      and(eq(invoices.type, "sale"), isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to));
 
     const [today] = await db
       .select({
@@ -105,7 +106,7 @@ export function GET() {
         type: invoices.type,
       })
       .from(invoices)
-      .where(eq(invoices.type, "sale"))
+      .where(and(eq(invoices.type, "sale"), isNull(invoices.deletedAt)))
       .orderBy(desc(invoices.date))
       .limit(6);
 

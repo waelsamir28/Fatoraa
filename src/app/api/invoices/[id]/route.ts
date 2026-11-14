@@ -1,5 +1,7 @@
-import { HttpError, handle, parseId, readJson } from "@/lib/server/http";
-import { deleteInvoice, getInvoice, parseInvoiceInput, updateInvoice } from "@/lib/server/invoices";
+import { NextResponse } from "next/server";
+import { HttpError, handle, parseId, readJson, str } from "@/lib/server/http";
+import { deleteInvoice, getInvoice, parseInvoiceInput, restoreInvoice, updateInvoice } from "@/lib/server/invoices";
+import { getSession } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,35 @@ export function PUT(req: Request, { params }: Ctx) {
   });
 }
 
-export function DELETE(_req: Request, { params }: Ctx) {
-  return handle(async () => deleteInvoice(parseId((await params).id)));
+/**
+ * حذف آمن: نطلب سبب الحذف ونسجّل مين حذفها.
+ * الجسم اختياري — لو مفيش سبب نكتب «حذف بدون سبب مذكور».
+ */
+export function DELETE(req: Request, { params }: Ctx) {
+  return handle(async () => {
+    const id = parseId((await params).id);
+    let reason = "";
+    try {
+      const body = await readJson(req);
+      reason = str(body.reason);
+    } catch {
+      /* الجسم فارغ — مسموح */
+    }
+    const session = await getSession();
+    const actor = session?.name || session?.username || "";
+    return deleteInvoice(id, actor, reason);
+  });
+}
+
+/** استرجاع فاتورة محذوفة */
+export function POST(req: Request, { params }: Ctx) {
+  return handle(async () => {
+    const id = parseId((await params).id);
+    const body = await readJson(req).catch(() => ({}) as Record<string, unknown>);
+    if (str(body.action) !== "restore") {
+      throw new HttpError(400, "إجراء غير صالح");
+    }
+    await restoreInvoice(id);
+    return NextResponse.json({ ok: true });
+  });
 }

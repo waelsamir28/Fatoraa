@@ -1393,7 +1393,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
         </div>
 
         {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
-        <div className="flex h-[180px] shrink-0 gap-2">
+        <div className="flex h-[196px] shrink-0 gap-2">
           {/* أزرار العمليات */}
           <div className="grid w-[22%] min-w-[240px] max-w-[320px] shrink-0 grid-cols-2 grid-rows-2 gap-1.5">
             <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
@@ -1425,13 +1425,13 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
               ملاحظات الفاتورة والبيان
             </div>
             <textarea
-              className="win-input m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
+              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
               placeholder="اكتب أية ملاحظات للعميل هنا ..."
               value={state.notes}
               onChange={(e) => patch({ notes: e.target.value })}
             />
             {/* شريط المبالغ بحجم مكبر وبدون (ج.م) والأخير: المتبقي (آجل) */}
-            <div className="grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] p-2 bg-white/80">
+            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] bg-white p-2">
               <label className="text-[12px] font-black text-[#1e3a6a]">
                 خصم إضافي
                 <input
@@ -1444,13 +1444,38 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
               </label>
 
               <label className="text-[12px] font-black text-[#1e3a6a]">
-                {state.paymentType === "credit" ? "المدفوع مقدماً" : "المبلغ المستلم"}
+                <span className="flex items-center justify-between gap-1">
+                  <span>{state.paymentType === "credit" ? "المدفوع مقدماً" : "المبلغ المستلم"}</span>
+                  {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
+                  <span className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      title="دفع المبلغ كاملاً"
+                      onClick={() => patch({ paid: String(totals.total) })}
+                      className="rounded bg-[#2fb3a6] px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-[#25938a]"
+                    >
+                      الكل
+                    </button>
+                    <button
+                      type="button"
+                      title="مسح المبلغ"
+                      onClick={() => patch({ paid: "" })}
+                      className="rounded bg-slate-400 px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-slate-500"
+                    >
+                      مسح
+                    </button>
+                  </span>
+                </span>
                 <input
+                  type="text"
+                  dir="ltr"
                   className="win-input num mt-0.5 h-[34px] w-full text-center text-[20px] font-black text-green-700 bg-green-50/60 border-green-400"
                   inputMode="decimal"
+                  autoComplete="off"
                   placeholder="0"
                   value={state.paid}
-                  onChange={(e) => patch({ paid: e.target.value })}
+                  onChange={(e) => patch({ paid: e.target.value.replace(/[^\d.]/g, "") })}
+                  onFocus={(e) => e.currentTarget.select()}
                 />
               </label>
 

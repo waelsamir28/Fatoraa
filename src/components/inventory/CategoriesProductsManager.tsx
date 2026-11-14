@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Edit2, FolderPlus, Pencil, Plus, RefreshCw, Save, Trash2, Upload } from "lucide-react";
+import { Camera, Download, Edit2, FolderPlus, ImagePlus, Pencil, Plus, RefreshCw, Save, Trash2, Upload, X } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Dialog, Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
@@ -47,6 +47,7 @@ export function CategoriesProductsManager() {
   const [form, setForm] = useState<ProductForm | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [preview, setPreview] = useState<Product | null>(null);
 
   // نوافذ إضافة وتعديل المجموعات
   const [addCatModal, setAddCatModal] = useState(false);
@@ -337,6 +338,7 @@ export function CategoriesProductsManager() {
                   <th className="w-12">م</th>
                   <th className="text-right">اسم الصنف</th>
                   <th>المجموعة</th>
+                  <th className="w-[54px]">صورة</th>
                   <th>العبوة</th>
                   <th>سعر الشراء</th>
                   <th>سعر البيع</th>
@@ -351,6 +353,21 @@ export function CategoriesProductsManager() {
                   <tr key={p.id}>
                     <td className="num font-bold">{i + 1}</td>
                     <td className="max-w-[240px] truncate text-right font-black text-blue-900">{p.name}</td>
+                    <td className="p-0.5">
+                      <button
+                        type="button"
+                        title={p.imageUrl ? "تكبير الصورة" : "إضافة صورة للصنف"}
+                        onClick={() => setPreview(p)}
+                        className="mx-auto grid h-9 w-9 place-items-center overflow-hidden rounded-md border border-[#c9d8ee] bg-white hover:border-[#2fb3a6]"
+                      >
+                        {p.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <ImagePlus className="h-4 w-4 text-[#8094ae]" />
+                        )}
+                      </button>
+                    </td>
                     <td>{p.category}</td>
                     <td>{p.unit}</td>
                     <td className="num">{fmt(p.costPrice)}</td>
@@ -396,7 +413,7 @@ export function CategoriesProductsManager() {
                 ))}
                 {!filtered.length && (
                   <tr className="empty">
-                    <td colSpan={10} className="py-12 text-center text-slate-500 font-bold">
+                    <td colSpan={11} className="py-12 text-center text-slate-500 font-bold">
                       لا توجد أصناف في هذه المجموعة
                     </td>
                   </tr>
@@ -594,27 +611,144 @@ export function CategoriesProductsManager() {
             </Field>
 
             <div className="col-span-2">
-              <span className="form-label">صورة الصنف (رفع من الكمبيوتر)</span>
+              <span className="form-label">صورة الصنف</span>
               <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      const reader = new FileReader();
-                      reader.onload = () => setForm({ ...form, imageUrl: reader.result as string });
-                      reader.readAsDataURL(f);
-                    }
-                  }}
-                />
-                {form.imageUrl && (
-                  <span className="text-[12px] font-black text-green-700">✓ تم اختيار صورة للصنف</span>
-                )}
+                {/* معاينة الصورة */}
+                <div className="grid h-[70px] w-[70px] shrink-0 place-items-center overflow-hidden rounded-lg border-2 border-dashed border-[#c9d8ee] bg-white">
+                  {form.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.imageUrl} alt="معاينة" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImagePlus className="h-6 w-6 text-[#8094ae]" />
+                  )}
+                </div>
+
+                <div className="flex flex-1 flex-col gap-1.5">
+                  {/* رفع من الكمبيوتر */}
+                  <label className="btn btn-blue h-8 cursor-pointer justify-center !text-[12px]">
+                    <Upload className="h-3.5 w-3.5" />
+                    رفع صورة من الكمبيوتر
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        if (f.size > 2 * 1024 * 1024) {
+                          toast("حجم الصورة كبير — اختر صورة أقل من 2 ميجا", "error");
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setForm({ ...form, imageUrl: reader.result as string });
+                        reader.readAsDataURL(f);
+                      }}
+                    />
+                  </label>
+
+                  {/* تصوير بالكاميرا / الموبايل */}
+                  <label className="btn h-8 cursor-pointer justify-center !text-[12px]">
+                    <Camera className="h-3.5 w-3.5 text-[#2fb3a6]" />
+                    تصوير بالكاميرا
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const reader = new FileReader();
+                        reader.onload = () => setForm({ ...form, imageUrl: reader.result as string });
+                        reader.readAsDataURL(f);
+                      }}
+                    />
+                  </label>
+
+                  <div className="flex items-center gap-1">
+                    <input
+                      className="win-input h-8 flex-1 !text-[11.5px]"
+                      dir="ltr"
+                      placeholder="أو رابط صورة https://..."
+                      value={form.imageUrl.startsWith("data:") ? "" : form.imageUrl}
+                      onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                    />
+                    {form.imageUrl && (
+                      <button
+                        type="button"
+                        className="btn h-8 w-8 p-0"
+                        title="إزالة الصورة"
+                        onClick={() => setForm({ ...form, imageUrl: "" })}
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </Dialog>
+      )}
+
+      {/* معاينة صورة الصنف بحجم كبير */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-[80] grid place-items-center bg-black/60 p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div
+            className="w-full max-w-[460px] overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between bg-[#0f2942] px-4 py-2.5 text-white">
+              <span className="truncate text-[14px] font-black">{preview.name}</span>
+              <button type="button" onClick={() => setPreview(null)} className="rounded p-1 hover:bg-white/15">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid place-items-center bg-[#f4f7fb] p-4">
+              {preview.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview.imageUrl} alt={preview.name} className="max-h-[52vh] w-auto object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 py-8 text-slate-400">
+                  <ImagePlus className="h-14 w-14" />
+                  <span className="text-[13px] font-bold">لا توجد صورة لهذا الصنف</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-2 border-t border-slate-200 p-3">
+              <div className="text-[12px] font-bold text-slate-500">
+                الكود: <span className="num font-black text-slate-700">{preview.code}</span> — الرصيد:{" "}
+                <span className="num font-black text-slate-700">{fmtQty(preview.stock)}</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-blue h-8 px-3 !text-[12px]"
+                onClick={() => {
+                  setForm({
+                    id: preview.id,
+                    code: preview.code,
+                    name: preview.name,
+                    unit: preview.unit,
+                    category: preview.category,
+                    costPrice: String(preview.costPrice),
+                    salePrice: String(preview.salePrice),
+                    wholesalePrice: String(preview.wholesalePrice),
+                    stock: String(preview.stock),
+                    minStock: String(preview.minStock),
+                    imageUrl: preview.imageUrl,
+                  });
+                  setPreview(null);
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                تعديل الصنف والصورة
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Window>
   );

@@ -267,4 +267,26 @@ ALTER TABLE "cash_moves" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 
+-- حذف آمن للفواتير (سجل تدقيق)
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "deleted_by" text DEFAULT '' NOT NULL;
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "delete_reason" text DEFAULT '' NOT NULL;
+
+-- حركات المخزون
+CREATE TABLE IF NOT EXISTS "stock_movements" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"product_id" integer NOT NULL,
+	"product_name" text DEFAULT '' NOT NULL,
+	"kind" text NOT NULL,
+	"qty" double precision NOT NULL,
+	"balance_after" double precision DEFAULT 0 NOT NULL,
+	"ref_id" integer,
+	"ref_label" text DEFAULT '' NOT NULL,
+	"notes" text DEFAULT '' NOT NULL,
+	"user_name" text DEFAULT '' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "stock_moves_product_idx" ON "stock_movements" ("product_id");
+CREATE INDEX IF NOT EXISTS "stock_moves_date_idx" ON "stock_movements" ("created_at");
+
 `;

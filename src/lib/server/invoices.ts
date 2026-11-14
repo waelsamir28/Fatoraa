@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { invoiceItems, invoices, parties, products } from "@/db/schema";
+import { invoiceItems, invoices, parties, products, stockMovements } from "@/db/schema";
 import { HttpError, num, round2, round3, str } from "./http";
 
 export type InvoiceType = "sale" | "purchase" | "sale_return" | "purchase_return";
@@ -108,18 +108,41 @@ export function computeTotals(input: Pick<InvoiceInput, "items" | "extraDiscount
   return { subtotal, discount, tax, total, paid };
 }
 
-type EffectInvoice = { type: string; partyId: number | null; total: number; paid: number };
+type EffectInvoice = {
+  type: string;
+  partyId: number | null;
+  total: number;
+  paid: number;
+  id?: number;
+  number?: number;
+  userName?: string;
+};
 type EffectItem = { productId: number | null; qty: number };
 
 /** تأثير الفاتورة على المخزون وأرصدة العملاء/الموردين (sign = 1 تطبيق، -1 عكس) */
 async function applyEffects(tx: Tx, inv: EffectInvoice, items: EffectItem[], sign: 1 | -1) {
+  const invRow = inv;
   for (const it of items) {
     if (!it.productId) continue;
     const delta = round3(it.qty * (STOCK_SIGN[inv.type as InvoiceType] ?? 0) * sign);
-    await tx
+    const [updatedProduct] = await tx
       .update(products)
       .set({ stock: sql`round((${products.stock} + ${delta})::numeric, 3)::float8` })
-      .where(eq(products.id, it.productId));
+      .where(eq(products.id, it.productId))
+      .returning({ stock: products.stock, name: products.name });
+
+    // سجل حركة المخزون: كل تغيير له سبب ومصدر
+    await tx.insert(stockMovements).values({
+      productId: it.productId,
+      productName: updatedProduct?.name ?? "",
+      kind: sign === 1 ? inv.type : `${inv.type}_undo`,
+      qty: delta,
+      balanceAfter: updatedProduct?.stock ?? 0,
+      refId: invRow.id ?? null,
+      refLabel: invRow.number ? `فاتورة #${invRow.number}` : "",
+      userName: invRow.userName ?? "",
+      notes: sign === 1 ? "تطبيق الفاتورة" : "عكس الفاتورة",
+    });
   }
   const due = round2(inv.total - inv.paid);
   if (inv.partyId && due !== 0) {
@@ -254,7 +277,7 @@ export async function createInvoice(input: InvoiceInput) {
       })
       .returning();
     await tx.insert(invoiceItems).values(items.map((it) => ({ ...it, invoiceId: inv.id })));
-    await applyEffects(tx, inv, items, 1);
+    await applyEffects(tx, { ...inv, id: inv.id, number: inv.number, userName: inv.userName }, items, 1);
     await updatePurchaseCosts(tx, input.type, items);
     return inv.id;
   });
@@ -297,19 +320,50 @@ export async function updateInvoice(id: number, input: InvoiceInput) {
       .where(eq(invoices.id, id))
       .returning();
     await tx.insert(invoiceItems).values(items.map((it) => ({ ...it, invoiceId: id })));
-    await applyEffects(tx, inv, items, 1);
+    await applyEffects(tx, { ...inv, id: inv.id, number: inv.number, userName: inv.userName }, items, 1);
     await updatePurchaseCosts(tx, input.type, items);
   });
   return getInvoice(id);
 }
 
-export async function deleteInvoice(id: number) {
+/**
+ * حذف آمن للفاتورة (soft delete):
+ * - نعكس تأثيرها على المخزون والأرصدة (زي الحذف العادي).
+ * - لكن الصف يبقى في قاعدة البيانات مع تاريخ/مستخدم/سبب الحذف — سجل تدقيق كامل،
+ *   ويمكن استرجاعها لاحقاً.
+ */
+export async function deleteInvoice(id: number, deletedBy = "", reason = "") {
   await db.transaction(async (tx) => {
     const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
     if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
+    if (old.deletedAt) throw new HttpError(400, "الفاتورة محذوفة بالفعل");
     const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
-    await applyEffects(tx, old, oldItems, -1);
-    await tx.delete(invoices).where(eq(invoices.id, id));
+    await applyEffects(tx, { ...old, id: old.id, number: old.number, userName: old.userName }, oldItems, -1);
+    await tx
+      .update(invoices)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: deletedBy || old.userName || "",
+        deleteReason: reason || "حذف بدون سبب مذكور",
+        updatedAt: new Date(),
+      })
+      .where(eq(invoices.id, id));
+  });
+  return { ok: true };
+}
+
+/** استرجاع فاتورة محذوفة (يرجّع تأثيرها على المخزون والأرصدة) */
+export async function restoreInvoice(id: number) {
+  await db.transaction(async (tx) => {
+    const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
+    if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
+    if (!old.deletedAt) throw new HttpError(400, "الفاتورة غير محذوفة");
+    const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+    await applyEffects(tx, { ...old, id: old.id, number: old.number, userName: old.userName }, oldItems, 1);
+    await tx
+      .update(invoices)
+      .set({ deletedAt: null, deletedBy: "", deleteReason: "", updatedAt: new Date() })
+      .where(eq(invoices.id, id));
   });
   return { ok: true };
 }

@@ -1,9 +1,105 @@
-import { asc, desc, eq, getTableColumns, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { parties, payments, shifts } from "@/db/schema";
+import { cashMoves, expenses, invoices, payments, parties, shifts } from "@/db/schema";
 import { HttpError, handle, num, readJson, round2, str } from "@/lib/server/http";
 
 export const dynamic = "force-dynamic";
+
+const n = (expr: ReturnType<typeof sql>) => sql<number>`coalesce(${expr}, 0)`.mapWith(Number);
+
+/**
+ * ملخص نقدية الوردية:
+ * رصيد البداية + مبيعات نقدية + بيع بالتقسيط المدفوع + تحصيلات العملاء + إيداعات
+ * − مشتريات نقدية − مرتجعات مبيعات نقدية − سداد الموردين − مصروفات − سحوبات
+ */
+export async function shiftCashSummary(shift: { id: number; openedAt: Date | null; startingCash: number }) {
+  const from = shift.openedAt ?? new Date(0);
+  const untilNow = new Date();
+  const opened = gte(invoices.date, from);
+  const notDeleted = isNull(invoices.deletedAt);
+
+  const [sales] = await db
+    .select({
+      cashSales: n(sql`sum(case when ${invoices.paymentType} = 'cash' then ${invoices.total} else 0 end)`),
+      creditPaid: n(sql`sum(case when ${invoices.paymentType} = 'credit' then ${invoices.paid} else 0 end)`),
+      count: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(invoices)
+    .where(and(eq(invoices.type, "sale"), notDeleted, opened, lt(invoices.date, untilNow)));
+
+  const [purchases] = await db
+    .select({ total: n(sql`sum(${invoices.paid})`) })
+    .from(invoices)
+    .where(and(eq(invoices.type, "purchase"), notDeleted, opened, lt(invoices.date, untilNow)));
+
+  const [salesReturns] = await db
+    .select({ total: n(sql`sum(${invoices.paid})`) })
+    .from(invoices)
+    .where(and(eq(invoices.type, "sale_return"), notDeleted, opened, lt(invoices.date, untilNow)));
+
+  const [purchaseReturns] = await db
+    .select({ total: n(sql`sum(${invoices.paid})`) })
+    .from(invoices)
+    .where(and(eq(invoices.type, "purchase_return"), notDeleted, opened, lt(invoices.date, untilNow)));
+
+  // التحصيلات: من العملاء يدخل الدرج، وللموردين يخرج
+  const [collect] = await db
+    .select({
+      fromCustomers: n(sql`sum(case when ${parties.type} = 'customer' then ${payments.amount} else 0 end)`),
+      toSuppliers: n(sql`sum(case when ${parties.type} = 'supplier' then ${payments.amount} else 0 end)`),
+    })
+    .from(payments)
+    .innerJoin(parties, eq(payments.partyId, parties.id))
+    .where(and(gte(payments.date, from), lt(payments.date, untilNow)));
+
+  const [exp] = await db
+    .select({ total: n(sql`sum(${expenses.amount})`) })
+    .from(expenses)
+    .where(and(gte(expenses.date, from), lt(expenses.date, untilNow)));
+
+  const [moves] = await db
+    .select({
+      deposits: n(sql`sum(case when ${cashMoves.kind} = 'in' then ${cashMoves.amount} else 0 end)`),
+      withdrawals: n(sql`sum(case when ${cashMoves.kind} = 'out' then ${cashMoves.amount} else 0 end)`),
+    })
+    .from(cashMoves)
+    .where(and(gte(cashMoves.date, from), lt(cashMoves.date, untilNow)));
+
+  const start = round2(shift.startingCash);
+  const cashIn = round2(
+    Number(sales?.cashSales ?? 0) +
+      Number(sales?.creditPaid ?? 0) +
+      Number(collect?.fromCustomers ?? 0) +
+      Number(moves?.deposits ?? 0) +
+      Number(purchaseReturns?.total ?? 0),
+  );
+  const cashOut = round2(
+    Number(purchases?.total ?? 0) +
+      Number(salesReturns?.total ?? 0) +
+      Number(collect?.toSuppliers ?? 0) +
+      Number(exp?.total ?? 0) +
+      Number(moves?.withdrawals ?? 0),
+  );
+  const expected = round2(start + cashIn - cashOut);
+
+  return {
+    startingCash: start,
+    cashSales: round2(Number(sales?.cashSales ?? 0)),
+    creditPaid: round2(Number(sales?.creditPaid ?? 0)),
+    customerPayments: round2(Number(collect?.fromCustomers ?? 0)),
+    deposits: round2(Number(moves?.deposits ?? 0)),
+    purchaseReturns: round2(Number(purchaseReturns?.total ?? 0)),
+    purchases: round2(Number(purchases?.total ?? 0)),
+    salesReturns: round2(Number(salesReturns?.total ?? 0)),
+    supplierPayments: round2(Number(collect?.toSuppliers ?? 0)),
+    expenses: round2(Number(exp?.total ?? 0)),
+    withdrawals: round2(Number(moves?.withdrawals ?? 0)),
+    cashIn,
+    cashOut,
+    expectedCash: expected,
+    invoicesCount: Number(sales?.count ?? 0),
+  };
+}
 
 export function GET(req: Request) {
   return handle(async () => {
@@ -25,7 +121,10 @@ export function GET(req: Request) {
       .orderBy(desc(shifts.id))
       .limit(100);
 
-    return { current: current ?? null, items };
+    // ملخص حي للوردية المفتوحة قبل ما الكاشير يقفل
+    const live = current ? await shiftCashSummary(current) : null;
+
+    return { current: current ?? null, items, live };
   });
 }
 
@@ -73,9 +172,9 @@ export function POST(req: Request) {
       }
 
       const actualCash = round2(num(b.actualCash, 0));
-      // حساب النقدية المتوقعة من حركات الوردية
-      // مبيعات نقدية + إيداعات - مشتريات نقدية - مصروفات + رصيد البداية
-      const expectedCash = round2(shift.startingCash); // مبدئياً
+      // النقدية المتوقعة تُحسب من كل حركات الوردية (مبيعات، تحصيلات، مصروفات، سحب...)
+      const summary = await shiftCashSummary(shift);
+      const expectedCash = summary.expectedCash;
       const difference = round2(actualCash - expectedCash);
 
       const [updated] = await db
@@ -91,7 +190,7 @@ export function POST(req: Request) {
         .where(eq(shifts.id, shiftId))
         .returning();
 
-      return updated;
+      return { ...updated, summary };
     }
 
     throw new HttpError(400, "إجراء غير صالح");
