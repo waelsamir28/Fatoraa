@@ -14,7 +14,7 @@ const AUTO_LOCK_KEY = "fatora.lock.auto";
 
 /**
  * شاشة قفل البرنامج:
- * - تلقائي بعد 5 دقائق خمول (يمكن إيقافه من الخيار أسفل الشاشة)
+ * - تلقائي بعد 5 دقائق خمول (يمكن إيقافه من أسفل الشاشة)
  * - يدوي بـ Ctrl+L أو من زر في شريط المهام
  * - لا تُغلق الجلسة: فقط تطلب كلمة السر مرة أخرى للمتابعة
  */
@@ -27,6 +27,7 @@ export function LockScreen() {
   const [busy, setBusy] = useState(false);
   const [autoLock, setAutoLock] = useState(true);
   const [lastActivity, setLastActivity] = useState(0);
+  const [show, setShow] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // قراءة الإعداد المحفوظ + بدء عدّاد الخمول
@@ -47,13 +48,16 @@ export function LockScreen() {
     setLocked(true);
     setPassword("");
     setError("");
-    setTimeout(() => inputRef.current?.focus(), 80);
+    setTimeout(() => {
+      setShow(true);
+      inputRef.current?.focus();
+    }, 30);
   }, []);
 
   /** إلغاء القفل بعد التحقق */
   const unlock = async () => {
     if (!password) {
-      setError("أدخل كلمة المرور");
+      setError("مطلوب إدخال كلمة المرور للمتابعة");
       return;
     }
     setBusy(true);
@@ -66,9 +70,11 @@ export function LockScreen() {
       if (!r.ok) {
         setError(r.error || "كلمة المرور غير صحيحة");
         setPassword("");
+        setTimeout(() => inputRef.current?.focus(), 40);
         return;
       }
-      setLocked(false);
+      setShow(false);
+      setTimeout(() => setLocked(false), 180);
       setPassword("");
       setLastActivity(Date.now());
     } catch (e) {
@@ -92,7 +98,6 @@ export function LockScreen() {
     };
     window.addEventListener("keydown", onKey);
 
-    // حدث خارجي (من شريط المهام)
     const onLockEvent = () => lock();
     window.addEventListener("fatora:lock", onLockEvent);
 
@@ -107,7 +112,7 @@ export function LockScreen() {
   useEffect(() => {
     if (!autoLock || locked) return;
     const t = setInterval(() => {
-      if (Date.now() - lastActivity >= IDLE_MS) lock();
+      if (lastActivity && Date.now() - lastActivity >= IDLE_MS) lock();
     }, 15_000);
     return () => clearInterval(t);
   }, [autoLock, lastActivity, locked, lock]);
@@ -127,93 +132,92 @@ export function LockScreen() {
   if (!locked) return null;
 
   return (
-    <div className="lock-overlay" dir="rtl">
+    <div className={`lock-overlay ${show ? "is-in" : ""}`} dir="rtl">
+      {/* خلفية زخرفية */}
+      <span className="lock-blob lock-blob--1" />
+      <span className="lock-blob lock-blob--2" />
+      <span className="lock-blob lock-blob--3" />
+
       <div className="lock-card">
-        <div className="flex flex-col items-center gap-1">
+        {/* اللوجو */}
+        <div className="lock-logo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={DEFAULT_LOGO} alt={APP_NAME} className="h-14 w-auto object-contain" />
-          <div className="mt-1 flex items-center gap-1.5 text-[17px] font-black text-[#0f2942]">
-            <Lock className="h-5 w-5 text-[#d92d20]" />
-            الشاشة مقفولة
-          </div>
-          <div className="text-[11.5px] font-bold text-slate-500">
-            البرنامج مقفول مؤقتاً لحماية بياناتك — أدخل كلمة المرور للمتابعة
-          </div>
-          {user?.name && (
-            <div className="mt-1 flex items-center gap-1.5 rounded-full bg-[#eef4fa] px-3 py-1">
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-b from-[#ffd34d] to-[#e0a800] text-[10px] font-black text-[#3b2503]">
-                {user.name.trim().charAt(0)}
-              </span>
-              <span className="text-[12px] font-black text-[#0f2942]">{user.name}</span>
-              <span className="text-[10.5px] font-bold text-slate-500">({user.roleLabel || user.role})</span>
-            </div>
-          )}
+          <img src={DEFAULT_LOGO} alt={APP_NAME} />
         </div>
 
-        <div className="mt-3 space-y-2">
-          <div className="relative">
-            <KeyRound className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              ref={inputRef}
-              type="password"
-              autoComplete="current-password"
-              className="h-11 w-full rounded-lg border-2 border-[#c9d8ee] bg-white pe-10 ps-3 text-[15px] font-black text-[#0f2942] outline-none focus:border-[#2fb3a6] focus:ring-4 focus:ring-[#2fb3a6]/20"
-              placeholder="كلمة المرور"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError("");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void unlock();
-              }}
-            />
+        {/* أيقونة القفل */}
+        <div className="lock-badge">
+          <Lock className="h-[22px] w-[22px]" strokeWidth={2.4} />
+        </div>
+
+        <h1 className="lock-title">الشاشة مقفولة</h1>
+        <p className="lock-sub">
+          البرنامج مقفول مؤقتاً لحماية بياناتك
+          <br />
+          أدخل كلمة المرور للمتابعة
+        </p>
+
+        {/* المستخدم الحالي */}
+        {user?.name && (
+          <div className="lock-user">
+            <span className="lock-user__avatar">{user.name.trim().charAt(0)}</span>
+            <span className="lock-user__name">{user.name}</span>
+            <span className="lock-user__role">({user.roleLabel || user.role})</span>
           </div>
+        )}
 
-          {error && (
-            <div className="rounded-md bg-red-50 px-2.5 py-1.5 text-[12px] font-black text-red-700">{error}</div>
-          )}
+        {/* كلمة المرور */}
+        <div className="lock-field">
+          <KeyRound className="lock-field__ico h-[18px] w-[18px]" strokeWidth={2.2} />
+          <input
+            ref={inputRef}
+            type="password"
+            autoComplete="current-password"
+            className="lock-input"
+            placeholder="كلمة المرور"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError("");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void unlock();
+            }}
+          />
+        </div>
 
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              className="btn btn-green h-11 flex-1 text-[15px] font-black"
-              onClick={() => void unlock()}
-              disabled={busy}
-            >
-              {busy ? <ShieldCheck className="h-4 w-4 animate-pulse" /> : <Unlock className="h-4 w-4" />}
-              {busy ? "جاري التحقق..." : "فتح البرنامج"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-red h-11 px-3 text-[12.5px] font-black"
-              title="خروج من الحساب"
-              onClick={() => {
-                void logout().then(() => router.push("/"));
-              }}
-            >
-              <LogOut className="h-4 w-4" />
-              خروج
-            </button>
-          </div>
+        {error && <div className="lock-error">{error}</div>}
 
-          <label className="flex cursor-pointer items-center justify-between rounded-md bg-[#f4f8fd] px-2.5 py-1.5">
-            <span className="text-[11.5px] font-bold text-slate-600">
-              قفل تلقائي بعد 5 دقائق خمول
-            </span>
-            <span className="flex items-center gap-1.5">
-              {autoLock ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              ) : (
-                <span className="text-[10.5px] font-black text-red-600">متوقف</span>
-              )}
-              <input type="checkbox" className="h-4 w-4 accent-[#2fb3a6]" checked={autoLock} onChange={toggleAutoLock} />
-            </span>
-          </label>
+        {/* الأزرار */}
+        <div className="lock-actions">
+          <button type="button" className="lock-btn lock-btn--primary" onClick={() => void unlock()} disabled={busy}>
+            {busy ? <ShieldCheck className="h-[18px] w-[18px] animate-pulse" /> : <Unlock className="h-[18px] w-[18px]" />}
+            {busy ? "جاري التحقق…" : "فتح البرنامج"}
+          </button>
+          <button
+            type="button"
+            className="lock-btn lock-btn--danger"
+            title="الخروج من الحساب"
+            onClick={() => {
+              void logout().then(() => router.push("/"));
+            }}
+          >
+            <LogOut className="h-[18px] w-[18px]" />
+            خروج
+          </button>
+        </div>
 
-          <div className="text-center text-[10.5px] font-bold text-slate-400">
-            دعم فني: <span className="num">{SUPPORT_PHONE}</span> — اضغط Ctrl+L لقفل الشاشة في أي وقت
-          </div>
+        {/* القفل التلقائي */}
+        <button type="button" className="lock-auto" onClick={toggleAutoLock}>
+          <span className={`lock-auto__box ${autoLock ? "is-on" : ""}`}>{autoLock && <CheckCircle2 className="h-3.5 w-3.5" />}</span>
+          <span className="lock-auto__text">قفل تلقائي بعد 5 دقائق خمول</span>
+          <span className={`lock-auto__state ${autoLock ? "" : "is-off"}`}>{autoLock ? "مفعّل" : "متوقف"}</span>
+        </button>
+
+        <div className="lock-foot">
+          الدعم الفني: <b className="num">{SUPPORT_PHONE}</b>
+          <span className="lock-foot__dot">•</span>
+          اضغط <kbd>Ctrl</kbd> + <kbd>L</kbd> لقفل الشاشة في أي وقت
         </div>
       </div>
     </div>
