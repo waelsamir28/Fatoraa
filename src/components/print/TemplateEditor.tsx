@@ -6,6 +6,7 @@ import {
   AlignLeft,
   AlignRight,
   Check,
+  ImagePlus,
   Eye,
   LayoutTemplate,
   Minus,
@@ -14,6 +15,7 @@ import {
   RotateCcw,
   Save,
   Sparkles,
+  Upload,
   Type,
   X,
 } from "lucide-react";
@@ -70,6 +72,67 @@ function demoInvoice(s: Settings): Invoice {
   };
 }
 
+/** حقل نص مضغوط للوحة التحكم */
+function EditorField({
+  label,
+  hint,
+  value,
+  placeholder,
+  onChange,
+  max = 100,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  placeholder?: string;
+  onChange: (v: string) => void;
+  max?: number;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-0.5 flex items-center justify-between gap-1">
+        <span className="text-[11.5px] font-black text-[#0f2942]">{label}</span>
+        {hint && <span className="truncate text-[9.5px] font-bold text-slate-400">{hint}</span>}
+      </span>
+      <input
+        className="win-input w-full text-[12px] font-bold"
+        value={value}
+        placeholder={placeholder}
+        maxLength={max}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
+/** مفتاح تشغيل/إيقاف صغير */
+function EditorToggle({
+  label,
+  hint,
+  checked,
+  onChange,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 hover:border-[#2fb3a6]">
+      <span className="min-w-0">
+        <span className="block truncate text-[11.5px] font-black text-[#0f2942]">{label}</span>
+        {hint && <span className="block truncate text-[9.5px] font-bold text-slate-500">{hint}</span>}
+      </span>
+      <input
+        type="checkbox"
+        className="h-4 w-4 shrink-0 accent-[#2fb3a6]"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+    </label>
+  );
+}
+
 export function TemplateEditor({ onClose }: { onClose: () => void }) {
   const { toast } = useDesktop();
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -78,6 +141,7 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState(0.72);
   const previewRef = useRef<HTMLDivElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api<Settings>("/api/settings")
@@ -197,151 +261,269 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
               </section>
 
               {/* مقاس الورق وحجم العناصر */}
+              {/* ===== ٣) نصوص الترويسة — كل كلمة قابلة للتعديل ===== */}
               <section className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white">
                 <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-1.5 text-[13.5px] font-black text-white">
-                  <Type className="h-4 w-4 text-[#f5c518]" /> ٢ — مقاس الورق وحجم الخط
+                  <Type className="h-4 w-4 text-[#f5c518]" /> ٣ — كلام الترويسة (الجزء العلوي)
                 </div>
-                <div className="space-y-2 p-2">
-                  <div className="grid grid-cols-3 gap-1">
-                    {(["a5", "a4", "thermal"] as PaperSize[]).map((sz) => (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => patch({ paper: sz })}
-                        className={`rounded-lg border-2 px-1 py-1.5 text-[11.5px] font-black transition ${
-                          layout.paper === sz ? "border-[#2fb3a6] bg-[#eefaf8] text-[#0f6f66]" : "border-slate-200 text-[#0f2942] hover:border-[#8fb3e0]"
-                        }`}
-                      >
-                        {sz === "a5" ? "A5" : sz === "a4" ? "A4" : "حراري 80"}
-                      </button>
-                    ))}
+                <div className="space-y-1.5 p-2">
+                  <EditorToggle
+                    label="إظهار اسم المحل"
+                    checked={layout.showStoreName}
+                    onChange={(v) => patch({ showStoreName: v })}
+                  />
+                  {layout.showStoreName && (
+                    <EditorField
+                      label="اسم المحل كما يظهر في الفاتورة"
+                      hint="اتركه فارغاً لاستخدام اسم المحل من الإعدادات"
+                      value={layout.storeNameText}
+                      placeholder={settings?.storeName || "اسم المحل"}
+                      onChange={(v) => patch({ storeNameText: v })}
+                    />
+                  )}
+                  <EditorField
+                    label="الوصف تحت اسم المحل"
+                    value={layout.storeDescText}
+                    placeholder="مثال: تجارة الأدوات المدرسية والمكتبية"
+                    onChange={(v) => patch({ storeDescText: v })}
+                    max={90}
+                  />
+                  <EditorToggle label="إظهار سطر التليفون" checked={layout.showPhone} onChange={(v) => patch({ showPhone: v })} />
+                  {layout.showPhone && (
+                    <EditorField
+                      label="الكلمة قبل التليفون"
+                      value={layout.phoneLabel}
+                      placeholder="تليفون / موبايل / للطلب"
+                      onChange={(v) => patch({ phoneLabel: v })}
+                      max={16}
+                    />
+                  )}
+                  <EditorToggle label="إظهار العنوان" checked={layout.showAddress} onChange={(v) => patch({ showAddress: v })} />
+                  {layout.showAddress && (
+                    <EditorField
+                      label="الكلمة قبل العنوان"
+                      value={layout.addressLabel}
+                      placeholder="العنوان / الفرع"
+                      onChange={(v) => patch({ addressLabel: v })}
+                      max={16}
+                    />
+                  )}
+                  <div className="grid grid-cols-3 gap-1 pt-1">
+                    <EditorToggle label="رقم الفاتورة" checked={layout.showInvoiceNumber} onChange={(v) => patch({ showInvoiceNumber: v })} />
+                    <EditorToggle label="التاريخ" checked={layout.showInvoiceDate} onChange={(v) => patch({ showInvoiceDate: v })} />
+                    <EditorToggle label="الوقت" checked={layout.showInvoiceTime} onChange={(v) => patch({ showInvoiceTime: v })} />
                   </div>
-                  <div className="rounded-md bg-[#eef4fa] px-2 py-1 text-center text-[11px] font-bold text-slate-600">
-                    {PAPER_LABELS[layout.paper]}
-                  </div>
-
-                  <div>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-[12.5px] font-black text-[#0f2942]">حجم الخط والمسافات</span>
-                      <span className="num rounded bg-[#0f2942] px-2 py-0.5 text-[11.5px] font-black text-white">{layout.scale}%</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button type="button" className="btn h-7 w-7 shrink-0 p-0 text-[15px] font-black" onClick={() => patch({ scale: Math.max(70, layout.scale - 5) })}>
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <input
-                        type="range"
-                        min={70}
-                        max={140}
-                        step={5}
-                        value={layout.scale}
-                        onChange={(e) => patch({ scale: Number(e.target.value) })}
-                        className="h-2 flex-1 cursor-pointer"
-                        style={{ accentColor: "#2fb3a6" }}
-                      />
-                      <button type="button" className="btn h-7 w-7 shrink-0 p-0 text-[15px] font-black" onClick={() => patch({ scale: Math.min(140, layout.scale + 5) })}>
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <div className="mt-0.5 flex justify-between text-[10px] font-bold text-slate-400">
-                      <span>70% صغير</span>
-                      <span>140% كبير</span>
-                    </div>
-                  </div>
-
-                  {/* لون القالب */}
-                  <div>
-                    <div className="mb-1 text-[12.5px] font-black text-[#0f2942]">لون القالب</div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {["#0f2942", "#1e3a6a", "#2fb3a6", "#0f766e", "#b91c1c", "#a16207", "#334155", "#111827"].map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => patch({ accent: c })}
-                          className={`h-7 w-7 rounded-md border-2 transition ${layout.accent === c ? "scale-110 border-[#0f2942] ring-2 ring-[#f5c518]" : "border-white shadow"}`}
-                          style={{ background: c }}
-                          title={c}
-                        />
-                      ))}
-                      <input
-                        type="color"
-                        value={layout.accent}
-                        onChange={(e) => patch({ accent: e.target.value })}
-                        className="h-7 w-9 cursor-pointer rounded border border-slate-300 bg-white"
-                        title="لون مخصص"
-                      />
-                    </div>
-                  </div>
+                  <EditorField
+                    label="عنوان مربع الفاتورة"
+                    hint="فاضي = اسم نوع الفاتورة (فاتورة مبيعات...)"
+                    value={layout.invoiceTypeText}
+                    placeholder="فاتورة مبيعات"
+                    onChange={(v) => patch({ invoiceTypeText: v })}
+                    max={30}
+                  />
+                  <EditorField
+                    label="شريط ملوّن فوق الترويسة"
+                    value={layout.headerText}
+                    placeholder="مثال: عرض خاص — خصم 10% على المطبوعات"
+                    onChange={(v) => patch({ headerText: v })}
+                    max={80}
+                  />
                 </div>
               </section>
 
-              {/* الترويسة والتذييل */}
+              {/* ===== ٤) اللوجو ===== */}
               <section className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white">
                 <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-1.5 text-[13.5px] font-black text-white">
-                  <AlignRight className="h-4 w-4 text-[#f5c518]" /> ٣ — الترويسة والتذييل
+                  <ImagePlus className="h-4 w-4 text-[#f5c518]" /> ٤ — مكان اللوجو وحجمه
                 </div>
-                <div className="space-y-2 p-2">
+                <div className="space-y-1.5 p-2">
                   <div>
-                    <div className="mb-1 text-[12px] font-black text-[#0f2942]">موضع الترويسة</div>
-                    <div className="grid grid-cols-3 gap-1">
+                    <div className="mb-1 text-[12px] font-black text-[#0f2942]">مكان اللوجو</div>
+                    <div className="grid grid-cols-2 gap-1">
                       {([
-                        { k: "right", Icon: AlignRight, l: "يمين" },
-                        { k: "center", Icon: AlignCenter, l: "وسط" },
-                        { k: "left", Icon: AlignLeft, l: "يسار" },
-                      ] as const).map(({ k, Icon, l }) => (
+                        ["start", "بجانب الاسم (يمين)"],
+                        ["end", "بجانب الاسم (يسار)"],
+                        ["center", "في الوسط"],
+                        ["above", "فوق الاسم"],
+                        ["hidden", "بدون لوجو"],
+                      ] as const).map(([k, l]) => (
                         <button
                           key={k}
                           type="button"
-                          onClick={() => patch({ headerAlign: k })}
-                          className={`flex items-center justify-center gap-1 rounded-lg border-2 py-1.5 text-[11.5px] font-black transition ${
-                            layout.headerAlign === k ? "border-[#2fb3a6] bg-[#eefaf8] text-[#0f6f66]" : "border-slate-200 text-[#0f2942] hover:border-[#8fb3e0]"
-                          }`}
+                          onClick={() => patch({ logoPosition: k, showLogo: k !== "hidden" })}
+                          className={`rounded-lg border-2 px-2 py-1.5 text-[11.5px] font-black transition ${
+                            layout.logoPosition === k
+                              ? "border-[#2fb3a6] bg-[#eefaf8] text-[#0f6f66]"
+                              : "border-slate-200 text-[#0f2942] hover:border-[#8fb3e0]"
+                          } ${k === "hidden" ? "col-span-2" : ""}`}
                         >
-                          <Icon className="h-3.5 w-3.5" /> {l}
+                          {l}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <label className="block">
-                    <span className="mb-0.5 block text-[12px] font-black text-[#0f2942]">نص فوق الترويسة (شريط ملون)</span>
-                    <input
-                      className="win-input w-full text-[12.5px] font-bold"
-                      value={layout.headerText}
-                      onChange={(e) => patch({ headerText: e.target.value })}
-                      placeholder="مثال: عرض خاص — خصم 10% على المطبوعات"
-                      maxLength={80}
-                    />
-                  </label>
+                  {layout.logoPosition !== "hidden" && (
+                    <>
+                      <div className="rounded-lg border border-slate-200 p-2">
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-[12px] font-black text-[#0f2942]">حجم اللوجو</span>
+                          <span className="num rounded bg-[#0f2942] px-1.5 py-0.5 text-[11px] font-black text-white">{layout.logoSize} مم</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button type="button" className="btn h-7 w-7 p-0" onClick={() => patch({ logoSize: Math.max(6, layout.logoSize - 2) })}>
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                          <input
+                            type="range"
+                            min={6}
+                            max={60}
+                            step={2}
+                            value={layout.logoSize}
+                            onChange={(e) => patch({ logoSize: Number(e.target.value) })}
+                            className="h-2 flex-1 cursor-pointer"
+                            style={{ accentColor: "#2fb3a6" }}
+                          />
+                          <button type="button" className="btn h-7 w-7 p-0" onClick={() => patch({ logoSize: Math.min(60, layout.logoSize + 2) })}>
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
 
-                  <label className="block">
-                    <span className="mb-0.5 block text-[12px] font-black text-[#0f2942]">نص التذييل</span>
-                    <input
-                      className="win-input w-full text-[12.5px] font-bold"
-                      value={layout.footerText}
-                      onChange={(e) => patch({ footerText: e.target.value })}
-                      placeholder="مثال: شكراً لتعاملكم معنا — الاستبدال خلال 3 أيام"
-                      maxLength={100}
-                    />
-                  </label>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <EditorToggle label="إطار حول اللوجو" checked={layout.logoBorder} onChange={(v) => patch({ logoBorder: v })} />
+                        <label className="block rounded-lg border border-slate-200 px-2 py-1">
+                          <span className="mb-0.5 block text-[11px] font-black text-[#0f2942]">خلفية اللوجو</span>
+                          <input
+                            type="color"
+                            value={layout.logoBg || "#ffffff"}
+                            onChange={(e) => patch({ logoBg: e.target.value })}
+                            className="h-6 w-full cursor-pointer rounded border border-slate-300"
+                          />
+                        </label>
+                      </div>
 
-                  <label className="block">
-                    <span className="mb-0.5 block text-[12px] font-black text-[#0f2942]">علامة مائية (اسم خفيف في الخلف)</span>
-                    <input
-                      className="win-input w-full text-[12.5px] font-bold"
-                      value={layout.watermark}
-                      onChange={(e) => patch({ watermark: e.target.value })}
-                      placeholder="مثال: FATORA"
-                      maxLength={20}
-                    />
-                  </label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/png,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            if (f.size > 900_000) {
+                              toast("الصورة كبيرة — اختر صورة أقل من 900 كيلوبايت", "error");
+                              return;
+                            }
+                            const r = new FileReader();
+                            r.onload = () => patch({ logoUrl: r.result as string });
+                            r.readAsDataURL(f);
+                          }}
+                        />
+                        <button type="button" className="btn btn-blue h-8 flex-1 px-2 text-[11.5px] font-black" onClick={() => logoInputRef.current?.click()}>
+                          <Upload className="h-3.5 w-3.5" /> لوجو خاص بالفاتورة
+                        </button>
+                        {layout.logoUrl && (
+                          <button type="button" className="btn btn-red h-8 px-2 text-[11.5px] font-black" onClick={() => patch({ logoUrl: "" })}>
+                            حذف
+                          </button>
+                        )}
+                      </div>
+                      <div className="rounded bg-[#eef4fa] px-2 py-1 text-center text-[10.5px] font-bold text-slate-600">
+                        {layout.logoUrl ? "✓ يستخدم لوجو مخصص للفاتورة" : "يستخدم شعار البرنامج من الإعدادات"}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </section>
+
+              {/* ===== ٥) التذييل ===== */}
+              <section className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white">
+                <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-1.5 text-[13.5px] font-black text-white">
+                  <AlignCenter className="h-4 w-4 text-[#f5c518]" /> ٥ — كلام الفوتر (الجزء السفلي)
+                </div>
+                <div className="space-y-1.5 p-2">
+                  <EditorToggle label="إظهار التذييل" checked={layout.showFooter} onChange={(v) => patch({ showFooter: v })} />
+                  {layout.showFooter && (
+                    <>
+                      <EditorToggle label="سطر «شكراً لتعاملكم»" checked={layout.showThanksLine} onChange={(v) => patch({ showThanksLine: v })} />
+                      {layout.showThanksLine && (
+                        <EditorField
+                          label="نص الشكر"
+                          value={layout.thanksText}
+                          placeholder="شكراً لتعاملكم معنا"
+                          onChange={(v) => patch({ thanksText: v })}
+                          max={60}
+                        />
+                      )}
+                      <EditorField
+                        label="السطر الأول في الفوتر"
+                        hint="فاضي = نص تذييل الفاتورة من الإعدادات"
+                        value={layout.footerLine1}
+                        placeholder={settings?.invoiceFooter || "الاستبدال خلال 3 أيام"}
+                        onChange={(v) => patch({ footerLine1: v })}
+                        max={100}
+                      />
+                      <EditorField
+                        label="السطر الثاني في الفوتر"
+                        value={layout.footerLine2}
+                        placeholder="مثال: فاتورة إلكترونية — لا تحتاج ختم"
+                        onChange={(v) => patch({ footerLine2: v })}
+                        max={100}
+                      />
+                      <EditorToggle
+                        label="سطر البرنامج والدعم"
+                        hint="نظام نقاط البيع — FATORA — 01222355769"
+                        checked={layout.showSupportLine}
+                        onChange={(v) => patch({ showSupportLine: v })}
+                      />
+                      <div>
+                        <div className="mb-1 text-[12px] font-black text-[#0f2942]">محاذاة الفوتر</div>
+                        <div className="grid grid-cols-3 gap-1">
+                          {([
+                            { k: "right", Icon: AlignRight, l: "يمين" },
+                            { k: "center", Icon: AlignCenter, l: "وسط" },
+                            { k: "left", Icon: AlignLeft, l: "يسار" },
+                          ] as const).map(({ k, Icon, l }) => (
+                            <button
+                              key={k}
+                              type="button"
+                              onClick={() => patch({ footerAlign: k })}
+                              className={`flex items-center justify-center gap-1 rounded-lg border-2 py-1.5 text-[11.5px] font-black transition ${
+                                layout.footerAlign === k
+                                  ? "border-[#2fb3a6] bg-[#eefaf8] text-[#0f6f66]"
+                                  : "border-slate-200 text-[#0f2942] hover:border-[#8fb3e0]"
+                              }`}
+                            >
+                              <Icon className="h-3.5 w-3.5" /> {l}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <EditorField
+                        label="ملاحظة ثابتة تحت جدول الإجماليات"
+                        value={layout.totalsNoteText}
+                        placeholder="مثال: البضاعة المباعة لا تُرد بعد 3 أيام"
+                        onChange={(v) => patch({ totalsNoteText: v })}
+                        max={90}
+                      />
+                    </>
+                  )}
+                  <EditorField
+                    label="علامة مائية في الخلف"
+                    value={layout.watermark}
+                    placeholder="مثال: FATORA"
+                    onChange={(v) => patch({ watermark: v })}
+                    max={20}
+                  />
                 </div>
               </section>
 
               {/* العناصر الظاهرة */}
               <section className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white">
                 <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-1.5 text-[13.5px] font-black text-white">
-                  <Eye className="h-4 w-4 text-[#f5c518]" /> ٤ — أجزاء الفاتورة الظاهرة
+                  <Eye className="h-4 w-4 text-[#f5c518]" /> ٦ — أجزاء الفاتورة الظاهرة
                 </div>
                 <div className="grid grid-cols-1 gap-1.5 p-2">
                   {tRow("إظهار الشعار", "showLogo")}

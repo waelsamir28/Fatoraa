@@ -24,13 +24,101 @@ export function InvoiceSheet({
   const itemsDiscount = inv.items.reduce((a, b) => a + b.discount, 0);
   const thermal = layout.paper === "thermal";
   const accent = layout.accent || "#1e3a6a";
+
+  // ===== النصوص القابلة للتعديل =====
+  const storeName = layout.storeNameText.trim() || s.storeName;
+  const storeDesc = layout.storeDescText.trim();
+  const phoneText = [s.phone, s.phone2].filter(Boolean).join(" — ");
+  const invoiceTypeText = layout.invoiceTypeText.trim() || INVOICE_LABELS[inv.type];
+  const logo = resolveLogo(layout.logoUrl || s.customLogoUrl);
+  const logoMm = thermal ? Math.min(layout.logoSize, 22) : layout.logoSize;
+
   const aligned =
-    layout.headerAlign === "center" ? "text-center items-center" : layout.headerAlign === "left" ? "text-left items-start" : "text-right items-start";
+    layout.headerAlign === "center"
+      ? "text-center items-center"
+      : layout.headerAlign === "left"
+        ? "text-left items-start"
+        : "text-right items-start";
   const cell = thermal
     ? "py-0.5"
     : layout.templateKey === "template-lines-a5"
       ? "border border-slate-400 px-1.5 py-1"
       : "border-b border-slate-200 px-1.5 py-1";
+
+  /** كتلة الشعار */
+  const logoBlock = layout.showLogo && layout.logoPosition !== "hidden" && (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={logo}
+      alt={APP_NAME}
+      className="w-auto shrink-0 object-contain"
+      style={{
+        height: `${logoMm}mm`,
+        padding: `${layout.logoPadding}mm`,
+        border: layout.logoBorder ? `1px solid ${accent}` : undefined,
+        borderRadius: layout.logoBorder ? 6 : undefined,
+        background: layout.logoBg || undefined,
+      }}
+    />
+  );
+
+  /** كتلة بيانات المحل */
+  const infoBlock = (
+    <div className={layout.headerAlign === "center" ? "text-center" : ""}>
+      {layout.showStoreName && (
+        <h1 className="font-black leading-tight" style={{ fontSize: thermal ? "13px" : "19px", color: accent }}>
+          {storeName}
+        </h1>
+      )}
+      {!thermal && storeDesc && (
+        <div className="mt-0.5 text-[11px] font-bold text-slate-600">{storeDesc}</div>
+      )}
+      {layout.showPhone && phoneText && (
+        <div className="num text-[11px] font-bold text-slate-700">
+          {layout.phoneLabel ? `${layout.phoneLabel}: ` : ""}
+          {phoneText}
+        </div>
+      )}
+      {layout.showAddress && s.address && !thermal && (
+        <div className="text-[10.5px] text-slate-500">
+          {layout.addressLabel ? `${layout.addressLabel}: ` : ""}
+          {s.address}
+        </div>
+      )}
+    </div>
+  );
+
+  /** مربع رقم الفاتورة */
+  const numberBox = (layout.showInvoiceNumber || layout.showInvoiceDate || layout.showInvoiceTime) && (
+    <div
+      className={`min-w-[140px] overflow-hidden rounded-lg border text-center ${thermal ? "" : "shadow-sm"}`}
+      style={{ borderColor: accent }}
+    >
+      <div className="py-1 font-black text-white" style={{ background: accent, fontSize: thermal ? "12px" : "13px" }}>
+        {invoiceTypeText}
+      </div>
+      <div className="grid grid-cols-2 gap-y-0.5 bg-slate-50 p-1.5 text-[11px] font-bold">
+        {layout.showInvoiceNumber && (
+          <>
+            <span className="text-slate-500">رقم:</span>
+            <span className="num font-black text-red-600">#{inv.number}</span>
+          </>
+        )}
+        {layout.showInvoiceDate && (
+          <>
+            <span className="text-slate-500">التاريخ:</span>
+            <span className="num">{fmtDate(inv.date)}</span>
+          </>
+        )}
+        {layout.showInvoiceTime && !thermal && (
+          <>
+            <span className="text-slate-500">الوقت:</span>
+            <span className="num">{fmtTime(inv.date)}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -51,75 +139,42 @@ export function InvoiceSheet({
     >
       {/* علامة مائية */}
       {layout.watermark && (
-        <div
-          className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden select-none"
-          aria-hidden
-        >
+        <div className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden select-none" aria-hidden>
           <span className="rotate-[-24deg] whitespace-nowrap font-black text-black/[0.05]" style={{ fontSize: "42px" }}>
             {layout.watermark}
           </span>
         </div>
       )}
 
-      {/* نص ترويسة إضافي */}
+      {/* شريط الترويسة العلوي */}
       {layout.headerText && (
         <div className="mb-1.5 rounded px-2 py-1 text-center font-black text-white" style={{ background: accent }}>
           {layout.headerText}
         </div>
       )}
 
-      {/* الترويسة */}
-      <div
-        className={`flex gap-3 border-b-2 pb-2 ${aligned} ${layout.headerAlign === "center" ? "flex-col" : "flex-row justify-between"}`}
-        style={{ borderColor: accent }}
-      >
-        <div className={`flex gap-2 ${layout.headerAlign === "center" ? "flex-col items-center" : "items-start"}`}>
-          {layout.showLogo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={resolveLogo(s.customLogoUrl)}
-              alt={APP_NAME}
-              className="w-auto shrink-0 object-contain"
-              style={{ height: thermal ? 40 : 56 }}
-            />
-          )}
-          <div>
-            <h1 className="font-black leading-tight" style={{ fontSize: thermal ? "13px" : "19px", color: accent }}>
-              {s.storeName}
-            </h1>
-            {!thermal && (
-              <div className="mt-0.5 text-[11px] font-bold text-slate-600">
-                تجارة الأدوات المدرسية والمكتبية والخردوات وخدمات الطباعة والتصميم
-              </div>
-            )}
-            {s.phone && (
-              <div className="num text-[11px] font-bold text-slate-700">
-                تليفون: {s.phone}
-                {s.phone2 ? ` — ${s.phone2}` : ""}
-              </div>
-            )}
-            {s.address && !thermal && <div className="text-[10.5px] text-slate-500">{s.address}</div>}
-          </div>
+      {/* ===== الترويسة ===== */}
+      {layout.logoPosition === "above" ? (
+        <div className={`flex flex-col border-b-2 pb-2 ${aligned}`} style={{ borderColor: accent }}>
+          {logoBlock}
+          <div className="mt-1">{infoBlock}</div>
+          <div className="mt-1.5">{numberBox}</div>
         </div>
-
-        <div className={`min-w-[150px] overflow-hidden rounded-lg border text-center ${thermal ? "" : "shadow-sm"}`} style={{ borderColor: accent }}>
-          <div className="py-1 font-black text-white" style={{ background: accent, fontSize: thermal ? "12px" : "13px" }}>
-            {INVOICE_LABELS[inv.type]}
+      ) : (
+        <div
+          className={`flex gap-3 border-b-2 pb-2 ${aligned} ${
+            layout.headerAlign === "center" ? "flex-col" : "flex-row justify-between"
+          }`}
+          style={{ borderColor: accent }}
+        >
+          <div className={`flex gap-2 ${layout.headerAlign === "center" ? "flex-col items-center" : "items-start"} ${layout.logoPosition === "end" ? "flex-row-reverse" : ""}`}>
+            {layout.logoPosition !== "center" && layout.logoPosition !== "end" && logoBlock}
+            {infoBlock}
+            {layout.logoPosition === "end" && logoBlock}
           </div>
-          <div className="grid grid-cols-2 gap-y-0.5 bg-slate-50 p-1.5 text-[11px] font-bold">
-            <span className="text-slate-500">رقم:</span>
-            <span className="num font-black text-red-600">#{inv.number}</span>
-            <span className="text-slate-500">التاريخ:</span>
-            <span className="num">{fmtDate(inv.date)}</span>
-            {!thermal && (
-              <>
-                <span className="text-slate-500">الوقت:</span>
-                <span className="num">{fmtTime(inv.date)}</span>
-              </>
-            )}
-          </div>
+          {numberBox}
         </div>
-      </div>
+      )}
 
       {/* بيانات العميل */}
       {layout.showCustomer && (
@@ -183,6 +238,9 @@ export function InvoiceSheet({
               <b>ملاحظات:</b> {inv.notes}
             </div>
           )}
+          {layout.totalsNoteText && (
+            <div className="rounded border border-dashed border-slate-300 p-1.5 text-slate-700">{layout.totalsNoteText}</div>
+          )}
           {!thermal && (
             <div>
               عدد البنود: <b>{inv.items.length}</b> أصناف
@@ -242,27 +300,35 @@ export function InvoiceSheet({
         )}
       </div>
 
-      {/* التذييل و QR */}
-      <div className="mt-3 flex items-start justify-between gap-3 border-t border-slate-300 pt-1.5">
-        <div className="flex-1 text-center text-[10px] font-bold text-slate-500">
-          {layout.footerText && <div className="font-black text-slate-700">{layout.footerText}</div>}
-          {s.invoiceFooter && layout.footerText !== s.invoiceFooter && (
-            <div className="font-black text-slate-700">{s.invoiceFooter}</div>
-          )}
-          <div>
-            نظام نقاط البيع وإدارة المحلات — {APP_NAME} — {SUPPORT_PHONE}
+      {/* ===== التذييل ===== */}
+      {layout.showFooter && (
+        <div className={`mt-3 flex items-start justify-between gap-3 border-t border-slate-300 pt-1.5 ${qr && layout.showQr ? "" : "block"}`}>
+          <div
+            className={`flex-1 text-[10px] font-bold text-slate-500 ${
+              layout.footerAlign === "right" ? "text-right" : layout.footerAlign === "left" ? "text-left" : "text-center"
+            }`}
+          >
+            {layout.showThanksLine && layout.thanksText && (
+              <div className="text-[11px] font-black text-slate-700">{layout.thanksText}</div>
+            )}
+            {(layout.footerLine1 || s.invoiceFooter) && (
+              <div className="font-black text-slate-700">{layout.footerLine1 || s.invoiceFooter}</div>
+            )}
+            {layout.footerLine2 ? (
+              <div>{layout.footerLine2}</div>
+            ) : (
+              layout.showSupportLine && (
+                <div>
+                  نظام نقاط البيع وإدارة المحلات — {APP_NAME} — {SUPPORT_PHONE}
+                </div>
+              )
+            )}
           </div>
+          {qr && layout.showQr && (
+            <InvoiceQr invoiceId={inv.id} number={inv.number} size={thermal ? 60 : 80} thermal={thermal} label="امسح لعرض الفاتورة" />
+          )}
         </div>
-        {qr && layout.showQr && (
-          <InvoiceQr
-            invoiceId={inv.id}
-            number={inv.number}
-            size={thermal ? 60 : 80}
-            thermal={thermal}
-            label="امسح لعرض الفاتورة"
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 }

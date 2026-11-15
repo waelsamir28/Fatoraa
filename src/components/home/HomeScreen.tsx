@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { HomeSidebar } from "./HomeSidebar";
+import { QuickSaleBar } from "@/components/invoice/QuickSaleBar";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import {
   IconBackup,
@@ -180,6 +181,9 @@ export function HomeScreen() {
           </div>
 
           {/* ===== Body: Sidebar + Tiles ===== */}
+          {/* زر الفاتورة السريعة بضغطة واحدة */}
+          <QuickSaleBar />
+
           <div className="relative flex min-h-0 flex-1 gap-3 px-3 pb-1.5 pt-2">
             <HomeSidebar
               activeUser={activeUser || settings?.userName || "FATORA"}

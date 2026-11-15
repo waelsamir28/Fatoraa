@@ -8,9 +8,15 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "برنامج FATORA",
     description: "برنامج مبيعات ومشتريات ومخازن وحسابات للمحلات التجارية - الدعم الفني 01222355769",
     start_url: "/",
+    // شاشات الكاشير والموبايل
+    shortcuts: [
+      { name: "بيع سريع", short_name: "بيع", url: "/", description: "فاتورة نقدية بضغطة واحدة" },
+      { name: "فاتورة مبيعات", short_name: "فاتورة", url: "/sales" },
+      { name: "سجل الفواتير", short_name: "السجل", url: "/sales/list" },
+    ],
     scope: "/",
     display: "standalone",
-    orientation: "landscape",
+    orientation: "any",
     background_color: "#0b3a8c",
     theme_color: "#0b4cc2",
     lang: "ar",

@@ -171,8 +171,10 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    if ("serviceWorker" in navigator && window.location.protocol === "https:") {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    // تسجيل الـ service worker (يعمل أيضاً على localhost و روابط المشاركة https)
+    if ("serviceWorker" in navigator) {
+      const secure = window.location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      if (secure) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
     return undefined;
   }, []);
