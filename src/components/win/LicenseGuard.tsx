@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check } from "lucide-react";
+import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check, Layers, Tag } from "lucide-react";
+import { ActivationPlans } from "@/components/win/ActivationPlans";
 import { SUPPORT_PHONE } from "@/lib/constants";
 import { resolveLogo } from "@/lib/logo";
 
@@ -11,6 +12,10 @@ interface LicenseInfo {
   isClockTampered: boolean;
   daysLeft: number;
   machineId: string;
+  plan?: string | null;
+  planLabel?: string;
+  expiresAt?: string | null;
+  planDaysLeft?: number | null;
   limits: { maxProducts: number; maxInvoices: number };
 }
 
@@ -22,6 +27,8 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  // صفحة أنظمة التفعيل (الأسعار) — تُعرض قبل إدخال الكود
+  const [showPlans, setShowPlans] = useState(false);
 
   const fetchLicense = async () => {
     try {
@@ -137,10 +144,33 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
           <span>نسخة تجريبية (متبقي {info.daysLeft} يوم)</span>
           <button
             type="button"
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setShowPlans(false);
+              setModalOpen(true);
+            }}
             className="rounded bg-blue-700 px-2 py-0.5 text-[11px] font-black text-white hover:bg-blue-800"
           >
             تفعيل الآن
+          </button>
+        </div>
+      )}
+
+      {/* شريط حالة الاشتراك (سنة / سنتين) للنسخة المفعّلة */}
+      {info?.isActivated && info.plan && info.plan !== "lifetime" && info.planDaysLeft !== null && (
+        <div className="fixed bottom-8 left-3 z-40 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50/95 px-3 py-1.5 text-[12px] font-bold text-emerald-900 shadow-lg">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          <span>
+            {info.planLabel} — متبقي {info.planDaysLeft} يوم
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setShowPlans(true);
+              setModalOpen(true);
+            }}
+            className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-black text-white hover:bg-emerald-800"
+          >
+            تجديد
           </button>
         </div>
       )}
@@ -161,11 +191,34 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
                 </span>
               </div>
               <p className="mt-1 text-xs font-semibold text-blue-100">
-                للحصول على كود التفعيل الدائم وفتح جميع الأصناف والفواتير بلا حدود، تواصل مع الدعم الفني.
+                اختر نظام التفعيل المناسب (سنة / سنتين / مدى الحياة) وأرسل كود جهازك للدعم لاستلام كود التفعيل.
               </p>
             </div>
 
             <div className="space-y-4 p-5 text-right">
+              {/* الخطة الحالية (لو فيه اشتراك منتهي) */}
+              {info.plan && info.planLabel && (
+                <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <div className="flex items-center gap-2 text-amber-900">
+                    <Tag className="h-5 w-5 text-amber-600" />
+                    <span className="text-sm font-bold">الاشتراك الحالي: {info.planLabel}</span>
+                  </div>
+                  <b className="text-sm font-black text-amber-700">
+                    {info.expiresAt ? `انتهى في ${new Date(info.expiresAt).toLocaleDateString("ar-EG")}` : "—"}
+                  </b>
+                </div>
+              )}
+
+              {/* زر أنظمة التفعيل والأسعار */}
+              <button
+                type="button"
+                onClick={() => setShowPlans(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#1a6fd0] bg-[#f2f8ff] py-2.5 text-[13.5px] font-black text-[#0f2942] hover:bg-[#e4f1ff]"
+              >
+                <Layers className="h-4.5 w-4.5 text-[#1a6fd0]" />
+                عرض أنظمة التفعيل والأسعار (سنة / سنتين / مدى الحياة)
+              </button>
+
               {/* رقم الدعم الفني */}
               <div className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50 p-3">
                 <div className="flex items-center gap-2 text-green-900">
@@ -247,6 +300,11 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ===== صفحة أنظمة التفعيل (الأسعار والمدد) ===== */}
+      {info && modalOpen && showPlans && (
+        <ActivationPlans machineId={info.machineId} onClose={() => setShowPlans(false)} />
       )}
     </>
   );

@@ -22,6 +22,8 @@ export interface LicenseData {
   firstRunAt?: string | null;
   lastRunAt?: string | null;
   activationKey?: string | null;
+  /** تاريخ بدء الاشتراك (يُحسب منه انتهاء السنة/السنتين) */
+  activatedAt?: string | null;
 }
 
 const CFG_DEVICE = "license.device_id";

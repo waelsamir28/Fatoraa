@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import os from "os";
+import { PLAN_DEFS, buildPlanCode, planStatusOf, type PlanKey, type PlanStatus } from "./license-plans";
 
 // الكلمة السرية الخاصة بك وحدك (لا تشاركها مع أحد)
 const SECRET_SALT = "WAEL_ALGAMMAL_FATORA_2026_PRO";
@@ -37,22 +38,53 @@ export function normalizeDeviceId(id: string): string {
 }
 
 /** حساب كود التفعيل الصحيح بناءً على كود الجهاز */
-export function generateActivationCode(deviceId: string): string {
-  const cleanId = normalizeDeviceId(deviceId);
-  const hash = crypto
-    .createHmac("sha256", SECRET_SALT)
-    .update(cleanId)
-    .digest("hex")
-    .toUpperCase();
-
-  return `${hash.slice(0, 4)}-${hash.slice(4, 8)}-${hash.slice(8, 12)}`;
+export function generateActivationCode(deviceId: string, plan: PlanKey = "lifetime"): string {
+  return buildPlanCode(normalizeDeviceId(deviceId), plan, SECRET_SALT);
 }
 
 /** التحقق من صحة كود التفعيل الذي أدخله العميل */
 export function verifyActivationCode(deviceId: string, inputCode: string): boolean {
   if (!inputCode) return false;
-  const expected = generateActivationCode(deviceId);
-  return expected === String(inputCode).trim().toUpperCase();
+  const cleanId = normalizeDeviceId(deviceId);
+  const input = String(inputCode).trim().toUpperCase();
+
+  // الكود القديم (بدون خطة) — تفعيل دائم، يبقى مدعوماً
+  if (expectedLegacy(cleanId) === input) return true;
+
+  // أكواد الخطط: XXXX-XXXX-XXXX-XXXL|T|Y
+  for (const def of PLAN_DEFS) {
+    const expected = buildPlanCode(cleanId, def.key, SECRET_SALT);
+    if (expected === input) return true;
+  }
+  return false;
+}
+
+/** الكود القديم (12 حرفاً) — يُعتبر تفعيلاً مدى الحياة */
+export function expectedLegacy(deviceId: string): string {
+  const hash = crypto
+    .createHmac("sha256", SECRET_SALT)
+    .update(normalizeDeviceId(deviceId))
+    .digest("hex")
+    .toUpperCase();
+  return `${hash.slice(0, 4)}-${hash.slice(4, 8)}-${hash.slice(8, 12)}`;
+}
+
+/**
+ * استنتاج الخطة من كود التفعيل — **بعد التحقق** من أن الكود صحيح لهذا الجهاز.
+ * أي كود غير صحيح يرجّع null (لا يُعتبر تفعيلاً بأي خطة).
+ */
+export function planOfCode(deviceId: string, code: string): PlanKey | null {
+  const cleanId = normalizeDeviceId(deviceId);
+  const input = String(code || "").trim().toUpperCase();
+  if (!input) return null;
+
+  // الكود القديم (بدون خطة) = تفعيل مدى الحياة
+  if (expectedLegacy(cleanId) === input) return "lifetime";
+
+  for (const def of PLAN_DEFS) {
+    if (buildPlanCode(cleanId, def.key, SECRET_SALT) === input) return def.key;
+  }
+  return null;
 }
 
 export interface LicenseStatus {
@@ -62,6 +94,13 @@ export interface LicenseStatus {
   daysLeft: number;
   /** كود الجهاز الثابت المستخدم في التفعيل */
   machineId: string;
+  /** نوع الاشتراك المفعل (سنة / سنتين / مدى الحياة) */
+  plan: PlanKey | null;
+  planLabel: string;
+  /** تاريخ انتهاء الاشتراك (null = مدى الحياة أو غير مفعل) */
+  expiresAt: string | null;
+  /** أيام متبقية في الاشتراك (null = مدى الحياة أو غير مفعل) */
+  planDaysLeft: number | null;
   limits: {
     maxProducts: number;
     maxInvoices: number;
@@ -74,20 +113,46 @@ export function checkLicense(
     firstRunAt?: string | null;
     lastRunAt?: string | null;
     activationKey?: string | null;
+    activatedAt?: string | null;
   },
   deviceId: string
 ): LicenseStatus {
   const machineId = normalizeDeviceId(deviceId);
-  const isActivated = verifyActivationCode(machineId, data.activationKey || "");
+  const key = data.activationKey || "";
+  const plan = key ? planOfCode(machineId, key) : null;
+  const keyValid = Boolean(plan);
+  const activatedAt = data.activatedAt || data.firstRunAt || new Date().toISOString();
 
-  if (isActivated) {
+  // اشتراك ساري (سنة / سنتين / مدى الحياة)
+  if (keyValid && plan) {
+    const ps: PlanStatus = planStatusOf(plan, activatedAt);
+    const planExpired = ps.daysLeft !== null && ps.daysLeft <= 0;
+    if (!planExpired) {
+      return {
+        isActivated: true,
+        isExpired: false,
+        isClockTampered: false,
+        daysLeft: ps.daysLeft === null ? 9999 : ps.daysLeft,
+        machineId,
+        plan,
+        planLabel: ps.planLabel,
+        expiresAt: ps.expiresAt,
+        planDaysLeft: ps.daysLeft,
+        limits: { maxProducts: Infinity, maxInvoices: Infinity },
+      };
+    }
+    // الاشتراك انتهى → يرجع لوضع التجربة (غير مفعّل) مع بيانات الخطة للعرض
     return {
-      isActivated: true,
-      isExpired: false,
+      isActivated: false,
+      isExpired: true,
       isClockTampered: false,
-      daysLeft: 9999,
+      daysLeft: 0,
       machineId,
-      limits: { maxProducts: Infinity, maxInvoices: Infinity },
+      plan,
+      planLabel: ps.planLabel,
+      expiresAt: ps.expiresAt,
+      planDaysLeft: 0,
+      limits: { maxProducts: MAX_TRIAL_PRODUCTS, maxInvoices: MAX_TRIAL_INVOICES },
     };
   }
 
@@ -109,6 +174,10 @@ export function checkLicense(
     isClockTampered,
     daysLeft,
     machineId,
+    plan: null,
+    planLabel: "",
+    expiresAt: null,
+    planDaysLeft: null,
     limits: {
       maxProducts: MAX_TRIAL_PRODUCTS,
       maxInvoices: MAX_TRIAL_INVOICES,
