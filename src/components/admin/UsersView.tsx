@@ -16,6 +16,7 @@ import { IconCustomers } from "@/components/icons/AppIcons";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { api, errMsg } from "@/lib/client";
+import { Camera, ImageUp, Trash } from "lucide-react";
 
 interface UserRow {
   id: number;
@@ -50,6 +51,9 @@ export function UsersView() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<typeof emptyForm | null>(null);
+  /** صورة المستخدم الظاهرة في الشاشة الرئيسية */
+  const [avatar, setAvatar] = useState("");
+  const [avatarBusy, setAvatarBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,6 +64,8 @@ export function UsersView() {
       ]);
       setItems(u.items);
       setBranches(b.items);
+      const av = await api<{ avatar: string }>("/api/users/avatar").catch(() => ({ avatar: "" }));
+      setAvatar(av.avatar);
     } catch (e) {
       toast(errMsg(e), "error");
     } finally {
@@ -100,6 +106,41 @@ export function UsersView() {
       toast(errMsg(e), "error");
     } finally {
       setBusy(false);
+    }
+  };
+
+  /** رفع صورة المستخدم للعرض في الشاشة الرئيسية */
+  const uploadAvatar = (file: File) => {
+    if (file.size > 700 * 1024) return toast("الصورة كبيرة — اختار صورة أصغر من 700 كيلوبايت", "error");
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setAvatarBusy(true);
+      try {
+        const r = await api<{ avatar: string }>("/api/users/avatar", {
+          method: "PUT",
+          json: { avatar: reader.result as string },
+        });
+        setAvatar(r.avatar);
+        toast("تم تحديث صورة المستخدم ✓ — ستظهر في أعلى الشاشة الرئيسية");
+      } catch (e) {
+        toast(errMsg(e), "error");
+      } finally {
+        setAvatarBusy(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearAvatar = async () => {
+    setAvatarBusy(true);
+    try {
+      await api("/api/users/avatar", { method: "PUT", json: { avatar: "" } });
+      setAvatar("");
+      toast("تمت استعادة الصورة الافتراضية");
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setAvatarBusy(false);
     }
   };
 
@@ -156,6 +197,41 @@ export function UsersView() {
           >
             <UserPlus className="h-4 w-4" /> مستخدم جديد
           </button>
+        </div>
+
+        {/* صورة المستخدم في الشاشة الرئيسية */}
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border-2 border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+          <div className="grid h-[76px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white bg-white shadow">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={avatar || "/images/avatar-user.png"} alt="صورة المستخدم" className="h-full w-full object-cover object-[center_18%]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-black text-[#0b2350]">صورة المستخدم في الشاشة الرئيسية</div>
+            <div className="text-[11.5px] font-bold text-slate-600">
+              ارفع صورة شخصية (JPG/PNG حتى 700 كيلوبايت) — تظهر داخل الدائرة أعلى الشاشة الرئيسية.
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className={`btn btn-blue flex h-9 cursor-pointer items-center gap-1.5 px-3 text-[13px] font-black ${avatarBusy ? "opacity-60" : ""}`}>
+              {avatarBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
+              اختيار صورة
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) uploadAvatar(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {avatar && (
+              <button type="button" className="btn h-9 px-2.5 text-[13px] font-black" onClick={() => void clearAvatar()} title="استعادة الافتراضية">
+                <Trash className="h-4 w-4 text-red-600" />
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (

@@ -465,3 +465,24 @@ export function RailBackup({ className }: P) {
     </svg>
   );
 }
+
+export function RailSupport({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <path d="M9 28v-4a15 15 0 0 1 30 0v4" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" fill="none" />
+      <rect x="5" y="26" width="8" height="12" rx="3.5" stroke="currentColor" strokeWidth="3.2" fill="none" />
+      <rect x="35" y="26" width="8" height="12" rx="3.5" stroke="currentColor" strokeWidth="3.2" fill="none" />
+      <path d="M39 38c0 3-3 5-8 5" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+export function RailInfo({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <circle cx="24" cy="24" r="17" stroke="currentColor" strokeWidth="3.4" fill="none" />
+      <circle cx="24" cy="15.5" r="2.4" fill="currentColor" />
+      <path d="M24 21v13" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" />
+    </svg>
+  );
+}
