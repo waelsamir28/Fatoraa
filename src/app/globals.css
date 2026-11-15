@@ -1391,11 +1391,11 @@ html[data-font="cairo-play"] body {
   padding-bottom: 6px;
 }
 .hs-top__logo {
-  height: 132px;
+  height: 168px;
   width: auto;
-  max-width: 62%;
+  max-width: 74%;
   object-fit: contain;
-  filter: drop-shadow(0 10px 16px rgba(2, 16, 45, 0.55));
+  filter: drop-shadow(0 12px 20px rgba(2, 16, 45, 0.6));
 }
 
 /* صورة المستخدم — فوق الخلفية على اليمين بدون فاصل */
@@ -1774,16 +1774,16 @@ html[data-font="cairo-play"] body {
 @media (max-width: 1240px) {
   .hs-rail { width: 184px; }
   .hs-rail__btn { font-size: 11.5px; min-height: 38px; }
-  .hs-top { height: 164px; }
-  .hs-top__logo { height: 110px; }
+  .hs-top { height: 150px; }
+  .hs-top__logo { height: 124px; }
   .hs-user { width: 136px; }
   .hs-user__ring { width: 78px; height: 78px; }
   .hs-sec__head { width: 214px; }
   .hs-card__label { font-size: 10.2px; }
 }
 @media (max-height: 760px) {
-  .hs-top { height: 146px; }
-  .hs-top__logo { height: 96px; }
+  .hs-top { height: 138px; }
+  .hs-top__logo { height: 112px; }
   .hs-user__ring { width: 68px; height: 68px; }
   .hs-user__name { font-size: 12.5px; margin-top: 4px; }
   .hs-user__sub { font-size: 12px; }
