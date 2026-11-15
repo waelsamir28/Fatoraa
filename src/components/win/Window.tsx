@@ -147,10 +147,17 @@ export function Window({
           </span>
         </div>
 
-        {/* اسم المستخدم في الهيدر فوق المطابق للصورة تماماً */}
-        <div className="app-no-drag mx-auto hidden md:flex items-center gap-2 rounded-full bg-[#051a3a]/85 border border-[#fbbf24]/60 px-4 py-0.5 text-white shadow-inner">
-          <span className="text-[12px] text-blue-100 font-bold" dir="rtl">المستخدم:</span>
-          <span className="text-[14px] font-black text-[#fbbf24] drop-shadow-xs" dir="rtl">{activeUser || "FATORA"}</span>
+        {/* اسم المستخدم — كارت شيك بأيقونة دائرية */}
+        <div className="app-no-drag mx-auto hidden items-center gap-2 rounded-full border border-white/25 bg-white/10 py-[3px] pe-1 ps-3 text-white backdrop-blur-md md:flex">
+          <div className="flex flex-col items-end leading-none" dir="rtl">
+            <span className="text-[9.5px] font-bold text-blue-100/80">مرحباً</span>
+            <span className="max-w-[150px] truncate text-[13px] font-black text-white">
+              {activeUser || "FATORA"}
+            </span>
+          </div>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#fbbf24] to-[#d99a06] text-[13px] font-black text-[#3b2503] shadow-sm">
+            {(activeUser || "F").trim().charAt(0)}
+          </span>
         </div>
 
         <div className="app-no-drag flex h-full shrink-0" onDoubleClick={(e) => e.stopPropagation()}>
@@ -294,13 +301,16 @@ export function Kpi({
   sub?: ReactNode;
 }) {
   return (
-    <div className={`kpi kpi-${color}`}>
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="truncate text-[12.5px] font-bold opacity-95">{label}</span>
+    <div className={`kpi kpi-${color} !min-h-[74px]`}>
+      {/* التسمية على اليمين والرقم على الشمال بحجم كبير */}
+      <div className="flex h-full w-full items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-col items-start">
+          <span className="truncate text-[12.5px] font-bold opacity-95">{label}</span>
+          {sub && <span className="truncate text-[10.5px] font-bold opacity-80">{sub}</span>}
+        </div>
         {icon}
+        <div className="num shrink-0 text-[27px] font-black leading-none tracking-tight">{value}</div>
       </div>
-      <div className="num mt-0.5 truncate text-[21px] font-black leading-tight">{value}</div>
-      {sub && <div className="mt-0.5 truncate text-[11.5px] font-bold opacity-85">{sub}</div>}
     </div>
   );
 }

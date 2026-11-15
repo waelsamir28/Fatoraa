@@ -31,45 +31,17 @@ export interface ThemeDef {
 export const THEMES: ThemeDef[] = [
   {
     key: "classic-blue",
-    label: "أزرق ويندوز كلاسيك",
-    hint: "المظهر الافتراضي الأصلي",
+    label: "أزرق (الافتراضي)",
+    hint: "المظهر الأزرق الكلاسيكي — مريح وواضح",
     swatch: ["#2b74de", "#0b3fa8", "#0d3b82"],
     homeBg: "linear-gradient(135deg,#0b3370,#0b4fc0 45%,#1b6fe0 62%,#072555)",
   },
   {
     key: "modern-dark",
-    label: "كحلي داكن عصري",
-    hint: "مريح للعين في الإضاءة المنخفضة",
+    label: "أسود",
+    hint: "أسود بالكامل — يطبّق على كل الشاشات والجداول",
     swatch: ["#334155", "#0f172a", "#020617"],
     homeBg: "linear-gradient(135deg,#020617,#0f172a 45%,#1e293b 65%,#020617)",
-  },
-  {
-    key: "emerald-green",
-    label: "زمردي مالي",
-    hint: "أخضر هادئ للأنشطة التجارية",
-    swatch: ["#10b981", "#047857", "#022c22"],
-    homeBg: "linear-gradient(135deg,#03251c,#065f46 45%,#0f9f6e 65%,#021712)",
-  },
-  {
-    key: "royal-purple",
-    label: "بنفسجي ملكي",
-    hint: "فخم لمحلات الهدايا والأفراح",
-    swatch: ["#8b5cf6", "#5b21b6", "#1e1b4b"],
-    homeBg: "linear-gradient(135deg,#1b1240,#4c1d95 45%,#7c3aed 65%,#150e33)",
-  },
-  {
-    key: "dark-gold",
-    label: "أسود وذهبي",
-    hint: "تباين عالٍ وأرقام واضحة",
-    swatch: ["#f59e0b", "#b45309", "#111827"],
-    homeBg: "linear-gradient(135deg,#0b0f19,#1f2937 45%,#78350f 70%,#0b0f19)",
-  },
-  {
-    key: "crimson-red",
-    label: "قرمزي جريء",
-    hint: "هوية حمراء قوية",
-    swatch: ["#ef4444", "#b91c1c", "#1c0a0a"],
-    homeBg: "linear-gradient(135deg,#1b0606,#7f1d1d 45%,#dc2626 68%,#140404)",
   },
 ];
 

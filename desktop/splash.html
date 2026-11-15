@@ -15,17 +15,28 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      /* خلفية كحلي بدل الشفافية: لو الصورة مش موجودة تظهر شاشة واضحة لا شاشة فاضية */
-      background: radial-gradient(circle at 50% 35%, #16548f 0%, #0f3a5f 45%, #081a2b 100%);
+      /* نفس اللون الكحلي بتاع الصورة — مفيش إطار أسود حوالين الشاشة */
+      background: #0d3a63;
       user-select: none;
       position: relative;
       font-family: "Segoe UI", Tahoma, sans-serif;
+      /* قص الحواف المستديرة للصورة وأي زيادة برّه النافذة */
+      border-radius: 0;
+    }
+
+    /* طبقة تملأ النافذة بلون الصورة لمنع أي حدود سوداء */
+    #bg-fill {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #1268b3 0%, #0d3a63 55%, #082b4d 100%);
+      z-index: 0;
     }
 
     /* الصورة تغطي الشاشة بالكامل */
     #splash-img {
       position: absolute;
       inset: 0;
+      z-index: 1;
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -42,6 +53,7 @@
     #fallback {
       position: absolute;
       inset: 0;
+      z-index: 2;
       display: none;
       flex-direction: column;
       align-items: center;
@@ -79,7 +91,8 @@
     /* شريط تحميل ويندوز 11 */
     .win11-loader-box {
       position: absolute;
-      bottom: 9%;
+      z-index: 3;
+      bottom: 20%;
       left: 50%;
       transform: translateX(-50%);
       width: 46%;
@@ -138,6 +151,7 @@
 </head>
 
 <body>
+  <div id="bg-fill"></div>
   <img id="splash-img" alt="FATORA" />
 
   <div id="fallback">
