@@ -33,6 +33,8 @@ export async function POST(req: Request) {
 
     const data = await readLicenseData();
     data.activationKey = String(activationKey).trim().toUpperCase();
+    // تاريخ بدء الاشتراك (لحساب انتهاء السنة أو السنتين)
+    data.activatedAt = new Date().toISOString();
     // نثبّت كود الجهاز اللي الكود اتحقق بيه لو مختلف
     const usedId = candidates.find((id) => verifyActivationCode(id, data.activationKey || "")) || savedId;
     await saveLicenseData(data);
