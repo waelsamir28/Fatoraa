@@ -245,7 +245,7 @@ export function HomeScreen() {
       <div className="hs" dir="rtl">
         {/* ================= الترويسة: خلفية واحدة + لوجو كبير + صورة المستخدم يمين ================= */}
         <div className="hs-top">
-          <Image src="/images/home-bg.jpg" alt="" fill priority sizes="1400px" className="hs-top__bg" />
+          <Image src="/images/home-banner-light.jpg" alt="" fill priority sizes="1400px" className="hs-top__bg" />
           <div className="hs-top__veil" />
 
           {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
