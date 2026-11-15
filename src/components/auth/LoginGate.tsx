@@ -19,6 +19,9 @@ export function LoginGate() {
   const [mode, setMode] = useState<"login" | "setup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  /** دخول سريع برمز PIN (للكاشير) */
+  const [pinMode, setPinMode] = useState(false);
+  const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -45,6 +48,8 @@ export function LoginGate() {
       if (username.trim().length < 3) return setError("اسم المستخدم لازم يكون 3 حروف على الأقل");
       if (password.length < 6) return setError("كلمة المرور لازم تكون 6 أحرف على الأقل");
       if (password !== confirm) return setError("كلمتا المرور غير متطابقتين");
+    } else if (pinMode) {
+      if (!/^\d{4,6}$/.test(pin)) return setError("رمز الدخول من 4 إلى 6 أرقام");
     } else if (!username.trim() || !password) {
       return setError("أدخل اسم المستخدم وكلمة المرور");
     }
@@ -61,7 +66,7 @@ export function LoginGate() {
       } else {
         const r = await api<{ user: SessionUser }>("/api/auth/login", {
           method: "POST",
-          json: { username, password },
+          json: pinMode ? { pin } : { username, password },
         });
         try {
           localStorage.setItem("aljamal_active_user", r.user.name);
@@ -116,6 +121,31 @@ export function LoginGate() {
             </Field>
           )}
 
+          {mode !== "setup" && pinMode && (
+            <div className="rounded-xl border-2 border-[#c9d8ee] bg-[#f4f8fd] p-3">
+              <label className="mb-1 flex items-center gap-1.5 text-[12.5px] font-black text-slate-600">
+                <Lock className="h-4 w-4 text-amber-600" />
+                رمز الدخول السريع (PIN)
+              </label>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                autoFocus
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="••••"
+                dir="ltr"
+                className="h-12 w-full rounded-lg border-2 border-[#c9d8ee] bg-white text-center font-mono text-[24px] font-black tracking-[0.5em] text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
+              />
+              <div className="mt-1 text-[11px] font-bold text-slate-500">
+                اطلب رمزك من المالك — أسرع من كتابة اسم المستخدم وكلمة المرور
+              </div>
+            </div>
+          )}
+
+          {!pinMode && (
+          <>
           <Field icon={<User className="h-4 w-4 text-blue-600" />} label="اسم المستخدم">
             <input
               type="text"
@@ -162,6 +192,22 @@ export function LoginGate() {
                 className="h-10 w-full rounded-lg border-2 border-[#c9d8ee] px-3 text-[14px] font-bold text-slate-800 focus:border-[#2fb3a6] focus:outline-none"
               />
             </Field>
+          )}
+          </>
+          )}
+
+          {mode !== "setup" && (
+            <button
+              type="button"
+              onClick={() => {
+                setPinMode((v) => !v);
+                setError("");
+              }}
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#c9d8ee] bg-[#f4f8fd] py-2 text-[12px] font-black text-[#0f2942] hover:bg-[#eaf2fc]"
+            >
+              <KeyRound className="h-3.5 w-3.5 text-amber-600" />
+              {pinMode ? "الدخول باسم المستخدم وكلمة المرور" : "دخول سريع برمز PIN (كاشير)"}
+            </button>
           )}
 
           {(error || dbError) && (

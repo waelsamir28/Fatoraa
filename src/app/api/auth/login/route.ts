@@ -37,6 +37,23 @@ export function POST(req: Request) {
       return res;
     }
 
+    // ===== الدخول السريع بـ PIN (بدون اسم مستخدم) =====
+    const pin = str(b.pin).replace(/\s/g, "");
+    if (pin) {
+      if (!/^\d{4,6}$/.test(pin)) {
+        return NextResponse.json({ error: "الـ PIN يجب أن يكون من 4 إلى 6 أرقام" }, { status: 400 });
+      }
+      const allUsers = await db
+        .select()
+        .from(users)
+        .where(eq(users.active, true));
+      const match = allUsers.find((u) => u.pinHash && verifyPassword(pin, u.pinHash));
+      if (!match) {
+        return NextResponse.json({ error: "رمز الدخول غير صحيح" }, { status: 401 });
+      }
+      return issueSession(match);
+    }
+
     if (!username || !password) {
       return NextResponse.json({ error: "أدخل اسم المستخدم وكلمة المرور" }, { status: 400 });
     }
@@ -51,36 +68,60 @@ export function POST(req: Request) {
       return NextResponse.json({ error: "اسم المستخدم أو كلمة المرور غير صحيحة" }, { status: 401 });
     }
 
-    await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+    return issueSession(user);
+  });
+}
 
-    const token = createToken({
-      uid: user.id,
+/** إنشاء الجلسة وإرجاع بيانات المستخدم */
+async function issueSession(user: {
+  id: number;
+  username: string;
+  fullName: string;
+  role: string;
+  branchId: number | null;
+  permissions: string;
+}) {
+  await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
+
+  const perms = safePerms(user.permissions);
+  const token = createToken({
+    uid: user.id,
+    username: user.username,
+    name: user.fullName || user.username,
+    role: user.role as "owner" | "manager" | "cashier",
+    branchId: user.branchId ?? null,
+    perms,
+  });
+
+  const res = NextResponse.json({
+    ok: true,
+    authEnabled: true,
+    user: {
+      id: user.id,
       username: user.username,
       name: user.fullName || user.username,
-      role: user.role as "owner" | "manager" | "cashier",
+      role: user.role,
+      roleLabel: ROLE_LABELS[user.role] || user.role,
       branchId: user.branchId ?? null,
-    });
-
-    const res = NextResponse.json({
-      ok: true,
-      authEnabled: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        name: user.fullName || user.username,
-        role: user.role,
-        roleLabel: ROLE_LABELS[user.role] || user.role,
-        branchId: user.branchId ?? null,
-      },
-    });
-
-    res.cookies.set(SESSION_COOKIE, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_DAYS * 24 * 60 * 60,
-      secure: process.env.NODE_ENV === "production",
-    });
-    return res;
+      permissions: perms,
+    },
   });
+
+  res.cookies.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_DAYS * 24 * 60 * 60,
+    secure: process.env.NODE_ENV === "production",
+  });
+  return res;
+}
+
+function safePerms(raw: string): string[] {
+  try {
+    const v = JSON.parse(raw || "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
 }

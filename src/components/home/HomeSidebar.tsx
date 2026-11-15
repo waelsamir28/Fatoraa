@@ -132,6 +132,8 @@ export function buildNavGroups(lowStock: number): NavGroup[] {
       title: "المساعدة",
       tone: "#64748b",
       items: [
+        { href: "/health", label: "صحة البرنامج", Icon: IconSupport, keywords: "فحص صحة تنبيه" },
+        { href: "/audit", label: "سجل النشاط", Icon: ListTree as Icon, keywords: "سجل عمليات تتبع" },
         { href: "/support", label: "الدعم الفني", Icon: IconSupport, keywords: "دعم مساعدة" },
         { href: "/about", label: "معلومات البرنامج", Icon: IconInfo, keywords: "عن الإصدار" },
       ],

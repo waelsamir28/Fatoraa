@@ -4,6 +4,7 @@ import { products, stockMovements } from "@/db/schema";
 import { HttpError, handle, parseId, readJson } from "@/lib/server/http";
 import { parseProduct } from "@/lib/server/parsers";
 import { getSession } from "@/lib/server/session";
+import { audit } from "@/lib/server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,18 @@ export function PUT(req: Request, { params }: Ctx) {
 export function DELETE(_req: Request, { params }: Ctx) {
   return handle(async () => {
     const id = parseId((await params).id);
+    const [before] = await db
+      .select({ name: products.name, code: products.code })
+      .from(products)
+      .where(eq(products.id, id));
     const [row] = await db.delete(products).where(eq(products.id, id)).returning({ id: products.id });
     if (!row) throw new HttpError(404, "الصنف غير موجود");
+    await audit({
+      action: "delete_product",
+      entity: "product",
+      entityId: id,
+      label: `حذف صنف «${before?.name || id}» (${before?.code || ""})`,
+    });
     return { ok: true };
   });
 }

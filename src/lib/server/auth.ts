@@ -59,6 +59,28 @@ export const ROLE_LABELS: Record<string, string> = {
   cashier: "كاشير",
 };
 
+/**
+ * صلاحيات تفصيلية قابلة للتخصيص لكل مستخدم فوق صلاحيات دوره.
+ * مثلاً: كاشير يُسمح له بالتعديل على الأسعار، أو مدير يُمنع من تقرير الأرباح.
+ */
+export const GRANULAR_PERMISSIONS: Array<{ key: string; label: string; group: string }> = [
+  { key: "view_cost", label: "رؤية سعر التكلفة", group: "الأسعار" },
+  { key: "edit_price", label: "تعديل أسعار البيع", group: "الأسعار" },
+  { key: "invoice_discount", label: "عمل خصم على الفاتورة", group: "المبيعات" },
+  { key: "delete_invoice", label: "حذف فواتير", group: "المبيعات" },
+  { key: "edit_saved_invoice", label: "تعديل فاتورة محفوظة", group: "المبيعات" },
+  { key: "view_profit", label: "رؤية الأرباح", group: "التقارير" },
+  { key: "view_reports", label: "فتح التقارير", group: "التقارير" },
+  { key: "manage_products", label: "إضافة/تعديل الأصناف", group: "المخزون" },
+  { key: "delete_product", label: "حذف الأصناف", group: "المخزون" },
+  { key: "manage_users", label: "إدارة المستخدمين", group: "الإدارة" },
+  { key: "manage_settings", label: "تغيير الإعدادات", group: "الإدارة" },
+  { key: "manage_backup", label: "النسخ الاحتياطي والاستعادة", group: "الإدارة" },
+  { key: "view_audit", label: "فتح سجل المراجعة", group: "الإدارة" },
+  { key: "manage_treasury", label: "الخزينة والمصروفات", group: "المالية" },
+  { key: "manage_shifts", label: "فتح/تقفيل الورديات", group: "المالية" },
+];
+
 export function can(role: string, permission: string): boolean {
   const list = ROLE_PERMISSIONS[(role as Role) || "cashier"] || [];
   return list.includes("*") || list.includes(permission);
@@ -101,7 +123,20 @@ export interface SessionPayload {
   name: string;
   role: Role;
   branchId: number | null;
+  /** صلاحيات إضافية مخصصة للمستخدم */
+  perms?: string[];
   exp: number;
+}
+
+/** هل يملك المستخدم صلاحية معيّنة (مع مراعاة الصلاحيات المخصصة)؟ */
+export function hasPermission(
+  session: { role: string; perms?: string[] } | null | undefined,
+  permission: string
+): boolean {
+  if (!session) return false;
+  if (session.role === "owner") return true;
+  if ((session.perms || []).includes(permission)) return true;
+  return can(session.role, permission);
 }
 
 const b64url = (buf: Buffer | string) =>

@@ -27,6 +27,8 @@ export const settings = pgTable("settings", {
   invoiceFooter: text("invoice_footer").notNull().default(""),
   // تخصيص المظهر
   theme: text("theme").notNull().default("classic-blue"), // classic-blue | sky-blue | steel-blue (أزرق فقط)
+  /** light | dark — الوضع الليلي */
+  mode: text("mode").notNull().default("light"),
   buttonStyle: text("button_style").notNull().default("glossy-3d"), // glossy-3d | modern-flat | soft-rounded | pos-tactile
   fontFamily: text("font_family").notNull().default("cairo"), // cairo | tajawal | almarai | cairo-play
   tableHeaderColor: text("table_header_color").notNull().default("navy-dark"), // navy-dark | slate-deep | royal-blue | charcoal | forest
@@ -316,6 +318,10 @@ export const users = pgTable(
     active: boolean("active").notNull().default(true),
     branchId: integer("branch_id"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: "date" }),
+    /** رمز دخول سريع (PIN) — مشفّر بنفس طريقة كلمة المرور */
+    pinHash: text("pin_hash").notNull().default(""),
+    /** صلاحيات مخصصة (فوق صلاحيات الدور) — JSON array */
+    permissions: text("permissions").notNull().default("[]"),
     createdAt: ts("created_at"),
   },
   (t) => [uniqueIndex("users_username_idx").on(t.username)],
@@ -351,6 +357,27 @@ export const backups = pgTable(
     createdAt: ts("created_at"),
   },
   (t) => [index("backups_created_idx").on(t.createdAt)],
+);
+
+/**
+ * سجل المراجعة (Audit Log): كل عملية حساسة — من عملها وإمتى ومن أي جهاز.
+ * يُستخدم لحماية صاحب المحل من الأخطاء أو التلاعب.
+ */
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    action: text("action").notNull().default(""), // delete_invoice | edit_invoice | delete_product | settings_change ...
+    entity: text("entity").notNull().default(""), // invoice | product | party | user | settings
+    entityId: integer("entity_id"),
+    label: text("label").notNull().default(""), // وصف مقروء للعنصر
+    details: text("details").notNull().default(""), // JSON
+    userId: integer("user_id"),
+    userName: text("user_name").notNull().default(""),
+    userRole: text("user_role").notNull().default(""),
+    createdAt: ts("created_at"),
+  },
+  (t) => [index("audit_created_idx").on(t.createdAt), index("audit_entity_idx").on(t.entity)],
 );
 
 /** سجل كل عمليات التفعيل والتجديد (للمراجعة والحسابات) */

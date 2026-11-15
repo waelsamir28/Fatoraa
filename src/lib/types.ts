@@ -15,6 +15,7 @@ export interface Settings {
   invoiceFooter: string;
   // التخصيص والثيمات
   theme: string; // classic-blue | sky-blue | steel-blue
+  mode: string; // light | dark
   buttonStyle: string; // glossy-3d | modern-flat | soft-rounded | pos-tactile
   fontFamily: string; // cairo | tajawal | almarai | cairo-play
   tableHeaderColor: string; // navy-dark | slate-deep | royal-blue | charcoal | forest

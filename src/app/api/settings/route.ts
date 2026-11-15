@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { handle, num, readJson, str } from "@/lib/server/http";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/server/seed";
+import { audit } from "@/lib/server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export function PUT(req: Request) {
         theme: ["classic-blue", "sky-blue", "steel-blue"].includes(str(b.theme))
           ? str(b.theme)
           : "classic-blue",
+        mode: str(b.mode) === "dark" ? "dark" : "light",
         buttonStyle: str(b.buttonStyle) || "glossy-3d",
         fontFamily: str(b.fontFamily) || "cairo",
         tableHeaderColor: str(b.tableHeaderColor) || "navy-dark",
@@ -54,6 +56,13 @@ export function PUT(req: Request) {
       })
       .where(eq(settings.id, 1))
       .returning();
+    await audit({
+      action: "settings_change",
+      entity: "settings",
+      entityId: 1,
+      label: "تغيير إعدادات البرنامج",
+      details: { theme: str(b.theme), storeName: str(b.storeName) },
+    });
     return row;
   });
 }

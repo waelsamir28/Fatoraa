@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS = {
   salesRep: "مكتب FATORA",
   invoiceFooter: "شكراً لتعاملكم معنا .. برنامج FATORA 01222355769",
   theme: "classic-blue",
+  mode: "light",
   buttonStyle: "glossy-3d",
   fontFamily: "cairo",
   tableHeaderColor: "navy-dark",

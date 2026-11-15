@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { invoices, parties } from "@/db/schema";
 import { HttpError, handle, num, parseId, readJson, round2 } from "@/lib/server/http";
 import { parseParty } from "@/lib/server/parsers";
+import { audit } from "@/lib/server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,17 @@ export function PUT(req: Request, { params }: Ctx) {
 export function DELETE(_req: Request, { params }: Ctx) {
   return handle(async () => {
     const id = parseId((await params).id);
+    const [before] = await db.select({ name: parties.name }).from(parties).where(eq(parties.id, id));
     await db.transaction(async (tx) => {
       await tx.update(invoices).set({ partyId: null }).where(eq(invoices.partyId, id));
       const [row] = await tx.delete(parties).where(eq(parties.id, id)).returning({ id: parties.id });
       if (!row) throw new HttpError(404, "الحساب غير موجود");
+    });
+    await audit({
+      action: "delete_party",
+      entity: "party",
+      entityId: id,
+      label: `حذف حساب «${before?.name || id}»`,
     });
     return { ok: true };
   });

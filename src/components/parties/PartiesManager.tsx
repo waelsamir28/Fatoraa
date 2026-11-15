@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, FilePlus2, HandCoins, Info, Pencil, Plus, RefreshCw, Save, Search, Trash2 } from "lucide-react";
+import { Eye, FilePlus2, HandCoins, Info, MessageCircle, Pencil, Plus, Printer, RefreshCw, Save, Search, Trash2 } from "lucide-react";
 import { Dialog, Field, Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconCustomers, IconSuppliers } from "@/components/icons/AppIcons";
@@ -354,9 +354,48 @@ export function PartiesManager({ type }: { type: PartyType }) {
           onClose={() => setStatement(null)}
           width={900}
           footer={
-            <button type="button" className="btn h-9 px-5 font-bold" onClick={() => setStatement(null)}>
-              إغلاق
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn h-9 px-4 font-bold"
+                title="فتح كشف الحساب للطباعة أو حفظه PDF أو إرساله واتساب"
+                onClick={() =>
+                  window.open(
+                    `/print/statement/${statement.party.id}`,
+                    "_blank",
+                    "noopener,width=900,height=1000",
+                  )
+                }
+              >
+                <Printer className="h-4 w-4 text-blue-700" />
+                طباعة / PDF
+              </button>
+              <a
+                className="btn btn-green h-9 px-4 font-bold"
+                title="إرسال ملخص كشف الحساب على واتساب"
+                href={`https://wa.me/${(() => {
+                  const d = String(statement.party.phone || "").replace(/\D/g, "");
+                  return d.startsWith("0") ? `20${d.slice(1)}` : d.startsWith("00") ? d.slice(2) : d;
+                })()}?text=${encodeURIComponent(
+                  [
+                    `كشف حساب ${statement.party.type === "customer" ? "عميل" : "مورد"} — ${statement.party.name}`,
+                    `رصيد أول المدة: ${fmt(statement.opening)}`,
+                    `عدد الحركات: ${statement.rows.length}`,
+                    `الرصيد الحالي: ${fmt(statement.party.balance)} ج.م`,
+                    "",
+                    "للتفاصيل راجع كشف الحساب المرفق.",
+                  ].join("\n"),
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="h-4 w-4" />
+                واتساب
+              </a>
+              <button type="button" className="btn h-9 px-5 font-bold" onClick={() => setStatement(null)}>
+                إغلاق
+              </button>
+            </>
           }
         >
           <div className="mb-3 grid grid-cols-3 gap-3">

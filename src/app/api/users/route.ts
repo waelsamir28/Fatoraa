@@ -3,7 +3,8 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
-import { hashPassword, ROLE_LABELS } from "@/lib/server/auth";
+import { GRANULAR_PERMISSIONS, hashPassword, ROLE_LABELS } from "@/lib/server/auth";
+import { audit } from "@/lib/server/audit";
 import { requireSession, invalidateAuthCache } from "@/lib/server/session";
 import { backupBeforeDestructive } from "@/lib/server/destructive-guard";
 
@@ -23,10 +24,25 @@ export async function GET() {
         active: users.active,
         branchId: users.branchId,
         lastLoginAt: users.lastLoginAt,
+        permissions: users.permissions,
+        hasPin: sql<boolean>`(${users.pinHash} <> '')`,
       })
       .from(users)
       .orderBy(asc(users.id));
-    return { items: items.map((u) => ({ ...u, roleLabel: ROLE_LABELS[u.role] || u.role })) };
+    return {
+      items: items.map((u) => ({
+        ...u,
+        roleLabel: ROLE_LABELS[u.role] || u.role,
+        permissions: (() => {
+          try {
+            const v = JSON.parse(u.permissions || "[]");
+            return Array.isArray(v) ? v : [];
+          } catch {
+            return [];
+          }
+        })(),
+      })),
+    };
   });
 }
 
@@ -93,6 +109,21 @@ export async function PATCH(req: Request) {
       }
       patch.passwordHash = hashPassword(str(b.password));
     }
+    // رمز الدخول السريع PIN (4-6 أرقام) — أو "" لحذفه
+    if (b.pin !== undefined) {
+      const pin = str(b.pin).replace(/\s/g, "");
+      if (pin && !/^\d{4,6}$/.test(pin)) {
+        return NextResponse.json({ error: "الـ PIN يجب أن يكون من 4 إلى 6 أرقام" }, { status: 400 });
+      }
+      patch.pinHash = pin ? hashPassword(pin) : "";
+    }
+    // صلاحيات مخصصة (تُضاف فوق صلاحيات الدور)
+    if (b.permissions !== undefined) {
+      const list = Array.isArray(b.permissions)
+        ? b.permissions.filter((x) => typeof x === "string" && GRANULAR_PERMISSIONS.some((g) => g.key === x))
+        : [];
+      patch.permissions = JSON.stringify(list);
+    }
 
     if (!Object.keys(patch).length) {
       return NextResponse.json({ error: "لا يوجد تغييرات" }, { status: 400 });
@@ -121,6 +152,15 @@ export async function PATCH(req: Request) {
       branchId: users.branchId,
     });
     invalidateAuthCache();
+    if (b.pin !== undefined || b.permissions !== undefined || b.role !== undefined) {
+      await audit({
+        action: "role_change",
+        entity: "user",
+        entityId: id,
+        label: `تعديل صلاحيات/رمز «${user?.username || id}»`,
+        details: { pin: b.pin !== undefined ? "changed" : undefined, permissions: b.permissions, role: b.role },
+      });
+    }
     return NextResponse.json({ ok: true, user: user ? { ...user, roleLabel: ROLE_LABELS[user.role] || user.role } : null });
   });
 }
@@ -152,6 +192,7 @@ export async function DELETE(req: Request) {
     if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: 500 });
 
     await db.delete(users).where(eq(users.id, id));
+    await audit({ action: "delete_user", entity: "user", entityId: id, label: `حذف مستخدم «${target.username}»` });
     invalidateAuthCache();
     return { ok: true, backup: guard.fileName || guard.where || "" };
   });
