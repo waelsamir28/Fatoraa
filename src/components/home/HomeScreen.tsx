@@ -243,10 +243,11 @@ export function HomeScreen() {
       }
     >
       <div className="hs" dir="rtl">
-        {/* ================= الترويسة: خلفية واحدة + لوجو كبير + صورة المستخدم يمين ================= */}
+        {/* خلفية واحدة تغطي البانر + الأزرار الجانبية كقطعة واحدة */}
+        <Image src="/images/home-shell.jpg" alt="" fill priority sizes="1600px" className="hs-shell" />
+
+        {/* ================= الترويسة: لوجو كبير + صورة المستخدم يمين ================= */}
         <div className="hs-top">
-          <Image src="/images/home-banner-light.jpg" alt="" fill priority sizes="1400px" className="hs-top__bg" />
-          <div className="hs-top__veil" />
 
           {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
           <div className="hs-user">
@@ -269,7 +270,6 @@ export function HomeScreen() {
         <div className="hs-body">
           {/* ---- يمين: القائمة الثابتة ---- */}
           <nav className="hs-rail">
-            <Image src="/images/home-bg.jpg" alt="" fill sizes="220px" className="hs-rail__bg" />
             <div className="hs-rail__inner">
             {RAIL.map((r) => {
               const on = r.href ? (r.href === "/" ? pathname === "/" : pathname === r.href || pathname.startsWith(`${r.href}/`)) : false;
