@@ -114,12 +114,25 @@ export function checkLicense(
     lastRunAt?: string | null;
     activationKey?: string | null;
     activatedAt?: string | null;
+    /** أجهزة إضافية مربوطة بنفس الكود */
+    extraDevices?: string[] | null;
   },
   deviceId: string
 ): LicenseStatus {
   const machineId = normalizeDeviceId(deviceId);
   const key = data.activationKey || "";
-  const plan = key ? planOfCode(machineId, key) : null;
+  // كود واحد قد يخدم أكثر من جهاز (الأجهزة الإضافية) — نجرّب كل الأجهزة
+  const ids = [machineId, ...(data.extraDevices || []).map((d) => normalizeDeviceId(d))].filter(
+    (v, i, a) => v && a.indexOf(v) === i
+  );
+  let plan: PlanKey | null = null;
+  for (const id of ids) {
+    const found = key ? planOfCode(id, key) : null;
+    if (found) {
+      plan = found;
+      break;
+    }
+  }
   const keyValid = Boolean(plan);
   const activatedAt = data.activatedAt || data.firstRunAt || new Date().toISOString();
 

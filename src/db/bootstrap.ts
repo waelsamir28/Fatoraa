@@ -137,6 +137,22 @@ CREATE TABLE IF NOT EXISTS "purchase_orders" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "license_activations" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"device_id" text DEFAULT '' NOT NULL,
+	"plan" text DEFAULT '' NOT NULL,
+	"months" integer DEFAULT 0 NOT NULL,
+	"price" double precision DEFAULT 0 NOT NULL,
+	"kind" text DEFAULT 'activate' NOT NULL,
+	"activation_key" text DEFAULT '' NOT NULL,
+	"expires_at" timestamp with time zone,
+	"extra_devices" text DEFAULT '[]' NOT NULL,
+	"notes" text DEFAULT '' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "license_act_device_idx" ON "license_activations" ("device_id");
+CREATE INDEX IF NOT EXISTS "license_act_created_idx" ON "license_activations" ("created_at");
+
 CREATE TABLE IF NOT EXISTS "app_config" (
 	"key" text PRIMARY KEY NOT NULL,
 	"value" text DEFAULT '' NOT NULL,
