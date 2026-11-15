@@ -6,6 +6,7 @@ import {
   DatabaseBackup,
   Download,
   Image as ImageIcon,
+  LayoutTemplate,
   Palette,
   RotateCcw,
   Save,
@@ -18,6 +19,8 @@ import {
 import { Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { CartLogo, IconBackup, IconSettings } from "@/components/icons/AppIcons";
+import { TemplateEditor } from "@/components/print/TemplateEditor";
+import { TEMPLATE_PRESETS } from "@/lib/invoiceLayout";
 import { api, errMsg } from "@/lib/client";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { DEFAULT_LOGO } from "@/lib/constants";
@@ -58,6 +61,7 @@ const toForm = (s: Settings): SForm => ({
   customTagline: s.customTagline || "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",
   invoiceTemplate: s.invoiceTemplate || "template-modern-a5",
   fontScale: String(s.fontScale ?? 100),
+  invoiceLayout: s.invoiceLayout || "",
 });
 
 export function SettingsForm() {
@@ -66,6 +70,8 @@ export function SettingsForm() {
   const [f, setF] = useState<SForm | null>(null);
   const [savedForm, setSavedForm] = useState<SForm | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding">("appearance");
+  const [editorOpen, setEditorOpen] = useState(false);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
 
@@ -172,6 +178,22 @@ export function SettingsForm() {
   const activeTheme = THEMES.find((t) => t.key === prefs.theme) ?? THEMES[0];
   const scale = Number(f?.fontScale ?? prefs.fontScale ?? 100);
 
+  // ===== تبويبات الإعدادات =====
+  type TabKey = "appearance" | "store" | "invoices" | "branding";
+  const TABS: { key: TabKey; label: string; hint: string }[] = [
+    { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والأزرار" },
+    { key: "store", label: "بيانات المحل", hint: "الاسم والهاتف والعنوان والضريبة" },
+    { key: "invoices", label: "قوالب الفواتير", hint: "القالب والمقاس والتذييل" },
+    { key: "branding", label: "الشعار والخلفية", hint: "اللوجو والشاشة الرئيسية" },
+  ];
+  const dirty = Boolean(f && savedForm && JSON.stringify(f) !== JSON.stringify(savedForm));
+  const activeTabTheme = THEMES.find((t) => t.key === prefs.theme) ?? THEMES[0];
+  const btnStyle = BUTTON_STYLES.find((b) => b.key === prefs.buttonStyle);
+  const headerTheme = TABLE_HEADERS.find((t) => t.key === prefs.tableHeaderColor) ?? TABLE_HEADERS[0];
+
+  const pickedTemplate =
+    TEMPLATE_PRESETS.find((t) => t.key === f?.invoiceTemplate) ?? TEMPLATE_PRESETS[0];
+
   return (
     <Window
       title="الإعدادات وتخصيص المظهر والثيمات"
@@ -183,369 +205,452 @@ export function SettingsForm() {
           <span>الثيم: {activeTheme.label}</span>
           <span className="sep" />
           <span>حجم الخط: {scale}%</span>
-          <span className="ms-auto">اضغط «تطبيق وحفظ» لتثبيت التعديلات</span>
+          <span className="ms-auto">
+            {dirty ? "⚠ توجد تعديلات غير محفوظة — اضغط تطبيق وحفظ" : "كل التعديلات محفوظة ✓"}
+          </span>
         </>
       }
     >
       {!f ? (
         <div className="grid h-full place-items-center text-[18px] font-bold text-slate-500">جاري التحميل...</div>
       ) : (
-        <div className="flex h-full w-full flex-col">
-          {/* شريط الأزرار الثابت */}
-          <div className="panel mx-3 mt-3 flex shrink-0 flex-wrap items-center gap-2 border-2 border-blue-300 bg-white/80 p-2">
-            <button type="button" className="btn btn-green h-[40px] px-5 text-[15.5px] font-black shadow" onClick={() => void save()} disabled={busy}>
-              <Save className="h-5 w-5" />
-              {busy ? "جاري التطبيق..." : "تطبيق وحفظ الإعدادات"}
-            </button>
-            <button type="button" className="btn h-[40px] px-4 text-[14px] font-black" onClick={cancelPreview}>
-              <X className="h-4 w-4 text-red-600" />
-              إلغاء المعاينة
-            </button>
-            <button type="button" className="btn h-[40px] px-4 text-[14px] font-black" onClick={() => load()}>
-              <RotateCcw className="h-4 w-4 text-blue-700" />
-              إعادة تحميل
-            </button>
-            <span className="ms-auto rounded-md bg-blue-50 px-3 py-1.5 text-[12.5px] font-bold text-blue-900">
-              تغيير أي ثيم أو خط أو حجم يظهر فوراً في المعاينة والشاشات — ولا يُثبّت إلا بالحفظ
-            </span>
+        <div className="flex h-full w-full flex-col bg-[#eef3fa]">
+          {/* ===== شريط العنوان + الأزرار الثابتة ===== */}
+          <div className="shrink-0 bg-gradient-to-l from-[#164066] to-[#0f2942] px-3 py-2 text-white">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-[16.5px] font-black">إعدادات البرنامج</span>
+                <span className="text-[11.5px] font-bold text-blue-200">
+                  4 أقسام — اختر القسم من التبويبات بالأسفل
+                </span>
+              </div>
+              <div className="ms-auto flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  className="btn btn-green h-[38px] px-4 text-[14.5px] font-black shadow"
+                  onClick={() => void save()}
+                  disabled={busy}
+                >
+                  <Save className="h-4 w-4" />
+                  {busy ? "جاري التطبيق..." : "تطبيق وحفظ"}
+                </button>
+                <button type="button" className="btn h-[38px] px-3 text-[13px] font-black" onClick={cancelPreview}>
+                  <RotateCcw className="h-4 w-4 text-blue-700" />
+                  تراجع
+                </button>
+                <button type="button" className="btn h-[38px] px-3 text-[13px] font-black" onClick={() => load()}>
+                  <RotateCcw className="h-4 w-4" />
+                  إعادة تحميل
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-[1fr_370px] gap-3 overflow-auto p-3">
-            {/* ======= العمود الأيمن: إعدادات المظهر ======= */}
+          {/* ===== التبويبات ===== */}
+          <div className="flex shrink-0 flex-wrap gap-1.5 border-b-2 border-[#c9d8ee] bg-white px-3 py-1.5">
+            {TABS.map((t) => {
+              const on = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setTab(t.key)}
+                  className={`flex flex-col items-start rounded-t-lg border-2 border-b-0 px-3 py-1 transition ${
+                    on
+                      ? "border-[#0f2942] bg-[#0f2942] text-white shadow"
+                      : "border-transparent bg-[#eef3fa] text-[#0f2942] hover:bg-[#dbe8f7]"
+                  }`}
+                >
+                  <span className="text-[13.5px] font-black">{t.label}</span>
+                  <span className={`text-[10.5px] font-bold ${on ? "text-blue-200" : "text-slate-500"}`}>{t.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid min-h-0 flex-1 grid-cols-[1fr_330px] gap-3 overflow-auto p-3">
+            {/* ============ محتوى التبويب ============ */}
             <div className="space-y-3">
-              {/* الثيمات */}
-              <div className="panel overflow-hidden border-2 border-blue-200">
-                <div className="navy-head flex items-center gap-2 px-4 py-2 text-[15.5px]">
-                  <Palette className="h-4 w-4" />
-                  <span>ثيمات البرنامج — معاينة فورية قبل الاختيار</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 p-3">
-                  {THEMES.map((t) => {
-                    const active = prefs.theme === t.key;
-                    return (
-                      <button
-                        key={t.key}
-                        type="button"
-                        onClick={() => setVisual({ theme: t.key })}
-                        onDoubleClick={() => setVisual({ theme: t.key })}
-                        className={`group relative overflow-hidden rounded-lg border-2 p-0 text-right transition ${
-                          active ? "border-green-500 shadow-md ring-2 ring-green-300" : "border-slate-300 hover:border-blue-500"
-                        }`}
-                        title={`${t.label} — ${t.hint}`}
-                      >
-                        <div className="h-[52px] w-full" style={{ background: t.homeBg }}>
-                          <div className="flex h-[16px] items-center gap-1 px-1.5" style={{ background: t.swatch[0] }}>
-                            <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between gap-1 bg-white px-2 py-1">
-                          <span className="truncate text-[12.5px] font-black text-[#0c2340]">{t.label}</span>
-                          {active && <Check className="h-4 w-4 shrink-0 text-green-600" strokeWidth={3.5} />}
-                        </div>
-                        <div className="flex gap-0.5 px-2 pb-1.5">
-                          {t.swatch.map((c) => (
-                            <span key={c} className="h-2 flex-1 rounded-sm" style={{ background: c }} />
-                          ))}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* الخطوط وحجم الخط */}
-              <div className="panel overflow-hidden border-2 border-indigo-200">
-                <div className="navy-head flex items-center gap-2 px-4 py-2 text-[15.5px]">
-                  <Type className="h-4 w-4" />
-                  <span>الخطوط وحجم الخط</span>
-                </div>
-                <div className="space-y-3 p-3">
-                  <Field label="نوع الخط (يشمل خط Tahoma)">
-                    <select className="win-input w-full font-bold" value={f.fontFamily} onChange={(e) => setVisual({ fontFamily: e.target.value })}>
-                      {FONT_OPTIONS.map((o) => (
-                        <option key={o.key} value={o.key}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-
-                  <div>
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="form-label !mb-0">تكبير / تصغير الخط</span>
-                      <span className="num rounded bg-indigo-50 px-2 py-0.5 text-[13px] font-black text-indigo-800">{scale}%</span>
+              {/* ---------- 1) المظهر ---------- */}
+              {tab === "appearance" && (
+                <>
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Palette className="h-4 w-4 text-[#f5c518]" />
+                      ثيمات البرنامج — أزرق فقط
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn h-8 w-8 shrink-0 p-0 text-[16px] font-black"
-                        onClick={() => setVisual({ fontScale: String(Math.max(70, scale - 5)) })}
-                        title="تصغير"
-                      >
-                        −
-                      </button>
-                      <input
-                        type="range"
-                        min={70}
-                        max={130}
-                        step={5}
-                        value={scale}
-                        onChange={(e) => setVisual({ fontScale: e.target.value })}
-                        className="h-2 flex-1 cursor-pointer accent-indigo-600"
-                        style={{ accentColor: "#4338ca" }}
-                      />
-                      <button
-                        type="button"
-                        className="btn h-8 w-8 shrink-0 p-0 text-[16px] font-black"
-                        onClick={() => setVisual({ fontScale: String(Math.min(130, scale + 5)) })}
-                        title="تكبير"
-                      >
-                        +
-                      </button>
-                      <button type="button" className="btn h-8 shrink-0 px-2 text-[12px] font-black" onClick={() => setVisual({ fontScale: "100" })}>
-                        افتراضي
-                      </button>
-                    </div>
-                    <div className="mt-1 flex justify-between text-[10.5px] font-bold text-slate-400">
-                      <span>70% أصغر</span>
-                      <span>100%</span>
-                      <span>130% أكبر</span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-slate-200 bg-white p-2 text-center" style={{ fontFamily: FONT_OPTIONS.find((o) => o.key === f.fontFamily)?.stack }}>
-                    <div className="text-[15px] font-black text-[#0c2340]">معاينة الخط: فاتورة مبيعات — 1,508.00 ج.م</div>
-                    <div className="text-[12px] font-bold text-slate-500">أرقام: 0123456789 — ABCdef 123</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* أشكال الأزرار وألوان الجداول */}
-              <div className="panel overflow-hidden border-2 border-emerald-200">
-                <div className="navy-head flex items-center gap-2 px-4 py-2 text-[15.5px]">
-                  <Sliders className="h-4 w-4" />
-                  <span>أشكال الأزرار وألوان ترويسة الجداول</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  <div>
-                    <span className="form-label">شكل الأزرار</span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {BUTTON_STYLES.map((b) => {
-                        const active = prefs.buttonStyle === b.key;
-                        return (
-                          <button
-                            key={b.key}
-                            type="button"
-                            onClick={() => setVisual({ buttonStyle: b.key })}
-                            className={`rounded-md border-2 px-2 py-1.5 text-right transition ${
-                              active ? "border-green-500 bg-green-50" : "border-slate-300 hover:border-blue-400"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-[12.5px] font-black text-[#0c2340]">{b.label}</span>
-                              {active && <Check className="h-3.5 w-3.5 text-green-600" strokeWidth={3.5} />}
-                            </div>
-                            <div className="text-[10.5px] font-bold text-slate-500">{b.hint}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="form-label">لون ترويسة الجداول</span>
-                    <div className="space-y-1">
-                      {TABLE_HEADERS.map((t) => {
-                        const active = prefs.tableHeaderColor === t.key;
+                    <div className="grid grid-cols-3 gap-2.5 p-3">
+                      {THEMES.map((t) => {
+                        const active = prefs.theme === t.key;
                         return (
                           <button
                             key={t.key}
                             type="button"
-                            onClick={() => setVisual({ tableHeaderColor: t.key })}
-                            className={`flex w-full items-center justify-between rounded-md border-2 px-2 py-1 transition ${
-                              active ? "border-green-500" : "border-slate-300 hover:border-blue-400"
+                            onClick={() => setVisual({ theme: t.key })}
+                            className={`group relative overflow-hidden rounded-lg border-2 p-0 text-right transition ${
+                              active ? "border-[#2fb3a6] shadow-md ring-2 ring-[#2fb3a6]/40" : "border-slate-300 hover:border-[#8fb3e0]"
                             }`}
+                            title={`${t.label} — ${t.hint}`}
                           >
-                            <span className="text-[12px] font-black text-[#0c2340]">{t.label}</span>
-                            <span className="flex items-center gap-1">
-                              <span className="h-4 w-12 rounded-sm" style={{ background: `linear-gradient(180deg,${t.from},${t.to})` }} />
-                              {active && <Check className="h-3.5 w-3.5 text-green-600" strokeWidth={3.5} />}
-                            </span>
+                            <div className="h-[58px] w-full" style={{ background: t.homeBg }}>
+                              <div className="flex h-[16px] items-center gap-1 px-1.5" style={{ background: t.swatch[0] }}>
+                                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-1 bg-white px-2 py-1">
+                              <span className="truncate text-[13px] font-black text-[#0c2340]">{t.label}</span>
+                              {active && <Check className="h-4 w-4 shrink-0 text-[#0f8f82]" strokeWidth={3.5} />}
+                            </div>
+                            <div className="flex gap-0.5 px-2 pb-1.5">
+                              {t.swatch.map((c) => (
+                                <span key={c} className="h-2 flex-1 rounded-sm" style={{ background: c }} />
+                              ))}
+                            </div>
                           </button>
                         );
                       })}
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* الشاشة الرئيسية */}
-              <div className="panel overflow-hidden border-2 border-amber-200">
-                <div className="navy-head flex items-center gap-2 px-4 py-2 text-[15.5px]">
-                  <ImageIcon className="h-4 w-4" />
-                  <span>الشعار والشاشة الرئيسية والخلفية</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  {/* شعار البرنامج */}
-                  <div className="col-span-2 rounded-lg border-2 border-blue-200 bg-blue-50/60 p-2.5">
-                    <div className="mb-1.5 flex items-center justify-between">
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Type className="h-4 w-4 text-[#f5c518]" />
+                      الخطوط وحجم الخط
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 p-3">
+                      <Field label="نوع الخط (يشمل خط Tahoma)">
+                        <select
+                          className="win-input w-full font-bold"
+                          value={f.fontFamily}
+                          onChange={(e) => setVisual({ fontFamily: e.target.value })}
+                        >
+                          {FONT_OPTIONS.map((o) => (
+                            <option key={o.key} value={o.key}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+
                       <div>
-                        <div className="text-[14px] font-black text-blue-900">شعار البرنامج (Logo)</div>
-                        <div className="text-[11.5px] font-bold text-slate-600">
-                          يظهر بدون خلفية في الشاشة الرئيسية وشاشة الدخول والفواتير المطبوعة
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="form-label !mb-0">تكبير / تصغير الخط</span>
+                          <span className="num rounded bg-[#eef3fa] px-2 py-0.5 text-[13px] font-black text-[#0f2942]">{scale}%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            className="btn h-8 w-8 shrink-0 p-0 text-[16px] font-black"
+                            onClick={() => setVisual({ fontScale: String(Math.max(70, scale - 5)) })}
+                            title="تصغير"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="range"
+                            min={70}
+                            max={130}
+                            step={5}
+                            value={scale}
+                            onChange={(e) => setVisual({ fontScale: e.target.value })}
+                            className="h-2 flex-1 cursor-pointer"
+                            style={{ accentColor: "#0f2942" }}
+                          />
+                          <button
+                            type="button"
+                            className="btn h-8 w-8 shrink-0 p-0 text-[16px] font-black"
+                            onClick={() => setVisual({ fontScale: String(Math.min(130, scale + 5)) })}
+                            title="تكبير"
+                          >
+                            +
+                          </button>
+                          <button type="button" className="btn h-8 shrink-0 px-2 text-[12px] font-black" onClick={() => setVisual({ fontScale: "100" })}>
+                            افتراضي
+                          </button>
                         </div>
                       </div>
-                      <span className="rounded bg-white px-2 py-0.5 text-[11px] font-black text-blue-800">PNG شفاف مُفضّل</span>
+
+                      <div className="col-span-2 rounded-md border border-slate-200 bg-[#f8fafd] p-2 text-center" style={{ fontFamily: FONT_OPTIONS.find((o) => o.key === f.fontFamily)?.stack }}>
+                        <div className="text-[15px] font-black text-[#0c2340]">معاينة الخط: فاتورة مبيعات — 1,508.00 ج.م</div>
+                        <div className="text-[12px] font-bold text-slate-500">أرقام: 0123456789 — ABCdef 123</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Sliders className="h-4 w-4 text-[#f5c518]" />
+                      أشكال الأزرار وألوان ترويسة الجداول
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 p-3">
+                      <div>
+                        <span className="form-label">شكل الأزرار</span>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {BUTTON_STYLES.map((b) => {
+                            const active = prefs.buttonStyle === b.key;
+                            return (
+                              <button
+                                key={b.key}
+                                type="button"
+                                onClick={() => setVisual({ buttonStyle: b.key })}
+                                className={`rounded-md border-2 px-2 py-1.5 text-right transition ${
+                                  active ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[12.5px] font-black text-[#0c2340]">{b.label}</span>
+                                  {active && <Check className="h-3.5 w-3.5 text-[#0f8f82]" strokeWidth={3.5} />}
+                                </div>
+                                <div className="text-[10.5px] font-bold text-slate-500">{b.hint}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="form-label">لون ترويسة الجداول</span>
+                        <div className="space-y-1">
+                          {TABLE_HEADERS.map((t) => {
+                            const active = prefs.tableHeaderColor === t.key;
+                            return (
+                              <button
+                                key={t.key}
+                                type="button"
+                                onClick={() => setVisual({ tableHeaderColor: t.key })}
+                                className={`flex w-full items-center justify-between rounded-md border-2 px-2 py-1 transition ${
+                                  active ? "border-[#2fb3a6]" : "border-slate-300 hover:border-[#8fb3e0]"
+                                }`}
+                              >
+                                <span className="text-[12px] font-black text-[#0c2340]">{t.label}</span>
+                                <span className="flex items-center gap-1">
+                                  <span className="h-4 w-12 rounded-sm" style={{ background: `linear-gradient(180deg,${t.from},${t.to})` }} />
+                                  {active && <Check className="h-3.5 w-3.5 text-[#0f8f82]" strokeWidth={3.5} />}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ---------- 2) بيانات المحل ---------- */}
+              {tab === "store" && (
+                <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                  <div className="bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">بيانات المحل والفاتورة</div>
+                  <div className="grid grid-cols-2 gap-3 p-3">
+                    <Field label="اسم المحل / النشاط" className="col-span-2">
+                      <input className="win-input w-full font-black text-[16px]" value={f.storeName} onChange={set("storeName")} />
+                    </Field>
+                    <Field label="رقم الهاتف">
+                      <input className="win-input num w-full" dir="ltr" value={f.phone} onChange={set("phone")} />
+                    </Field>
+                    <Field label="رقم هاتف إضافي (يظهر في الرئيسية)">
+                      <input
+                        className="win-input num w-full"
+                        dir="ltr"
+                        value={f.phone2}
+                        onChange={set("phone2")}
+                        placeholder="اتركه فارغاً لإخفاء الخانة"
+                      />
+                    </Field>
+                    <Field label="العنوان التجاري">
+                      <input className="win-input w-full" value={f.address} onChange={set("address")} />
+                    </Field>
+                    <Field label="اسم المستخدم / الكاشير">
+                      <input className="win-input w-full" value={f.userName} onChange={set("userName")} />
+                    </Field>
+                    <Field label="اسم الفرع">
+                      <input className="win-input w-full" value={f.branchName} onChange={set("branchName")} />
+                    </Field>
+                    <Field label="ضريبة القيمة المضافة %">
+                      <input className="win-input num w-full" inputMode="decimal" value={f.taxRate} onChange={set("taxRate")} />
+                    </Field>
+                    <Field label="رمز العملة">
+                      <input className="win-input w-full" value={f.currency} onChange={set("currency")} />
+                    </Field>
+                    <Field label="اسم المندوب / البائع">
+                      <input className="win-input w-full" value={f.salesRep} onChange={set("salesRep")} />
+                    </Field>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------- 3) قوالب الفواتير ---------- */}
+              {tab === "invoices" && (
+                <>
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <LayoutTemplate className="h-4 w-4 text-[#f5c518]" />
+                      قالب طباعة الفاتورة
+                    </div>
+                    <div className="space-y-2 p-3">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {TEMPLATE_PRESETS.map((t) => {
+                          const on = f.invoiceTemplate === t.key;
+                          return (
+                            <button
+                              key={t.key}
+                              type="button"
+                              onClick={() => setF({ ...f, invoiceTemplate: t.key })}
+                              className={`rounded-lg border-2 px-2.5 py-1.5 text-right transition ${
+                                on ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-200 hover:border-[#8fb3e0]"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[12.5px] font-black text-[#0f2942]">{t.label}</span>
+                                {on && <Check className="h-4 w-4 shrink-0 text-[#0f8f82]" strokeWidth={3.5} />}
+                              </div>
+                              <div className="text-[10.5px] font-bold text-slate-500">{t.hint}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="btn btn-blue h-11 w-full text-[15px] font-black shadow"
+                        onClick={() => setEditorOpen(true)}
+                      >
+                        <LayoutTemplate className="h-5 w-5" />
+                        فتح محرّر القوالب — شاشة كاملة بمعاينة حية
+                      </button>
+                      <div className="rounded-md bg-[#eef4fa] px-3 py-1.5 text-[11.5px] font-bold text-slate-600">
+                        من المحرر يمكنك: تغيير المقاس (A5 / A4 / حراري)، حجم الخط، لون القالب، الترويسة والتذييل،
+                        إظهار أو إخفاء أي جزء من الفاتورة، وإضافة علامة مائية.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">نصوص الفاتورة</div>
+                    <div className="grid grid-cols-2 gap-3 p-3">
+                      <Field label="نص تذييل الفاتورة" className="col-span-2">
+                        <input className="win-input w-full" value={f.invoiceFooter} onChange={set("invoiceFooter")} />
+                      </Field>
+                      <Field label="الاسم الكبير (شاشة الدخول)" className="col-span-2">
+                        <input className="win-input w-full font-black text-red-600" value={f.customBigTitle} onChange={set("customBigTitle")} />
+                      </Field>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ---------- 4) الشعار والخلفية ---------- */}
+              {tab === "branding" && (
+                <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                  <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                    <ImageIcon className="h-4 w-4 text-[#f5c518]" />
+                    الشعار والشاشة الرئيسية والخلفية
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 p-3">
+                    <div className="col-span-2 rounded-lg border-2 border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <div>
+                          <div className="text-[14px] font-black text-[#0f2942]">شعار البرنامج (Logo)</div>
+                          <div className="text-[11.5px] font-bold text-slate-600">
+                            يظهر بدون خلفية في الشاشة الرئيسية وشاشة الدخول والفواتير المطبوعة
+                          </div>
+                        </div>
+                        <span className="rounded bg-white px-2 py-0.5 text-[11px] font-black text-[#0f2942]">PNG شفاف مُفضّل</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-md border border-slate-300 bg-white">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={f.customLogoUrl || DEFAULT_LOGO} alt="logo" className="max-h-full max-w-full object-contain" />
+                        </div>
+                        <input
+                          ref={logoFileRef}
+                          type="file"
+                          accept="image/png,image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleLogoUpload(file);
+                          }}
+                        />
+                        <button type="button" className="btn btn-blue h-9 px-4 text-[13.5px]" onClick={() => logoFileRef.current?.click()}>
+                          <Upload className="h-4 w-4" />
+                          رفع شعار جديد
+                        </button>
                         {f.customLogoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={f.customLogoUrl} alt="logo" className="max-h-full max-w-full object-contain" />
+                          <button type="button" className="btn btn-red h-9 px-3 text-[13px]" onClick={() => setF({ ...f, customLogoUrl: "" })}>
+                            <Trash2 className="h-4 w-4" />
+                            استعادة الافتراضي
+                          </button>
                         ) : (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={DEFAULT_LOGO} alt="logo" className="max-h-full max-w-full object-contain" />
+                          <span className="text-[12px] font-bold text-slate-500">الشعار الافتراضي (FATORA)</span>
                         )}
                       </div>
-                      <input
-                        ref={logoFileRef}
-                        type="file"
-                        accept="image/png,image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleLogoUpload(file);
-                        }}
-                      />
-                      <button type="button" className="btn btn-blue h-9 px-4 text-[13.5px]" onClick={() => logoFileRef.current?.click()}>
-                        <Upload className="h-4 w-4" />
-                        رفع شعار جديد من الكمبيوتر
-                      </button>
-                      {f.customLogoUrl ? (
-                        <button type="button" className="btn btn-red h-9 px-3 text-[13px]" onClick={() => setF({ ...f, customLogoUrl: "" })}>
-                          <Trash2 className="h-4 w-4" />
-                          استعادة الشعار الافتراضي
-                        </button>
-                      ) : (
-                        <span className="text-[12px] font-bold text-slate-500">الشعار الافتراضي (FATORA)</span>
-                      )}
                     </div>
-                  </div>
 
-                  <div className="col-span-2 flex items-center justify-between rounded-lg bg-blue-50 p-2.5">
-                    <div>
-                      <div className="text-[14px] font-black text-blue-900">إظهار أو إخفاء الاسم الكبير</div>
-                      <div className="text-[12px] text-slate-600">شعار البرنامج الأحمر الكبير في الشاشة الرئيسية</div>
+                    <div className="col-span-2 flex items-center justify-between rounded-lg border border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+                      <div>
+                        <div className="text-[14px] font-black text-[#0f2942]">إظهار أو إخفاء الاسم الكبير</div>
+                        <div className="text-[12px] text-slate-600">شعار البرنامج الأحمر الكبير في الشاشة الرئيسية</div>
+                      </div>
+                      <label className="flex cursor-pointer items-center gap-2 font-black">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 rounded"
+                          checked={f.showBigTitle}
+                          onChange={(e) => setF({ ...f, showBigTitle: e.target.checked })}
+                        />
+                        <span>{f.showBigTitle ? "ظاهر" : "مخفي"}</span>
+                      </label>
                     </div>
-                    <label className="flex cursor-pointer items-center gap-2 font-black">
-                      <input
-                        type="checkbox"
-                        className="h-5 w-5 rounded text-blue-600"
-                        checked={f.showBigTitle}
-                        onChange={(e) => setF({ ...f, showBigTitle: e.target.checked })}
-                      />
-                      <span>{f.showBigTitle ? "ظاهر" : "مخفي"}</span>
-                    </label>
-                  </div>
-                  <Field label="الاسم الكبير">
-                    <input className="win-input w-full font-black text-red-600" value={f.customBigTitle} onChange={set("customBigTitle")} />
-                  </Field>
-                  <Field label="السطر الدعائي">
-                    <input className="win-input w-full font-bold" value={f.customTagline} onChange={set("customTagline")} />
-                  </Field>
-                  <div className="col-span-2">
-                    <span className="form-label">صورة خلفية مخصصة للرئيسية (اختياري)</span>
-                    <div className="flex items-center gap-2">
-                      <input
-                        ref={bgFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleBgUpload(file);
-                        }}
-                      />
-                      <button type="button" className="btn btn-blue h-9 px-4 text-[13.5px]" onClick={() => bgFileRef.current?.click()}>
-                        <Upload className="h-4 w-4" />
-                        رفع صورة من الكمبيوتر
-                      </button>
-                      {f.customBgUrl && (
-                        <button type="button" className="btn btn-red h-9 px-3 text-[13px]" onClick={() => setF({ ...f, customBgUrl: "" })}>
-                          <Trash2 className="h-4 w-4" />
-                          حذف الخلفية
+
+                    <Field label="السطر الدعائي">
+                      <input className="win-input w-full font-bold" value={f.customTagline} onChange={set("customTagline")} />
+                    </Field>
+
+                    <div className="col-span-2">
+                      <span className="form-label">صورة خلفية مخصصة للرئيسية (اختياري)</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={bgFileRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleBgUpload(file);
+                          }}
+                        />
+                        <button type="button" className="btn btn-blue h-9 px-4 text-[13.5px]" onClick={() => bgFileRef.current?.click()}>
+                          <Upload className="h-4 w-4" />
+                          رفع صورة من الكمبيوتر
                         </button>
-                      )}
-                      <span className="text-[12px] text-slate-500">
-                        {f.customBgUrl ? "✓ صورة خلفية مخصصة" : "تُستخدم الخلفية الافتراضية الجديدة"}
-                      </span>
+                        {f.customBgUrl && (
+                          <button type="button" className="btn btn-red h-9 px-3 text-[13px]" onClick={() => setF({ ...f, customBgUrl: "" })}>
+                            <Trash2 className="h-4 w-4" />
+                            حذف الخلفية
+                          </button>
+                        )}
+                        <span className="text-[12px] text-slate-500">
+                          {f.customBgUrl ? "✓ صورة خلفية مخصصة" : "تُستخدم الخلفية الافتراضية"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* بيانات المحل */}
-              <div className="panel overflow-hidden">
-                <div className="navy-head px-4 py-2 text-[15.5px]">بيانات المحل والفاتورة</div>
-                <div className="grid grid-cols-2 gap-3 p-3">
-                  <Field label="اسم المحل / النشاط" className="col-span-2">
-                    <input className="win-input w-full font-black text-[16px]" value={f.storeName} onChange={set("storeName")} />
-                  </Field>
-                  <Field label="رقم الهاتف">
-                    <input className="win-input num w-full" dir="ltr" value={f.phone} onChange={set("phone")} />
-                  </Field>
-                  <Field label="رقم هاتف إضافي (يظهر في الرئيسية)">
-                    <input
-                      className="win-input num w-full"
-                      dir="ltr"
-                      value={f.phone2}
-                      onChange={set("phone2")}
-                      placeholder="اتركه فارغاً لإخفاء الخانة"
-                    />
-                  </Field>
-                  <Field label="العنوان التجاري">
-                    <input className="win-input w-full" value={f.address} onChange={set("address")} />
-                  </Field>
-                  <Field label="اسم المستخدم / الكاشير">
-                    <input className="win-input w-full" value={f.userName} onChange={set("userName")} />
-                  </Field>
-                  <Field label="اسم الفرع">
-                    <input className="win-input w-full" value={f.branchName} onChange={set("branchName")} />
-                  </Field>
-                  <Field label="ضريبة القيمة المضافة %">
-                    <input className="win-input num w-full" inputMode="decimal" value={f.taxRate} onChange={set("taxRate")} />
-                  </Field>
-                  <Field label="رمز العملة">
-                    <input className="win-input w-full" value={f.currency} onChange={set("currency")} />
-                  </Field>
-                  <Field label="قالب الفاتورة" className="col-span-2">
-                    <select className="win-input w-full font-bold" value={f.invoiceTemplate} onChange={set("invoiceTemplate")}>
-                      <option value="template-modern-a5">① A5 عصري — إطار ملوّن</option>
-                      <option value="template-classic-a5">② A5 كلاسيكي — خطوط رسمية</option>
-                      <option value="template-lines-a5">③ A5 مسطّر — جدول بخطوط كاملة</option>
-                      <option value="template-minimal-a5">④ A5 بسيط — بدون إطارات</option>
-                      <option value="template-pos-thermal">⑤ إيصال حراري 80mm</option>
-                    </select>
-                  </Field>
-                  <Field label="نص تذييل الفاتورة" className="col-span-2">
-                    <input className="win-input w-full" value={f.invoiceFooter} onChange={set("invoiceFooter")} />
-                  </Field>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* ======= العمود الأيسر: المعاينة الحية ======= */}
+            {/* ============ العمود الجانبي: المعاينة الحية ============ */}
             <div className="space-y-3">
-              <div className="panel overflow-hidden shadow-sm">
-                <div className="navy-head px-3 py-2 text-[14.5px]">معاينة حية للمظهر المختار</div>
+              <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                <div className="bg-[#0f2942] px-3 py-2 text-[14px] font-black text-white">معاينة حية للمظهر المختار</div>
                 <div className="space-y-2 p-3">
-                  {/* نافذة مصغرة */}
                   <div className="overflow-hidden rounded-lg border border-slate-400 shadow">
                     <div
                       className="flex h-[42px] items-center justify-between px-2 text-white"
                       style={{
-                        background: `linear-gradient(180deg, ${activeTheme.swatch[0]}, ${activeTheme.swatch[1]} 50%, ${activeTheme.swatch[2]})`,
+                        background: `linear-gradient(180deg, ${activeTabTheme.swatch[0]}, ${activeTabTheme.swatch[1]} 50%, ${activeTabTheme.swatch[2]})`,
                       }}
                     >
                       <span className="flex items-center gap-1 text-[11px] font-black">
@@ -571,7 +676,7 @@ export function SettingsForm() {
                       </div>
                       <table className="w-full overflow-hidden rounded border border-slate-300 text-center text-[10px]">
                         <thead>
-                          <tr style={{ background: `linear-gradient(180deg,${TABLE_HEADERS.find((t) => t.key === prefs.tableHeaderColor)?.from},${TABLE_HEADERS.find((t) => t.key === prefs.tableHeaderColor)?.to})`, color: "#fff" }}>
+                          <tr style={{ background: `linear-gradient(180deg,${headerTheme.from},${headerTheme.to})`, color: "#fff" }}>
                             <th className="py-1">الصنف</th>
                             <th className="py-1">الكمية</th>
                             <th className="py-1">الإجمالي</th>
@@ -595,7 +700,7 @@ export function SettingsForm() {
                     </div>
                   </div>
 
-                  <div className="rounded-md border border-slate-200 bg-white p-2 text-[12px] font-bold text-slate-600">
+                  <div className="space-y-0.5 rounded-md border border-slate-200 bg-[#f8fafd] p-2 text-[12px] font-bold text-slate-600">
                     <div className="flex justify-between">
                       <span>الخط:</span>
                       <b>{FONT_OPTIONS.find((o) => o.key === prefs.fontFamily)?.label.split(" — ")[0]}</b>
@@ -606,15 +711,24 @@ export function SettingsForm() {
                     </div>
                     <div className="flex justify-between">
                       <span>شكل الأزرار:</span>
-                      <b>{BUTTON_STYLES.find((b) => b.key === prefs.buttonStyle)?.label}</b>
+                      <b>{btnStyle?.label}</b>
                     </div>
                     <div className="flex justify-between">
                       <span>لون الجداول:</span>
-                      <b>{TABLE_HEADERS.find((t) => t.key === prefs.tableHeaderColor)?.label}</b>
+                      <b>{headerTheme.label}</b>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>قالب الفاتورة:</span>
+                      <b>{pickedTemplate.label.replace(/^[①-⑥]\s*/, "")}</b>
                     </div>
                   </div>
 
-                  <button type="button" className="btn btn-green h-11 w-full text-[15.5px] font-black shadow" onClick={() => void save()} disabled={busy}>
+                  <button
+                    type="button"
+                    className="btn btn-green h-11 w-full text-[15.5px] font-black shadow"
+                    onClick={() => void save()}
+                    disabled={busy}
+                  >
                     <Save className="h-5 w-5" />
                     {busy ? "جاري التطبيق..." : "تطبيق وحفظ الإعدادات"}
                   </button>
@@ -623,6 +737,15 @@ export function SettingsForm() {
             </div>
           </div>
         </div>
+      )}
+
+      {editorOpen && (
+        <TemplateEditor
+          onClose={() => {
+            setEditorOpen(false);
+            load();
+          }}
+        />
       )}
     </Window>
   );

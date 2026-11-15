@@ -31,17 +31,24 @@ export interface ThemeDef {
 export const THEMES: ThemeDef[] = [
   {
     key: "classic-blue",
-    label: "أزرق (الافتراضي)",
-    hint: "المظهر الأزرق الكلاسيكي — مريح وواضح",
+    label: "أزرق كلاسيك (الافتراضي)",
+    hint: "الأزرق الكلاسيكي — أزرق غامق مع لمسات ذهبية",
     swatch: ["#2b74de", "#0b3fa8", "#0d3b82"],
     homeBg: "linear-gradient(135deg,#0b3370,#0b4fc0 45%,#1b6fe0 62%,#072555)",
   },
   {
-    key: "modern-dark",
-    label: "أسود",
-    hint: "أسود بالكامل — يطبّق على كل الشاشات والجداول",
-    swatch: ["#334155", "#0f172a", "#020617"],
-    homeBg: "linear-gradient(135deg,#020617,#0f172a 45%,#1e293b 65%,#020617)",
+    key: "sky-blue",
+    label: "أزرق فاتح",
+    hint: "أزرق سماوي هادئ ومريح للعين",
+    swatch: ["#4db8ff", "#1877c9", "#0d4e8f"],
+    homeBg: "linear-gradient(135deg,#0a4a7a,#0e6bb8 45%,#2a9de0 62%,#073352)",
+  },
+  {
+    key: "steel-blue",
+    label: "أزرق بترولي",
+    hint: "أزرق معدني غامق — أنيق وعملي",
+    swatch: ["#5b8fd6", "#2c5c93", "#153a5f"],
+    homeBg: "linear-gradient(135deg,#0b2540,#1a4468 45%,#2f6ba3 62%,#071a2c)",
   },
 ];
 
@@ -71,10 +78,19 @@ export const TABLE_HEADERS: Array<{ key: string; label: string; from: string; to
 
 const STORAGE_KEY = "aljamal.ui.prefs";
 
+/** تحويل أي ثيم قديم/محذوف إلى أقرب ثيم أزرق متاح */
+export function normalizeTheme(key: string | null | undefined): string {
+  const k = (key || "").trim();
+  if (THEMES.some((t) => t.key === k)) return k;
+  // الثيم الأسود حُذف نهائياً — يرجع للأزرق الافتراضي
+  if (k === "modern-dark" || k === "dark" || k === "black") return "classic-blue";
+  return "classic-blue";
+}
+
 export function applyUiPrefs(p: UiPrefs) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.setAttribute("data-theme", p.theme || "classic-blue");
+  root.setAttribute("data-theme", normalizeTheme(p.theme));
   root.setAttribute("data-buttons", p.buttonStyle || "glossy-3d");
   root.setAttribute("data-table", p.tableHeaderColor || "navy-dark");
   root.setAttribute("data-font", p.fontFamily || "cairo");
@@ -112,7 +128,7 @@ export function useUiPrefs(): Ctx {
 }
 
 const fromSettings = (s: Partial<Settings>): UiPrefs => ({
-  theme: s.theme || DEFAULT_PREFS.theme,
+  theme: normalizeTheme(s.theme),
   fontFamily: s.fontFamily || DEFAULT_PREFS.fontFamily,
   fontScale: typeof s.fontScale === "number" && s.fontScale > 0 ? s.fontScale : DEFAULT_PREFS.fontScale,
   buttonStyle: s.buttonStyle || DEFAULT_PREFS.buttonStyle,
@@ -129,6 +145,7 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UiPrefs>) };
+        parsed.theme = normalizeTheme(parsed.theme);
         setPrefs(parsed);
         setSaved(parsed);
         applyUiPrefs(parsed);
@@ -159,7 +176,12 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
       const next = { ...prefs, ...patch };
       applyUiPrefs(next);
       setPrefs(next);
-      await api<Settings>("/api/settings", { method: "PUT", json: next });
+      // نقرأ الإعدادات الحالية أولاً حتى لا نمحو بيانات المحل وقوالب الفاتورة
+      const current = await api<Settings>("/api/settings").catch(() => null);
+      await api<Settings>("/api/settings", {
+        method: "PUT",
+        json: { ...(current ?? {}), ...next },
+      });
       setSaved(next);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

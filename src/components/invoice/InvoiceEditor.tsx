@@ -38,6 +38,7 @@ import {
   Tag,
   Trash2,
   Undo2,
+  User,
   Wallet,
   X,
   XCircle,
@@ -899,6 +900,20 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
               >
                 <PdfIcon className="h-6 w-6" />
               </button>
+
+              {/* المستخدم الحالي — بجوار زر الطباعة */}
+              <div
+                className="ms-1 flex h-[32px] items-center gap-1.5 rounded-full border border-[#8fb3e0] bg-white pe-1 ps-2.5 shadow-sm"
+                title={`المستخدم الحالي: ${activeUser || settings?.userName || "FATORA"}`}
+              >
+                <User className="h-3.5 w-3.5 shrink-0 text-[#0f2942]" />
+                <span className="max-w-[110px] truncate text-[12px] font-black text-[#0f2942]">
+                  {activeUser || settings?.userName || "FATORA"}
+                </span>
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#fbbf24] to-[#d99a06] text-[11px] font-black text-[#3b2503]">
+                  {(activeUser || settings?.userName || "F").trim().charAt(0)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -1173,7 +1188,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
           </div>
 
           <div className="flex min-w-0 flex-1 items-end gap-1">
-            <div className="etab relative w-[190px] min-w-[150px] shrink-0">
+            <div className="etab relative min-w-[230px] flex-1">
               <span>الصنف</span>
               <input
                 ref={productRef}

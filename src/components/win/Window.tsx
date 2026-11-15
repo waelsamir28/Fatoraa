@@ -105,7 +105,7 @@ export function Window({
   baseH?: number;
   showBackBtn?: boolean;
 }) {
-  const { maximized, showRestore, native, toggleMaximized, minimized, setMinimized, setWindowTitle, activeUser } = useDesktop();
+  const { maximized, showRestore, native, toggleMaximized, minimized, setMinimized, setWindowTitle } = useDesktop();
   const router = useRouter();
   const [isFs, toggleFs] = useFullscreen();
   const [calc, setCalc] = useState(false);
@@ -144,19 +144,6 @@ export function Window({
           </span>
           <span dir="rtl" className="truncate text-[19px] font-extrabold pr-1">
             {title}
-          </span>
-        </div>
-
-        {/* اسم المستخدم — كارت شيك بأيقونة دائرية */}
-        <div className="app-no-drag mx-auto hidden items-center gap-2 rounded-full border border-white/25 bg-white/10 py-[3px] pe-1 ps-3 text-white backdrop-blur-md md:flex">
-          <div className="flex flex-col items-end leading-none" dir="rtl">
-            <span className="text-[9.5px] font-bold text-blue-100/80">مرحباً</span>
-            <span className="max-w-[150px] truncate text-[13px] font-black text-white">
-              {activeUser || "FATORA"}
-            </span>
-          </div>
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#fbbf24] to-[#d99a06] text-[13px] font-black text-[#3b2503] shadow-sm">
-            {(activeUser || "F").trim().charAt(0)}
           </span>
         </div>
 
@@ -301,15 +288,17 @@ export function Kpi({
   sub?: ReactNode;
 }) {
   return (
-    <div className={`kpi kpi-${color} !min-h-[74px]`}>
-      {/* التسمية على اليمين والرقم على الشمال بحجم كبير */}
-      <div className="flex h-full w-full items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-col items-start">
-          <span className="truncate text-[12.5px] font-bold opacity-95">{label}</span>
-          {sub && <span className="truncate text-[10.5px] font-bold opacity-80">{sub}</span>}
+    <div className={`kpi kpi-${color}`}>
+      {/* التسمية فوق والرقم تحتها — بمساحة كافية فمفيش تداخل */}
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center">
+        <div className="flex w-full items-center justify-center gap-1">
+          {icon}
+          <span className="truncate text-[12.5px] font-bold leading-tight opacity-95">{label}</span>
         </div>
-        {icon}
-        <div className="num shrink-0 text-[27px] font-black leading-none tracking-tight">{value}</div>
+        <div className="num w-full truncate text-center text-[26px] font-black leading-none tracking-tight">
+          {value}
+        </div>
+        {sub && <span className="truncate text-[10.5px] font-bold leading-none opacity-80">{sub}</span>}
       </div>
     </div>
   );

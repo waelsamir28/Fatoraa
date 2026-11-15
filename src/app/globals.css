@@ -278,11 +278,11 @@ body {
     border-color: #7fb0ea;
     box-shadow: 0 0 0 3px rgba(29, 111, 242, 0.13), var(--sh-md);
   }
+  /* عند الضغط: درجة أفتح بدرجتين من لون الزر نفسه — الكلام يفضل مقروء */
   .btn:active:not(:disabled) {
     transform: translateY(1px) scale(0.995);
-    box-shadow: inset 0 2px 5px rgba(11, 37, 69, 0.16);
-    /* لون ضغط واضح: مايبقاش الزر أبيض والكلام أبيض */
-    background: linear-gradient(180deg, #cfe0f5 0%, #a9c6e8 100%) !important;
+    box-shadow: inset 0 2px 5px rgba(11, 37, 69, 0.18);
+    background: linear-gradient(180deg, #ffffff 0%, #dce9f8 100%) !important;
     color: #0b2545 !important;
     border-color: #7fa6d4 !important;
   }
@@ -290,16 +290,33 @@ body {
     color: #0b2545 !important;
   }
   .btn-blue:active:not(:disabled) {
-    background: linear-gradient(180deg, #0f4bb0 0%, #0a3a8c 100%) !important;
+    background: linear-gradient(180deg, #6fa8f2 0%, #3d82e0 100%) !important;
     color: #ffffff !important;
-    border-color: #062a6b !important;
+    border-color: #1d63c4 !important;
   }
   .btn-blue:active:not(:disabled) svg {
     color: #ffffff !important;
   }
-  .btn-green:active:not(:disabled),
-  .btn-red:active:not(:disabled) {
+  .btn-blue:active:not(:disabled) {
+    background: linear-gradient(180deg, #6fa8f2 0%, #3d82e0 100%) !important;
     color: #ffffff !important;
+    border-color: #1d63c4 !important;
+  }
+  .btn-green:active:not(:disabled) {
+    background: linear-gradient(180deg, #6ee7a8 0%, #34c47a 100%) !important;
+    color: #07351f !important;
+    border-color: #12a05c !important;
+  }
+  .btn-green:active:not(:disabled) svg {
+    color: #07351f !important;
+  }
+  .btn-red:active:not(:disabled) {
+    background: linear-gradient(180deg, #fca5a0 0%, #ef5b52 100%) !important;
+    color: #3d0703 !important;
+    border-color: #cf3227 !important;
+  }
+  .btn-red:active:not(:disabled) svg {
+    color: #3d0703 !important;
   }
   .btn-green {
     color: #ffffff;
@@ -895,14 +912,13 @@ body {
     transform: translateX(24px);
     pointer-events: none;
   }
-  /* القائمة الجانبية — تصميم كبسولي حديث */
+  /* القائمة الجانبية — تصميم واضح ومقروء (خلفية كحلي + كلام أبيض) */
   .side-nav {
-    padding: 6px 5px;
+    padding: 7px 6px;
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(4, 20, 44, 0.22);
-    backdrop-filter: blur(6px);
+    background: linear-gradient(180deg, #123a63 0%, #0d2b4a 100%);
+    border: 1px solid #1e4f7d;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 8px 22px rgba(4, 20, 44, 0.32);
   }
   .side-btn {
     position: relative;
@@ -911,17 +927,17 @@ body {
     justify-content: flex-start;
     gap: 8px;
     flex: 1 1 0;
-    min-height: 28px;
-    max-height: 46px;
-    padding: 0 10px;
-    border-radius: 999px;
+    min-height: 30px;
+    max-height: 48px;
+    padding: 0 11px;
+    border-radius: 8px;
     color: #ffffff;
-    font-weight: 800;
-    font-size: 14.5px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 900;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     transition: transform 0.13s ease, background 0.16s ease, box-shadow 0.16s ease;
     overflow: hidden;
   }
@@ -929,33 +945,33 @@ body {
     content: "";
     position: absolute;
     inset-inline-start: 0;
-    top: 18%;
-    bottom: 18%;
-    width: 3px;
-    border-radius: 999px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
     background: transparent;
     transition: background 0.16s ease;
   }
   .side-btn:hover {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1));
+    background: rgba(255, 255, 255, 0.2);
     transform: translateX(-2px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
   }
   .side-btn.active {
     color: #0f2942;
     text-shadow: none;
-    background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #e8f2ff 100%);
     border-color: #f5c518;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(245, 197, 24, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   }
   .side-btn.active::before {
     background: #f5c518;
   }
   .side-btn svg {
-    width: 19px;
-    height: 19px;
+    width: 20px;
+    height: 20px;
     flex: none;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
   }
   .side-btn.active svg {
     filter: none;
@@ -1012,8 +1028,10 @@ body {
     overflow: hidden;
     display: flex;
     align-items: center;
+    justify-content: center;
+    min-height: 84px;
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 8px 10px;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.22);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 10px rgba(11, 37, 69, 0.16);
@@ -1144,222 +1162,39 @@ html[data-theme="classic-blue"] {
   --ui-side-mid: #1a5fd0;
   --ui-side-to: #0e4398;
 }
-html[data-theme="modern-dark"] {
-  --ui-title-from: #52627a;
-  --ui-title-mid: #26364c;
-  --ui-title-dark: #16202f;
-  --ui-title-to: #3a4a63;
-  --ui-title-border: #0a1220;
-  --ui-desktop-1: #22303f;
-  --ui-desktop-2: #101a26;
-  --ui-desktop-3: #070d15;
-  --ui-desktop-4: #03070c;
-  --ui-head-from: #3a4a63;
-  --ui-head-mid: #26364c;
-  --ui-head-to: #16202f;
-  --ui-side-from: #3a4a63;
-  --ui-side-mid: #26364c;
-  --ui-side-to: #16202f;
+html[data-theme="sky-blue"] {
+  --ui-title-from: #6fc6ff;
+  --ui-title-mid: #2a95e0;
+  --ui-title-dark: #1877c9;
+  --ui-title-to: #3aa4ea;
+  --ui-title-border: #0f568f;
+  --ui-desktop-1: #0e6bb8;
+  --ui-desktop-2: #0a4a7a;
+  --ui-desktop-3: #073352;
+  --ui-desktop-4: #041d2e;
+  --ui-head-from: #2a95e0;
+  --ui-head-mid: #1877c9;
+  --ui-head-to: #0f568f;
+  --ui-side-from: #2a95e0;
+  --ui-side-mid: #1877c9;
+  --ui-side-to: #0f568f;
 }
-html[data-theme="emerald-green"] {
-  --ui-title-from: #4bdcab;
-  --ui-title-mid: #0d9d70;
-  --ui-title-dark: #077a56;
-  --ui-title-to: #12b380;
-  --ui-title-border: #04402d;
-  --ui-desktop-1: #0a6b4e;
-  --ui-desktop-2: #065239;
-  --ui-desktop-3: #03301f;
-  --ui-desktop-4: #011912;
-  --ui-head-from: #10a97a;
-  --ui-head-mid: #077a56;
-  --ui-head-to: #055c41;
-  --ui-side-from: #10a97a;
-  --ui-side-mid: #077a56;
-  --ui-side-to: #055c41;
-}
-html[data-theme="royal-purple"] {
-  --ui-title-from: #ab8bff;
-  --ui-title-mid: #7c3aed;
-  --ui-title-dark: #5b21b6;
-  --ui-title-to: #8b5cf6;
-  --ui-title-border: #2e1065;
-  --ui-desktop-1: #4c1d95;
-  --ui-desktop-2: #3a1578;
-  --ui-desktop-3: #1f1548;
-  --ui-desktop-4: #100b28;
-  --ui-head-from: #7c3aed;
-  --ui-head-mid: #6828d6;
-  --ui-head-to: #521ea8;
-  --ui-side-from: #7c3aed;
-  --ui-side-mid: #5b21b6;
-  --ui-side-to: #46168f;
-}
-html[data-theme="dark-gold"] {
-  --ui-title-from: #f7b23a;
-  --ui-title-mid: #bf6f0a;
-  --ui-title-dark: #8a4f06;
-  --ui-title-to: #e08e12;
-  --ui-title-border: #2a1a05;
-  --ui-desktop-1: #3a2a12;
-  --ui-desktop-2: #241a0c;
-  --ui-desktop-3: #120d07;
-  --ui-desktop-4: #070503;
-  --ui-head-from: #b8690a;
-  --ui-head-mid: #8a4f06;
-  --ui-head-to: #6a3c05;
-  --ui-side-from: #b8690a;
-  --ui-side-mid: #8a4f06;
-  --ui-side-to: #6a3c05;
-}
-html[data-theme="crimson-red"] {
-  --ui-title-from: #ff8a7d;
-  --ui-title-mid: #dc2f24;
-  --ui-title-dark: #b31c14;
-  --ui-title-to: #ef4034;
-  --ui-title-border: #4a0b07;
-  --ui-desktop-1: #7f221b;
-  --ui-desktop-2: #5a1712;
-  --ui-desktop-3: #2a0a07;
-  --ui-desktop-4: #140403;
-  --ui-head-from: #dc2f24;
-  --ui-head-mid: #b31c14;
-  --ui-head-to: #8f120c;
-  --ui-side-from: #dc2f24;
-  --ui-side-mid: #b31c14;
-  --ui-side-to: #8f120c;
-}
-
-
-/* جدول العملاء — تصميم فاتح وأنيق */
-.parties-table {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.parties-table thead th {
-  background: #f1f6fc;
-  color: #0f2942;
-  font-size: 13px;
-  font-weight: 900;
-  padding: 10px 8px;
-  border-bottom: 2px solid #dbe7f5;
-  text-align: center;
-}
-.parties-table tbody td {
-  padding: 9px 8px;
-  border-bottom: 1px solid #eef3fa;
-  text-align: center;
-  vertical-align: middle;
-  background: #ffffff;
-}
-.parties-table tbody tr:nth-child(even) td {
-  background: #fafcff;
-}
-.parties-table tbody tr:hover td {
-  background: #eef6ff;
-}
-.parties-table tbody tr.sel td {
-  background: #e3effd !important;
-}
-.parties-table tbody tr.empty td {
-  background: #ffffff;
-  color: #94a3b8;
-}
-
-/* ==================================================================
-   توسيط الكلام والأرقام داخل الخانات والجداول — في كل البرنامج
-   ================================================================== */
-.win-input,
-.cell-input {
-  text-align: center;
-}
-.dgrid tbody td,
-.dgrid-invoice tbody td,
-.dgrid tfoot td {
-  text-align: center;
-  vertical-align: middle;
-}
-.dgrid tbody td .num,
-.dgrid-invoice tbody td .num,
-.dgrid tfoot td .num {
-  display: inline-block;
-  text-align: center;
-  width: 100%;
-}
-.kpi,
-.kpi * {
-  text-align: center;
-}
-
-/* ==================================================================
-   الثيم الأسود — يطبّق على كل الشاشات والجداول والفواتير
-   ================================================================== */
-html[data-theme="modern-dark"] body {
-  background: #0b1220;
-  color: #e2e8f0;
-}
-/* الجداول: بدون إطارات زرقاء ولا ترويسة ملوّنة */
-html[data-theme="modern-dark"] .dgrid,
-html[data-theme="modern-dark"] .dgrid-invoice {
-  border-color: #2a3648 !important;
-  background: #0f172a !important;
-  color: #dbe4f0;
-}
-html[data-theme="modern-dark"] .dgrid thead th,
-html[data-theme="modern-dark"] .dgrid-invoice thead th {
-  background: #1a2436 !important;
-  color: #f1f5f9 !important;
-  border-color: #2a3648 !important;
-  text-shadow: none;
-}
-html[data-theme="modern-dark"] .dgrid tbody td,
-html[data-theme="modern-dark"] .dgrid-invoice tbody td {
-  border-color: #22304a !important;
-  color: #dbe4f0;
-}
-html[data-theme="modern-dark"] .dgrid tbody tr:nth-child(even) td {
-  background: #131d30 !important;
-}
-html[data-theme="modern-dark"] .dgrid tbody tr.clickable:hover td {
-  background: #1c2942 !important;
-}
-html[data-theme="modern-dark"] .dgrid tbody tr.sel td,
-html[data-theme="modern-dark"] .dgrid-invoice tbody tr.sel td {
-  background: #1d3a63 !important;
-  color: #fff !important;
-}
-html[data-theme="modern-dark"] .dgrid tfoot td {
-  background: #16202f !important;
-  color: #e2e8f0 !important;
-}
-/* البانلات والحقول */
-html[data-theme="modern-dark"] .panel,
-html[data-theme="modern-dark"] .win-input {
-  background: #101a2b !important;
-  border-color: #2a3648 !important;
-  color: #e5edf8 !important;
-}
-html[data-theme="modern-dark"] .win-input::placeholder {
-  color: #6b7c94;
-}
-html[data-theme="modern-dark"] .panel-head,
-html[data-theme="modern-dark"] .navy-head {
-  background: linear-gradient(180deg, #1e2a3d, #0f1726) !important;
-  color: #e8eef8 !important;
-  border-color: #2a3648 !important;
-}
-/* إزالة الإطارات الزرقاء في شاشة الفاتورة */
-html[data-theme="modern-dark"] .border-\[\#15459b\],
-html[data-theme="modern-dark"] .border-\[\#a9c3e2\],
-html[data-theme="modern-dark"] .border-\[\#c3d6ec\],
-html[data-theme="modern-dark"] .border-\[\#8ba3c4\],
-html[data-theme="modern-dark"] .border-\[\#8fb3e0\] {
-  border-color: #2a3648 !important;
-}
-/* حالة الضغط على الأزرار: مايبقاش أبيض على أبيض */
-html[data-theme="modern-dark"] .btn:active:not(:disabled) {
-  background: #24384f !important;
-  color: #ffffff !important;
+html[data-theme="steel-blue"] {
+  --ui-title-from: #6fa3e0;
+  --ui-title-mid: #3a6ea5;
+  --ui-title-dark: #2c5c93;
+  --ui-title-to: #4a7fb8;
+  --ui-title-border: #153a5f;
+  --ui-desktop-1: #1a4468;
+  --ui-desktop-2: #0b2540;
+  --ui-desktop-3: #071a2c;
+  --ui-desktop-4: #030d17;
+  --ui-head-from: #3a6ea5;
+  --ui-head-mid: #2c5c93;
+  --ui-head-to: #153a5f;
+  --ui-side-from: #3a6ea5;
+  --ui-side-mid: #2c5c93;
+  --ui-side-to: #153a5f;
 }
 
 /* ألوان ترويسة الجداول */
@@ -1486,6 +1321,22 @@ html[data-font="cairo-play"] body {
     margin: 0 !important;
     border: 0 !important;
     max-width: none !important;
+  }
+  /* ورقة الفاتورة الجديدة (محرر القوالب) */
+  .print-sheet-wrap {
+    padding: 0 !important;
+  }
+  .print-sheet-wrap > .invoice-sheet {
+    box-shadow: none !important;
+    margin: 0 auto !important;
+  }
+  /* منع كسر صفوف جدول الأصناف بين صفحتين */
+  .invoice-sheet table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .invoice-sheet thead {
+    display: table-header-group;
   }
 }
 /* ===== تسريع البرنامج وإلغاء حركة ارتفاع الأزرار ===== */

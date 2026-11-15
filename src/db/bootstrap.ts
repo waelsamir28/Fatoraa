@@ -264,6 +264,7 @@ ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "expenses" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "cash_moves" ADD COLUMN IF NOT EXISTS "shift_id" integer;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "invoice_layout" text DEFAULT '' NOT NULL;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 
