@@ -148,8 +148,13 @@ export function GlobalShortcuts() {
           break;
       }
     };
+    const openSearch = () => setSearch(true);
+    window.addEventListener("fatora:search", openSearch);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("fatora:search", openSearch);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [router, inEditor]);
 
   const syncLabel = lastSyncAt();
