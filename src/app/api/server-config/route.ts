@@ -76,12 +76,39 @@ export function GET() {
     const saved = (await getConfig(DB_CONFIG_KEY).catch(() => "")) || "";
     const envUrl = process.env.DATABASE_URL || "";
     const driver = process.env.DB_DRIVER || (envUrl ? "postgres" : "pglite");
+    const localChoice = ((await getConfig("db.local.mode").catch(() => "")) || "") === "1";
+    const dataDir = process.env.PGLITE_DATA_DIR || (process.env.VERCEL ? "/tmp/fatora-data" : "./aljamal-data");
+    const embedded = driver === "pglite";
+    // حجم ملف قاعدة البيانات المدمجة (لو موجود)
+    let dbSizeBytes = 0;
+    try {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const walk = (dir: string): number => {
+        let total = 0;
+        for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+          const full = path.join(dir, f.name);
+          if (f.isDirectory()) total += walk(full);
+          else if (f.isFile()) total += fs.statSync(full).size;
+        }
+        return total;
+      };
+      if (fs.existsSync(dataDir)) dbSizeBytes = walk(dataDir);
+    } catch {
+      /* بيئة للقراءة فقط */
+    }
     return NextResponse.json({
       hasSaved: Boolean(saved),
       savedMasked: maskDatabaseUrl(saved),
       envConfigured: Boolean(envUrl),
       envMasked: maskDatabaseUrl(envUrl),
-      mode: driver === "pglite" ? "embedded" : "postgres",
+      mode: embedded ? "embedded" : "postgres",
+      activeMode: embedded ? "local" : "cloud",
+      localChoice,
+      dataDir,
+      dbSizeBytes,
+      canSwitchLocal: process.platform !== "win32" || !process.env.VERCEL,
+      serverless: Boolean(process.env.VERCEL),
       isOwner: session.role === "owner",
     });
   });
@@ -104,6 +131,45 @@ export function POST(req: Request) {
     }
 
     const b = await readJson(req);
+
+    // ===== اختيار قاعدة بيانات محلية (مدمجة — تعمل بدون إنترنت ولا تحتاج سيرفر) =====
+    if (str(b.mode) === "local") {
+      await setConfig("db.local.mode", "1").catch(() => undefined);
+      await deleteConfig(DB_CONFIG_KEY).catch(() => undefined);
+      const winnerJson = JSON.stringify(
+        {
+          databaseUrl: "",
+          note: "البرنامج يستخدم قاعدة البيانات المحلية المدمجة (PGlite) — لا حاجة لأي سيرفر.",
+          mode: "local",
+          savedAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      );
+      const newEnv = [
+        "# قاعدة بيانات محلية مدمجة (بدون إنترنت) — FATORA",
+        "DB_DRIVER=pglite",
+        "# اختياري: مكان تخزين البيانات",
+        "# PGLITE_DATA_DIR=C:\\FATORA\\data",
+        "",
+      ].join("\n");
+      return NextResponse.json({
+        ok: true,
+        mode: "local",
+        message: "تم اختيار قاعدة البيانات المحلية المدمجة — البرنامج يعمل بدون إنترنت وبلا أي سيرفر.",
+        envFile: newEnv,
+        settingsFile: winnerJson,
+        steps: [
+          "نسخة الويندوز: لا تحتاج أي إعداد — البرنامج بيستخدم القاعدة المدمجة تلقائياً.",
+          "نسخة الويب/سيرفر: ضع DB_DRIVER=pglite في .env (أو امسح DATABASE_URL) ثم أعد التشغيل.",
+          "البيانات تُحفظ في مجلد DATA على الجهاز — اعمل نسخة احتياطية دورية من شاشة النسخ الاحتياطي.",
+        ],
+      });
+    }
+
+    // إلغاء الوضع المحلي لو المستخدم اختار السحابة
+    await deleteConfig("db.local.mode").catch(() => undefined);
+
     const url = str(b.databaseUrl).trim();
     if (!url) {
       return NextResponse.json({ error: "الصق رابط قاعدة البيانات الأول" }, { status: 400 });
