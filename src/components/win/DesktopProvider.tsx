@@ -166,11 +166,14 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       b.isMaximized().then(setNativeMax).catch(() => undefined);
       return b.onMaximizedChange(setNativeMax);
     }
+    // البرنامج يفتح دائماً بوضع التكبير (ملء الشاشة) — يمكن التصغير يدوياً بعد الفتح
     try {
-      if (localStorage.getItem("aljamal.max") === "0") setMaximized(false);
+      localStorage.removeItem("aljamal.max");
     } catch {
       /* ignore */
     }
+    const id = setTimeout(() => setMaximized(true), 0);
+    void id;
     // تسجيل الـ service worker (يعمل أيضاً على localhost و روابط المشاركة https)
     if ("serviceWorker" in navigator) {
       const secure = window.location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(window.location.hostname);
@@ -189,15 +192,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       b.toggleMaximize();
       return;
     }
-    setMaximized((m) => {
-      const v = !m;
-      try {
-        localStorage.setItem("aljamal.max", v ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return v;
-    });
+    setMaximized((m) => !m);
   }, []);
 
   const setMinimized = useCallback((v: boolean) => {
