@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from "react";
 import {
   Building2,
@@ -138,6 +139,9 @@ export function buildNavGroups(lowStock: number): NavGroup[] {
   ];
 }
 
+const isActive = (pathname: string, href: string) =>
+  href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+
 export function HomeSidebar({
   activeUser,
   lowStock,
@@ -154,6 +158,7 @@ export function HomeSidebar({
   const [openGroup, setOpenGroup] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canUp, setCanUp] = useState(false);
+  const pathname = usePathname();
   const [canDown, setCanDown] = useState(false);
 
   // استرجاع الحالة المحفوظة (بعد أول رسم لتجنب اختلاف الترطيب)
@@ -318,7 +323,7 @@ export function HomeSidebar({
                 <Link
                   key={`flat-${it.href}-${it.label}`}
                   href={it.href}
-                  className="nav-btn nav-btn--flat"
+                  className={`nav-btn nav-btn--flat ${isActive(pathname, it.href) ? "is-active" : ""}`}
                   style={{ borderInlineStartColor: g.tone }}
                   title={it.label}
                 >
@@ -365,7 +370,7 @@ export function HomeSidebar({
                     <Link
                       key={it.href + it.label}
                       href={it.href}
-                      className="nav-btn"
+                      className={`nav-btn ${isActive(pathname, it.href) ? "is-active" : ""}`}
                       title={mini ? it.label : undefined}
                     >
                       <it.Icon className="nav-btn-icon" />

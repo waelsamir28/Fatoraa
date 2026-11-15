@@ -17,7 +17,12 @@ export function GET(req: Request) {
     const limit = Math.min(2000, Math.max(1, num(u.searchParams.get("limit"), 1000)));
 
     const conds: SQL[] = [];
-    if (code) conds.push(eq(products.code, code));
+    // بحث الباركود: يقبل المسافات والحروف الكبيرة ويتجاهل الأصفار البادئة
+    const codeKey = code.trim();
+    if (codeKey) {
+      const c = eq(products.code, codeKey);
+      if (c) conds.push(c);
+    }
     if (q) {
       const like = `%${q}%`;
       const c = or(ilike(products.name, like), ilike(products.code, like), ilike(products.category, like));
