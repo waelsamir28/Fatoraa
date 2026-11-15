@@ -24,6 +24,8 @@ export interface LicenseData {
   activationKey?: string | null;
   /** تاريخ بدء الاشتراك (يُحسب منه انتهاء السنة/السنتين) */
   activatedAt?: string | null;
+  /** أجهزة إضافية تُستخدم بنفس كود التفعيل */
+  extraDevices?: string[];
 }
 
 const CFG_DEVICE = "license.device_id";

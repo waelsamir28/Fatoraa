@@ -353,6 +353,26 @@ export const backups = pgTable(
   (t) => [index("backups_created_idx").on(t.createdAt)],
 );
 
+/** سجل كل عمليات التفعيل والتجديد (للمراجعة والحسابات) */
+export const licenseActivations = pgTable(
+  "license_activations",
+  {
+    id: serial("id").primaryKey(),
+    deviceId: text("device_id").notNull().default(""),
+    plan: text("plan").notNull().default(""), // year | tier2 | lifetime
+    months: integer("months").notNull().default(0),
+    price: doublePrecision("price").notNull().default(0),
+    kind: text("kind").notNull().default("activate"), // activate | renew | upgrade | reissue
+    activationKey: text("activation_key").notNull().default(""),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
+    /** الأجهزة الإضافية المرتبطة بنفس الكود */
+    extraDevices: text("extra_devices").notNull().default("[]"),
+    notes: text("notes").notNull().default(""),
+    createdAt: ts("created_at"),
+  },
+  (t) => [index("license_act_device_idx").on(t.deviceId), index("license_act_created_idx").on(t.createdAt)],
+);
+
 /** إعدادات تشغيل حساسة (مثل توكن تيليجرام) — لا تُعرض للواجهة كنص صريح */
 export const appConfig = pgTable("app_config", {
   key: text("key").primaryKey(),

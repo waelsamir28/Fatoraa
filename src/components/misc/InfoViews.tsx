@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, Gift, Loader2, MessageCircle, Phone, Power, RefreshCw, ShieldCheck } from "lucide-react";
+import { BadgeCheck, CheckCircle2, Clock, Gift, Layers, Loader2, MessageCircle, Phone, Power, RefreshCw, ShieldCheck } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { CartLogo, IconInfo, IconSupport } from "@/components/icons/AppIcons";
 import { APP_BRAND, APP_NAME, APP_TAGLINE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PHONE, SUPPORT_TEL, WHATSAPP_URL } from "@/lib/constants";
@@ -130,6 +131,22 @@ export function AboutView() {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 px-6 pb-3">
+            <Link
+              href="/subscription"
+              className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-b from-[#2f86e8] to-[#1a5fc0] px-4 text-[13.5px] font-black text-white shadow"
+            >
+              <BadgeCheck className="h-4 w-4" />
+              حالة اشتراكي
+            </Link>
+            <Link
+              href="/plans"
+              className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#c9d8ee] bg-white px-4 text-[13.5px] font-black text-[#0f2942]"
+            >
+              <Layers className="h-4 w-4 text-[#1a6fd0]" />
+              أنظمة التفعيل والأسعار
+            </Link>
           </div>
           <div className="px-6 pb-4">
             <UpdatePanel />

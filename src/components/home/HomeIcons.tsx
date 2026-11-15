@@ -486,3 +486,30 @@ export function RailInfo({ className }: P) {
     </svg>
   );
 }
+
+/** درع بعلامة صح — حالة الاشتراك */
+export function RailShield({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <path
+        d="M24 6l14 5v11c0 9-6 15-14 18-8-3-14-9-14-18V11l14-5z"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      <path d="M17 23l5 5 10-10" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+/** بطاقة ترخيص — لوحة التراخيص */
+export function RailCard({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <rect x="5" y="11" width="38" height="26" rx="5" stroke="currentColor" strokeWidth="3.2" fill="none" />
+      <path d="M5 20h38" stroke="currentColor" strokeWidth="3.2" />
+      <path d="M12 30h9" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+    </svg>
+  );
+}

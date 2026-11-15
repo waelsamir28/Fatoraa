@@ -36,14 +36,17 @@ import {
   IcWarehouse,
   IcCartPlus,
   RailBackup,
+  RailCard,
   RailDatabase,
   RailHome,
   RailInfo,
   RailSupport,
   RailSettings,
+  RailShield,
   RailShifts,
   RailUsers,
 } from "@/components/home/HomeIcons";
+
 
 type Icon = ComponentType<{ className?: string }>;
 type RawIcon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -147,6 +150,8 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
   { href: "/connection", label: "ربط قاعدة البيانات", Icon: RailDatabase },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: RailBackup },
+  { href: "/subscription", label: "حالة الاشتراك", Icon: RailShield },
+  { href: "/licenses", label: "لوحة التراخيص", Icon: RailCard },
   { href: "/support", label: "الدعم الفني", Icon: RailSupport },
   { href: "/about", label: "معلومات البرنامج", Icon: RailInfo },
   { href: null, label: "خروج", Icon: IcPower as unknown as RawIcon, danger: true, action: "exit" },
@@ -162,6 +167,11 @@ export function HomeScreen() {
   const [exportOpen, setExportOpen] = useState(false);
   const [avatar, setAvatar] = useState("");
   const [bannerImg, setBannerImg] = useState("");
+  const [lic, setLic] = useState<{
+    plan: string | null;
+    planLabel: string;
+    planDaysLeft: number | null;
+  } | null>(null);
   const [railImg, setRailImg] = useState("");
   const [openSection, setOpenSection] = useState<Record<string, boolean>>({});
   const [now, setNow] = useState<Date | null>(null);
@@ -182,6 +192,9 @@ export function HomeScreen() {
     }
     api<{ avatar: string }>("/api/users/avatar")
       .then((r) => alive && setAvatar(r.avatar))
+      .catch(() => undefined);
+    api<{ plan: string | null; planLabel: string; planDaysLeft: number | null }>("/api/license")
+      .then((r) => alive && setLic(r))
       .catch(() => undefined);
     // صور البانر وخلفية الأزرار (يتم رفعها من الإعدادات)
     (["banner", "rail"] as const).forEach((kind) => {
@@ -398,6 +411,17 @@ export function HomeScreen() {
                 <span className="hs-footer__low">النواقص: <b className="num">{stats?.lowStock ?? 0}</b></span>
                 <span className="hs-footer__sep">|</span>
                 <span>الإصدار {APP_VERSION}</span>
+                {lic && lic.plan && (
+                  <>
+                    <span className="hs-footer__sep">|</span>
+                    <span className={lic.planDaysLeft !== null && lic.planDaysLeft <= 30 ? "hs-footer__low" : ""}>
+                      {lic.planLabel}:{" "}
+                      <b className="num">
+                        {lic.plan === "lifetime" ? "مدى الحياة" : `${lic.planDaysLeft ?? 0} يوم`}
+                      </b>
+                    </span>
+                  </>
+                )}
                 <span className="hs-footer__sep">|</span>
                 <span>الدعم: <b className="num">{SUPPORT_PHONE}</b></span>
               </span>

@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { ActivationPlans } from "@/components/win/ActivationPlans";
+import type { PlanKey } from "@/lib/license-plans";
 
 export function PlansPageClient() {
   const [machineId, setMachineId] = useState("");
+  const [plan, setPlan] = useState<PlanKey | null>(null);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +17,10 @@ export function PlansPageClient() {
     fetch("/api/license")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (alive && d?.machineId) setMachineId(String(d.machineId));
+        if (!alive || !d) return;
+        if (d.machineId) setMachineId(String(d.machineId));
+        if (d.plan) setPlan(d.plan as PlanKey);
+        if (typeof d.planDaysLeft === "number") setDaysLeft(d.planDaysLeft);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -46,7 +52,12 @@ export function PlansPageClient() {
         </div>
       ) : (
         <div className="mx-auto w-full max-w-[1000px] px-3">
-          <ActivationPlans machineId={machineId} standalone />
+          <ActivationPlans
+            machineId={machineId}
+            currentPlan={plan}
+            currentDaysLeft={daysLeft}
+            standalone
+          />
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check, Layers, Tag } from "lucide-react";
 import { ActivationPlans } from "@/components/win/ActivationPlans";
+import { RenewalReminder } from "@/components/license/RenewalReminder";
 import { SUPPORT_PHONE } from "@/lib/constants";
 import { resolveLogo } from "@/lib/logo";
 
@@ -92,6 +93,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
+      <RenewalReminder />
 
       {/* ===== نافذة التهانئة بعد التفعيل — بنفس هوية البرنامج ===== */}
       {activated && (
@@ -304,7 +306,12 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
 
       {/* ===== صفحة أنظمة التفعيل (الأسعار والمدد) ===== */}
       {info && modalOpen && showPlans && (
-        <ActivationPlans machineId={info.machineId} onClose={() => setShowPlans(false)} />
+        <ActivationPlans
+          machineId={info.machineId}
+          currentPlan={(info.plan as never) || null}
+          currentDaysLeft={info.planDaysLeft ?? null}
+          onClose={() => setShowPlans(false)}
+        />
       )}
     </>
   );
