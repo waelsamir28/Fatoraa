@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   customBigTitle: "FATORA",
   customTagline: "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",
   invoiceTemplate: "template-modern-a5",
+  invoiceLayout: "",
   fontScale: 100,
 };
 

@@ -26,7 +26,7 @@ export const settings = pgTable("settings", {
   salesRep: text("sales_rep").notNull().default(""),
   invoiceFooter: text("invoice_footer").notNull().default(""),
   // تخصيص المظهر
-  theme: text("theme").notNull().default("classic-blue"), // classic-blue | modern-dark | emerald-green | royal-purple | dark-gold
+  theme: text("theme").notNull().default("classic-blue"), // classic-blue | sky-blue | steel-blue (أزرق فقط)
   buttonStyle: text("button_style").notNull().default("glossy-3d"), // glossy-3d | modern-flat | soft-rounded | pos-tactile
   fontFamily: text("font_family").notNull().default("cairo"), // cairo | tajawal | almarai | cairo-play
   tableHeaderColor: text("table_header_color").notNull().default("navy-dark"), // navy-dark | slate-deep | royal-blue | charcoal | forest
@@ -39,6 +39,8 @@ export const settings = pgTable("settings", {
   customBigTitle: text("custom_big_title").notNull().default("FATORA"),
   customTagline: text("custom_tagline").notNull().default("إدارة احترافية .. لمحل تجاري أكثر نجاحاً"),
   invoiceTemplate: text("invoice_template").notNull().default("template-modern-a5"),
+  /** إعدادات محرّر قوالب الفاتورة (JSON) — ترويسة، تذييل، حجم، إظهار الأجزاء */
+  invoiceLayout: text("invoice_layout").notNull().default(""),
   fontScale: doublePrecision("font_scale").notNull().default(100), // template-classic-a5 | template-modern-a5 | template-pos-thermal
   updatedAt: ts("updated_at"),
 });

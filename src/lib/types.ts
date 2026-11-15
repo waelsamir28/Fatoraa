@@ -14,7 +14,7 @@ export interface Settings {
   salesRep: string;
   invoiceFooter: string;
   // التخصيص والثيمات
-  theme: string; // classic-blue | modern-dark | emerald-green | royal-purple | dark-gold
+  theme: string; // classic-blue | sky-blue | steel-blue
   buttonStyle: string; // glossy-3d | modern-flat | soft-rounded | pos-tactile
   fontFamily: string; // cairo | tajawal | almarai | cairo-play
   tableHeaderColor: string; // navy-dark | slate-deep | royal-blue | charcoal | forest
@@ -24,8 +24,10 @@ export interface Settings {
   showBigTitle: boolean;
   customBigTitle: string;
   customTagline: string;
-  invoiceTemplate: string; // template-classic-a5 | template-modern-a5 | template-pos-thermal
+  invoiceTemplate: string; // template-modern-a5 | template-classic-a5 | template-lines-a5 | template-minimal-a5 | template-pos-thermal | template-a4-full
   fontScale: number; // 80 .. 130 (نسبة حجم الخط)
+  /** إعدادات محرّر قوالب الفاتورة (JSON) */
+  invoiceLayout: string;
 }
 
 export interface Product {

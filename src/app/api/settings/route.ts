@@ -31,7 +31,9 @@ export function PUT(req: Request) {
         salesRep: str(b.salesRep),
         invoiceFooter: str(b.invoiceFooter),
         // تخصيص المظهر
-        theme: str(b.theme) || "classic-blue",
+        theme: ["classic-blue", "sky-blue", "steel-blue"].includes(str(b.theme))
+          ? str(b.theme)
+          : "classic-blue",
         buttonStyle: str(b.buttonStyle) || "glossy-3d",
         fontFamily: str(b.fontFamily) || "cairo",
         tableHeaderColor: str(b.tableHeaderColor) || "navy-dark",
@@ -42,6 +44,11 @@ export function PUT(req: Request) {
         customBigTitle: str(b.customBigTitle) || "FATORA",
         customTagline: str(b.customTagline) || DEFAULT_SETTINGS.customTagline,
         invoiceTemplate: str(b.invoiceTemplate) || "template-modern-a5",
+        // إعدادات محرّر القوالب (JSON) — تُحفظ كما هي
+        invoiceLayout:
+          typeof b.invoiceLayout === "string"
+            ? str(b.invoiceLayout).slice(0, 4000)
+            : undefined,
         fontScale: Math.min(130, Math.max(70, num(b.fontScale, 100))),
         updatedAt: new Date(),
       })
