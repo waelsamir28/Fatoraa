@@ -161,6 +161,8 @@ export function HomeScreen() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [avatar, setAvatar] = useState("");
+  const [bannerImg, setBannerImg] = useState("");
+  const [railImg, setRailImg] = useState("");
   const [openSection, setOpenSection] = useState<Record<string, boolean>>({});
   const [now, setNow] = useState<Date | null>(null);
 
@@ -181,6 +183,16 @@ export function HomeScreen() {
     api<{ avatar: string }>("/api/users/avatar")
       .then((r) => alive && setAvatar(r.avatar))
       .catch(() => undefined);
+    // صور البانر وخلفية الأزرار (يتم رفعها من الإعدادات)
+    (["banner", "rail"] as const).forEach((kind) => {
+      api<{ url: string }>(`/api/home/images?kind=${kind}`)
+        .then((r) => {
+          if (!alive || !r.url) return;
+          if (kind === "banner") setBannerImg(r.url);
+          else setRailImg(r.url);
+        })
+        .catch(() => undefined);
+    });
     api<Settings>("/api/settings")
       .then((st) => {
         if (!alive) return;
@@ -247,7 +259,10 @@ export function HomeScreen() {
         <Image src="/images/home-shell.jpg" alt="" fill priority sizes="1600px" className="hs-shell" />
 
         {/* ================= الترويسة: لوجو كبير + صورة المستخدم يمين ================= */}
-        <div className="hs-top">
+        <div
+          className="hs-top"
+          style={bannerImg ? { backgroundImage: `url("${bannerImg}")` } : undefined}
+        >
 
           {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
           <div className="hs-user">
@@ -269,7 +284,7 @@ export function HomeScreen() {
         {/* ================= المحتوى: الكروت + القائمة اليمنى ================= */}
         <div className="hs-body">
           {/* ---- يمين: القائمة الثابتة ---- */}
-          <nav className="hs-rail">
+          <nav className="hs-rail" style={railImg ? { backgroundImage: `url("${railImg}")` } : undefined}>
             <div className="hs-rail__inner">
             {RAIL.map((r) => {
               const on = r.href ? (r.href === "/" ? pathname === "/" : pathname === r.href || pathname.startsWith(`${r.href}/`)) : false;
