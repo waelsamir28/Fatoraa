@@ -400,9 +400,12 @@ function MessageBox({ dialog, onClose }: { dialog: DialogState; onClose: (v: boo
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex items-start gap-4 bg-white p-5">
+        {/* الكلام في وسط الرسالة */}
+        <div className="flex flex-col items-center gap-3 bg-white px-6 py-5 text-center">
           {icon}
-          <p className="whitespace-pre-line pt-1 text-[16px] font-bold leading-relaxed text-[#0b2350]">{dialog.text}</p>
+          <p className="whitespace-pre-line text-center text-[16px] font-bold leading-relaxed text-[#0b2350]">
+            {dialog.text}
+          </p>
         </div>
         <div className="win-dialog-footer">
           <button

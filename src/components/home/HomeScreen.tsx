@@ -176,7 +176,11 @@ export function HomeScreen() {
           <span className="sep" />
           <span>العملاء: <b>{stats?.counts.customers ?? "-"}</b></span>
           <span className="sep" />
-          <span className={stats?.counts.lowStock ? "font-black text-red-600" : ""}>النواقص: {stats?.counts.lowStock ?? 0}</span>
+          {/* النواقص: الكلمة والرقم باللون الأحمر دايماً */}
+          <span className="flex items-center gap-1 font-black text-red-600">
+            <span>النواقص:</span>
+            <b className="num text-[14px] text-red-600">{stats?.counts.lowStock ?? 0}</b>
+          </span>
           <span className="ms-auto flex items-center gap-2">
             <button type="button" className="font-black text-blue-800 underline-offset-2 hover:underline" onClick={toggleSidebar}>
               {sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية"}

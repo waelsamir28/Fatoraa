@@ -281,6 +281,25 @@ body {
   .btn:active:not(:disabled) {
     transform: translateY(1px) scale(0.995);
     box-shadow: inset 0 2px 5px rgba(11, 37, 69, 0.16);
+    /* لون ضغط واضح: مايبقاش الزر أبيض والكلام أبيض */
+    background: linear-gradient(180deg, #cfe0f5 0%, #a9c6e8 100%) !important;
+    color: #0b2545 !important;
+    border-color: #7fa6d4 !important;
+  }
+  .btn:active:not(:disabled) svg {
+    color: #0b2545 !important;
+  }
+  .btn-blue:active:not(:disabled) {
+    background: linear-gradient(180deg, #0f4bb0 0%, #0a3a8c 100%) !important;
+    color: #ffffff !important;
+    border-color: #062a6b !important;
+  }
+  .btn-blue:active:not(:disabled) svg {
+    color: #ffffff !important;
+  }
+  .btn-green:active:not(:disabled),
+  .btn-red:active:not(:disabled) {
+    color: #ffffff !important;
   }
   .btn-green {
     color: #ffffff;
@@ -844,11 +863,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    border-radius: 12px;
+    gap: 2px;
+    border-radius: 10px;
     color: var(--c-ink);
     font-weight: 900;
-    font-size: 17px;
+    font-size: 13px;
     background: linear-gradient(180deg, #ffffff 0%, #f7fbff 62%, #e9f2fd 100%);
     border: 1px solid #dbe7f5;
     box-shadow: var(--sh-sm);
@@ -861,9 +880,9 @@ body {
     box-shadow: 0 12px 24px rgba(20, 60, 120, 0.16), 0 0 0 3px rgba(29, 111, 242, 0.12);
   }
   .tile svg {
-    width: 54px;
+    width: 38px;
     height: auto;
-    filter: drop-shadow(0 3px 3px rgba(11, 37, 69, 0.16));
+    filter: drop-shadow(0 2px 2px rgba(11, 37, 69, 0.14));
   }
   .side-nav {
     transition: width 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
@@ -876,40 +895,70 @@ body {
     transform: translateX(24px);
     pointer-events: none;
   }
+  /* القائمة الجانبية — تصميم كبسولي حديث */
+  .side-nav {
+    padding: 6px 5px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 18px rgba(4, 20, 44, 0.22);
+    backdrop-filter: blur(6px);
+  }
   .side-btn {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 8px;
     flex: 1 1 0;
-    min-height: 30px;
-    max-height: 52px;
-    padding: 0 12px;
-    border-radius: 9px;
+    min-height: 28px;
+    max-height: 46px;
+    padding: 0 10px;
+    border-radius: 999px;
     color: #ffffff;
-    font-weight: 900;
-    font-size: 17px;
-    background: linear-gradient(180deg, var(--ui-side-from) 0%, var(--ui-side-mid) 50%, var(--ui-side-to) 100%);
-    border: 1px solid var(--ui-title-border);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 5px rgba(11, 37, 69, 0.18);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    transition: transform 0.13s ease, filter 0.13s ease, background 0.13s ease;
+    font-weight: 800;
+    font-size: 14.5px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: transform 0.13s ease, background 0.16s ease, box-shadow 0.16s ease;
+    overflow: hidden;
+  }
+  .side-btn::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 18%;
+    bottom: 18%;
+    width: 3px;
+    border-radius: 999px;
+    background: transparent;
+    transition: background 0.16s ease;
   }
   .side-btn:hover {
-    filter: brightness(1.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1));
     transform: translateX(-2px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   }
   .side-btn.active {
-    color: var(--c-ink);
+    color: #0f2942;
     text-shadow: none;
-    background: linear-gradient(180deg, #ffffff 0%, #f0f6fd 100%);
-    border: 2px solid #f5c518;
-    box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.22);
+    background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%);
+    border-color: #f5c518;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22), inset 0 0 0 1px rgba(245, 197, 24, 0.5);
+  }
+  .side-btn.active::before {
+    background: #f5c518;
   }
   .side-btn svg {
-    width: 26px;
-    height: 26px;
+    width: 19px;
+    height: 19px;
     flex: none;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+  }
+  .side-btn.active svg {
+    filter: none;
   }
   .phone-pill {
     display: flex;
@@ -961,8 +1010,10 @@ body {
   .kpi {
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
     border-radius: 12px;
-    padding: 11px 13px;
+    padding: 10px 14px;
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.22);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 10px rgba(11, 37, 69, 0.16);
@@ -1177,6 +1228,138 @@ html[data-theme="crimson-red"] {
   --ui-side-from: #dc2f24;
   --ui-side-mid: #b31c14;
   --ui-side-to: #8f120c;
+}
+
+
+/* جدول العملاء — تصميم فاتح وأنيق */
+.parties-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.parties-table thead th {
+  background: #f1f6fc;
+  color: #0f2942;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 10px 8px;
+  border-bottom: 2px solid #dbe7f5;
+  text-align: center;
+}
+.parties-table tbody td {
+  padding: 9px 8px;
+  border-bottom: 1px solid #eef3fa;
+  text-align: center;
+  vertical-align: middle;
+  background: #ffffff;
+}
+.parties-table tbody tr:nth-child(even) td {
+  background: #fafcff;
+}
+.parties-table tbody tr:hover td {
+  background: #eef6ff;
+}
+.parties-table tbody tr.sel td {
+  background: #e3effd !important;
+}
+.parties-table tbody tr.empty td {
+  background: #ffffff;
+  color: #94a3b8;
+}
+
+/* ==================================================================
+   توسيط الكلام والأرقام داخل الخانات والجداول — في كل البرنامج
+   ================================================================== */
+.win-input,
+.cell-input {
+  text-align: center;
+}
+.dgrid tbody td,
+.dgrid-invoice tbody td,
+.dgrid tfoot td {
+  text-align: center;
+  vertical-align: middle;
+}
+.dgrid tbody td .num,
+.dgrid-invoice tbody td .num,
+.dgrid tfoot td .num {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+}
+.kpi,
+.kpi * {
+  text-align: center;
+}
+
+/* ==================================================================
+   الثيم الأسود — يطبّق على كل الشاشات والجداول والفواتير
+   ================================================================== */
+html[data-theme="modern-dark"] body {
+  background: #0b1220;
+  color: #e2e8f0;
+}
+/* الجداول: بدون إطارات زرقاء ولا ترويسة ملوّنة */
+html[data-theme="modern-dark"] .dgrid,
+html[data-theme="modern-dark"] .dgrid-invoice {
+  border-color: #2a3648 !important;
+  background: #0f172a !important;
+  color: #dbe4f0;
+}
+html[data-theme="modern-dark"] .dgrid thead th,
+html[data-theme="modern-dark"] .dgrid-invoice thead th {
+  background: #1a2436 !important;
+  color: #f1f5f9 !important;
+  border-color: #2a3648 !important;
+  text-shadow: none;
+}
+html[data-theme="modern-dark"] .dgrid tbody td,
+html[data-theme="modern-dark"] .dgrid-invoice tbody td {
+  border-color: #22304a !important;
+  color: #dbe4f0;
+}
+html[data-theme="modern-dark"] .dgrid tbody tr:nth-child(even) td {
+  background: #131d30 !important;
+}
+html[data-theme="modern-dark"] .dgrid tbody tr.clickable:hover td {
+  background: #1c2942 !important;
+}
+html[data-theme="modern-dark"] .dgrid tbody tr.sel td,
+html[data-theme="modern-dark"] .dgrid-invoice tbody tr.sel td {
+  background: #1d3a63 !important;
+  color: #fff !important;
+}
+html[data-theme="modern-dark"] .dgrid tfoot td {
+  background: #16202f !important;
+  color: #e2e8f0 !important;
+}
+/* البانلات والحقول */
+html[data-theme="modern-dark"] .panel,
+html[data-theme="modern-dark"] .win-input {
+  background: #101a2b !important;
+  border-color: #2a3648 !important;
+  color: #e5edf8 !important;
+}
+html[data-theme="modern-dark"] .win-input::placeholder {
+  color: #6b7c94;
+}
+html[data-theme="modern-dark"] .panel-head,
+html[data-theme="modern-dark"] .navy-head {
+  background: linear-gradient(180deg, #1e2a3d, #0f1726) !important;
+  color: #e8eef8 !important;
+  border-color: #2a3648 !important;
+}
+/* إزالة الإطارات الزرقاء في شاشة الفاتورة */
+html[data-theme="modern-dark"] .border-\[\#15459b\],
+html[data-theme="modern-dark"] .border-\[\#a9c3e2\],
+html[data-theme="modern-dark"] .border-\[\#c3d6ec\],
+html[data-theme="modern-dark"] .border-\[\#8ba3c4\],
+html[data-theme="modern-dark"] .border-\[\#8fb3e0\] {
+  border-color: #2a3648 !important;
+}
+/* حالة الضغط على الأزرار: مايبقاش أبيض على أبيض */
+html[data-theme="modern-dark"] .btn:active:not(:disabled) {
+  background: #24384f !important;
+  color: #ffffff !important;
 }
 
 /* ألوان ترويسة الجداول */

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check } from "lucide-react";
 import { SUPPORT_PHONE } from "@/lib/constants";
+import { resolveLogo } from "@/lib/logo";
 
 interface LicenseInfo {
   isActivated: boolean;
@@ -17,6 +18,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   const [info, setInfo] = useState<LicenseInfo | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [code, setCode] = useState("");
+  const [activated, setActivated] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -68,7 +70,8 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
         setInfo(data.status);
         setModalOpen(false);
         setCode("");
-        alert("🎉 تم تفعيل النسخة الكاملة من برنامج FATORA بنجاح!\nشكراً لثقتكم بنا، يمكنك الآن استخدام البرنامج بلا حدود.");
+        // رسالة تهانينا بتصميم البرنامج نفسه (مش alert المتصفح)
+        setActivated(true);
       } else {
         setError(data.error || "كود التفعيل غير صحيح");
       }
@@ -82,6 +85,50 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
+
+      {/* ===== نافذة التهانئة بعد التفعيل — بنفس هوية البرنامج ===== */}
+      {activated && (
+        <div className="fixed inset-0 z-[120] grid place-items-center bg-black/60 p-4 backdrop-blur-sm" dir="rtl">
+          <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="bg-gradient-to-l from-[#164066] to-[#0f2942] px-5 pb-5 pt-6 text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={resolveLogo()}
+                alt="FATORA"
+                className="mx-auto h-[64px] w-auto object-contain drop-shadow-lg"
+              />
+            </div>
+
+            <div className="relative px-6 pb-5 pt-8 text-center">
+              {/* علامة الصح الخضراء */}
+              <div className="absolute -top-7 left-1/2 grid h-14 w-14 -translate-x-1/2 place-items-center rounded-full border-4 border-white bg-emerald-500 shadow-lg">
+                <Check className="h-7 w-7 stroke-[4] text-white" />
+              </div>
+
+              <div className="mt-2 text-[20px] font-black text-[#0f2942]">تهانينا 🎉</div>
+              <div className="mt-1 text-[14.5px] font-bold leading-relaxed text-slate-600">
+                لقد تم تفعيل البرنامج بنجاح
+              </div>
+
+              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-bold leading-relaxed text-emerald-800">
+                النسخة الكاملة مفعّلة الآن — يمكنك استخدام البرنامج بلا حدود.
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivated(false)}
+                className="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-[#0f2942] text-[14px] font-black text-white hover:bg-[#1b3f5f]"
+              >
+                ابدأ الاستخدام
+              </button>
+
+              <div className="mt-3 text-[10.5px] font-bold text-slate-400">
+                تحياتى — م/ وائل الجمال
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* شريط عائم صغير للنسخة التجريبية */}
       {info && !info.isActivated && !info.isExpired && (

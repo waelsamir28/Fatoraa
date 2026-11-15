@@ -77,9 +77,11 @@ export function PrintView({
             value={currentTemplate}
             onChange={(e) => setCurrentTemplate(e.target.value)}
           >
-            <option value="template-modern-a5">قالب A5 عصري أنيق (Modern)</option>
-            <option value="template-classic-a5">قالب A5 رسمي كلاسيكي (Classic)</option>
-            <option value="template-pos-thermal">قالب إيصال حراري 80mm (Thermal POS)</option>
+            <option value="template-modern-a5">① A5 عصري — إطار ملوّن</option>
+            <option value="template-classic-a5">② A5 كلاسيكي — خطوط رسمية</option>
+            <option value="template-lines-a5">③ A5 مسطّر — جدول بخطوط كاملة</option>
+            <option value="template-minimal-a5">④ A5 بسيط — بدون إطارات</option>
+            <option value="template-pos-thermal">⑤ إيصال حراري 80mm</option>
           </select>
         </div>
 

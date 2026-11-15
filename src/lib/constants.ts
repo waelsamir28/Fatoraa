@@ -1,7 +1,7 @@
-export const APP_NAME = "برنامج FATORA";
+export const APP_NAME = "FATORA - 2027";
 export const APP_BRAND = "FATORA";
 export const APP_TITLE = "برنامج FATORA - لإدارة المحلات التجارية";
-export const APP_TAGLINE = "إدارة احترافية .. لمحل تجاري أكثر نجاحاً";
+export const APP_TAGLINE = "مناسب لجميع الأنشطة التجارية";
 export const APP_VERSION = "1.0.0";
 export const DEFAULT_LOGO = "/images/logo-fatora.png";
 export const SUPPORT_PHONE = "01222355769";

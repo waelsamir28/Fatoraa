@@ -521,9 +521,11 @@ export function SettingsForm() {
                   </Field>
                   <Field label="قالب الفاتورة" className="col-span-2">
                     <select className="win-input w-full font-bold" value={f.invoiceTemplate} onChange={set("invoiceTemplate")}>
-                      <option value="template-modern-a5">A5 عصري أنيق</option>
-                      <option value="template-classic-a5">A5 كلاسيكي رسمي</option>
-                      <option value="template-pos-thermal">إيصال حراري 80mm</option>
+                      <option value="template-modern-a5">① A5 عصري — إطار ملوّن</option>
+                      <option value="template-classic-a5">② A5 كلاسيكي — خطوط رسمية</option>
+                      <option value="template-lines-a5">③ A5 مسطّر — جدول بخطوط كاملة</option>
+                      <option value="template-minimal-a5">④ A5 بسيط — بدون إطارات</option>
+                      <option value="template-pos-thermal">⑤ إيصال حراري 80mm</option>
                     </select>
                   </Field>
                   <Field label="نص تذييل الفاتورة" className="col-span-2">

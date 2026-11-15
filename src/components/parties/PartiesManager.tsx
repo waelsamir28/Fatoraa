@@ -215,13 +215,13 @@ export function PartiesManager({ type }: { type: PartyType }) {
           <Kpi label={`رصيد ${cfg.one} المحدد`} value={selected ? fmt(selected.balance) : "-"} color="blue" sub={selected?.name ?? "اختر حساباً من الجدول"} />
         </div>
 
-        <div className="panel min-h-0 flex-1 overflow-auto p-0">
-          <table className="dgrid text-center text-[14.5px]">
+        {/* جدول العملاء — تصميم فاتح، الأرقام في الوسط باللون الأحمر */}
+        <div className="panel min-h-0 flex-1 overflow-auto rounded-xl border-2 border-[#dbe7f5] bg-white p-0 shadow-sm">
+          <table className="parties-table w-full text-center text-[14.5px]">
             <thead>
               <tr>
                 <th className="w-[90px]">الرقم</th>
-                {/* اسم العميل أو المورد في رأس الجدول */}
-                <th className="text-right">{type === "customer" ? "اسم العميل" : "اسم المورد"}</th>
+                <th>{type === "customer" ? "اسم العميل" : "اسم المورد"}</th>
                 <th>الهاتف</th>
                 <th>العنوان</th>
                 <th>الرصيد الحالى</th>
@@ -239,19 +239,12 @@ export function PartiesManager({ type }: { type: PartyType }) {
                     onClick={() => setSel(p.id)}
                     onDoubleClick={() => setForm({ id: p.id, name: p.name, phone: p.phone, address: p.address, notes: p.notes, balance: String(p.balance) })}
                   >
-                    <td className={`num font-black ${s ? "" : "text-blue-700"}`}>{p.code}</td>
-
-                    {/* خانة اسم العميل بلون أصفر هادي ومريح في كل الجداول */}
-                    <td className="text-right font-black">
-                      <span className="inline-block rounded px-2 py-0.5 bg-[#fffbeb] border border-amber-200 text-amber-950 shadow-2xs">
-                        {p.name}
-                      </span>
-                    </td>
-
+                    <td className="num font-black text-slate-600">{p.code}</td>
+                    <td className="font-black text-slate-800">{p.name}</td>
                     <td className="num" dir="ltr">{p.phone}</td>
-                    <td className="max-w-[220px] truncate">{p.address}</td>
-                    <td className={`num font-black ${!s && p.balance > 0 ? "text-red-600" : ""}`}>{fmt(p.balance)}</td>
-                    <td className="max-w-[180px] truncate">{p.notes}</td>
+                    <td className="max-w-[220px] truncate text-slate-600">{p.address}</td>
+                    <td className="num text-[17px] font-black text-red-600">{fmt(p.balance)}</td>
+                    <td className="max-w-[180px] truncate text-slate-500">{p.notes}</td>
                     <td className="p-1">
                       <div className="flex justify-center gap-1">
                         <button type="button" className="btn h-7 px-2 text-[12px]" onClick={(e) => { e.stopPropagation(); void openStatement(p); }}>

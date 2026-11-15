@@ -268,6 +268,8 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
   const [selected, setSelected] = useState(-1);
   const [numberInput, setNumberInput] = useState("");
   const [partyCodeInput, setPartyCodeInput] = useState("");
+  /** تليفون العميل المختار — يظهر تلقائياً في خانة «تليفون» */
+  const [partyPhone, setPartyPhone] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState("");
@@ -509,6 +511,8 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
   const setParty = (p: Party | null) => {
     patch({ party: p ? { id: p.id, code: p.code, name: p.name, balance: p.balance } : cashParty(type) });
     setPartyCodeInput(p ? String(p.code) : "");
+    // التليفون بيتعبّى تلقائياً بمجرد اختيار العميل
+    setPartyPhone(p?.phone ?? "");
   };
 
   const lookupPartyCode = () => {
@@ -852,6 +856,25 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                 <Trash2 className="h-4 w-4" />
                 <span>حذف</span>
               </button>
+
+              {/* التاريخ والوقت — انتقلا هنا بجوار زر الحذف */}
+              <div className="flex items-center gap-1 rounded-md border border-[#c3d6ec] bg-white px-1">
+                <input
+                  type="date"
+                  className="num h-[26px] w-[112px] border-0 bg-transparent text-center text-[12.5px] font-black text-[#0f2e5a] outline-none"
+                  value={state.date}
+                  onChange={(e) => patch({ date: e.target.value || todayInput() })}
+                  title="تاريخ الفاتورة"
+                />
+                <div
+                  className="num flex h-[26px] items-center gap-1 border-r border-[#dbe6f3] pl-1 pr-1.5 text-[12.5px] font-black text-[#0f2e5a]"
+                  suppressHydrationWarning
+                  title="الوقت الحالي"
+                >
+                  <Clock3 className="h-3 w-3 text-blue-700" />
+                  {clock || "--:--"}
+                </div>
+              </div>
             </div>
 
             {/* الشريط الأزرق الفاتح الذي يفصل بين المجموعتين */}
@@ -880,17 +903,10 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
           </div>
         </div>
 
-        {/* ===== إطار بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
-        <div className="flex h-[172px] shrink-0 gap-2">
-          {/* إطار بيانات العميل */}
-          <div className="panel flex w-[31%] min-w-[318px] max-w-[364px] shrink-0 flex-col overflow-hidden border-2 border-[#a9c3e2] shadow-sm">
-            <div className="panel-head flex h-[22px] shrink-0 items-center justify-between px-2 text-[11.5px]">
-              <span className="font-black text-[#0f2e5a]">بيانات {cfg.partyLabel}</span>
-              <span className="num rounded bg-blue-100 px-1.5 text-[10.5px] font-black text-blue-800">
-                {cfg.partyType === "customer" ? "حساب عميل" : "حساب مورد"}
-              </span>
-            </div>
-            <div className="flex flex-1 flex-col justify-between gap-1 p-1.5">
+        {/* ===== بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
+        <div className="flex h-[178px] shrink-0 gap-2">
+          {/* بيانات العميل — بدون إطار، جزء أوسع */}
+          <div className="flex w-[36%] min-w-[360px] max-w-[430px] shrink-0 flex-col justify-between gap-1 rounded-lg bg-white/70 p-1.5 shadow-sm">
               <FRow label={`رقم ${cfg.partyLabel}`}>
                 <input
                   className="win-input num h-full flex-1 text-center text-[16px] font-black text-[#d0190f]"
@@ -917,23 +933,28 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                 </div>
               </FRow>
 
-              <FRow label="التاريخ والوقت">
+              {/* تليفون العميل — يظهر تلقائياً عند اختيار العميل */}
+              <FRow label="تليفون">
                 <input
-                  type="date"
-                  className="win-input num h-full flex-1 text-center text-[14px] font-black"
-                  value={state.date}
-                  onChange={(e) => patch({ date: e.target.value || todayInput() })}
+                  className="win-input num h-full flex-1 text-center text-[15px] font-black text-[#0f2e5a]"
+                  dir="ltr"
+                  inputMode="tel"
+                  placeholder="01xxxxxxxxx"
+                  value={partyPhone}
+                  onChange={(e) => setPartyPhone(e.target.value)}
+                  readOnly={!state.party.id}
+                  title={state.party.id ? "تليفون العميل — يمكن تعديله" : "اختر عميلاً أولاً"}
                 />
-                <div
-                  className="win-input num flex h-full w-[92px] shrink-0 items-center justify-center gap-1 text-[13.5px] font-black text-[#0f2e5a]"
-                  suppressHydrationWarning
-                  title="الوقت الحالي"
+                <button
+                  type="button"
+                  className="btn h-full w-[32px] shrink-0 p-0"
+                  title="مسح رقم التليفون"
+                  onClick={() => setPartyPhone("")}
+                  disabled={!state.party.id}
                 >
-                  <Clock3 className="h-3.5 w-3.5 text-blue-700" />
-                  {clock || "--:--"}
-                </div>
+                  <X className="h-3.5 w-3.5 text-red-600" strokeWidth={3} />
+                </button>
               </FRow>
-            </div>
           </div>
 
           {/* إطار أزرار الفاتورة والأسعار */}
@@ -972,10 +993,12 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                 ))}
               </div>
 
-              {/* شريط رصيد العميل العريض — بنفس ارتفاع أزرار باركود وتجميع */}
-              <div className="due-box flex min-w-0 flex-1 items-center justify-between gap-2 px-3">
-                <span className="whitespace-nowrap text-[14px] font-black leading-none text-white">رصيد العميل</span>
-                <span className="num text-[27px] font-black leading-none text-[#ffe600] drop-shadow-[0_2px_0_#6b5200]">
+              {/* شريط رصيد العميل — خلفية صفراء ورقم كحلي متوسط، عرض أقل */}
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-md border-2 border-[#e6bf3a] bg-gradient-to-b from-[#ffe97a] to-[#ffd83d] px-2 shadow-inner">
+                <span className="whitespace-nowrap text-[12.5px] font-black leading-none text-[#0f2942]">
+                  رصيد العميل
+                </span>
+                <span className="num flex-1 text-center text-[24px] font-black leading-none text-[#0f2942]">
                   {fmt(state.party.balance)}
                 </span>
               </div>
@@ -1104,7 +1127,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
             <div className="relative shrink-0">
               <span className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 text-[13px]">🗂️</span>
               <select
-                className="win-input h-full w-[186px] appearance-none rounded-md border-2 border-[#8fb3e0] bg-gradient-to-b from-white to-[#e8f1fc] pr-7 pl-6 text-[13px] font-black text-[#0f2e5a] shadow-sm"
+                className="win-input h-full w-[240px] appearance-none rounded-md border-2 border-[#8fb3e0] bg-gradient-to-b from-white to-[#e8f1fc] pr-7 pl-6 text-[13px] font-black text-[#0f2e5a] shadow-sm"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 title="اختر المجموعة لعرض أصنافها"
@@ -1150,7 +1173,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
           </div>
 
           <div className="flex min-w-0 flex-1 items-end gap-1">
-            <div className="etab relative min-w-[170px] flex-1">
+            <div className="etab relative w-[190px] min-w-[150px] shrink-0">
               <span>الصنف</span>
               <input
                 ref={productRef}
@@ -1272,7 +1295,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                   return (
                     <tr key={r.key} className={`clickable ${sel ? "sel !bg-blue-600 text-white" : "border-b border-[#c2d3e8]"}`} onClick={() => setSelected(i)}>
                       <td className={`num font-black ${sel ? "text-white" : "text-blue-900"}`}>{i + 1}</td>
-                      <td className="max-w-[260px] truncate text-right font-black text-slate-900">{r.productName}</td>
+                      <td className="max-w-[190px] truncate text-right font-black text-slate-900">{r.productName}</td>
                       <td>{r.unit}</td>
                       <td className="p-0.5">
                         <NumCell value={r.qty} onCommit={(v) => (v > 0 ? updateRow(i, { qty: round3(v) }) : removeRow(i))} />
@@ -1343,25 +1366,26 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
 
             <div className="min-h-0 flex-1 overflow-auto p-1.5">
               {viewMode === "cards" ? (
-                <div className="grid grid-cols-2 gap-1.5 content-start">
+                <div className="grid grid-cols-2 gap-1.5 content-start overflow-hidden p-0.5">
                   {filtered.map((p) => (
                     <button
                       key={p.id}
                       type="button"
-                      className="group flex flex-col justify-between h-[66px] rounded-md border border-[#c5d7ed] bg-white p-1.5 text-right shadow-2xs hover:border-blue-500 hover:shadow-xs transition"
+                      className="group flex w-full flex-col justify-between h-[74px] overflow-hidden rounded-md border border-[#c5d7ed] bg-white p-1.5 text-right shadow-2xs hover:border-blue-500 hover:shadow-xs transition"
                       onClick={() => addProduct(p)}
                     >
-                      <div>
-                        <div className="w-full truncate text-[12.5px] font-black text-[#0f2e5a] group-hover:text-blue-700 leading-tight">
+                      <div className="min-w-0 w-full overflow-hidden">
+                        {/* line-clamp بيمنع الكلام يخرج بره الكارت مهما كان طويل */}
+                        <div className="line-clamp-2 w-full break-words text-[12px] font-black text-[#0f2e5a] group-hover:text-blue-700 leading-[1.15]">
                           {p.name}
                         </div>
-                        <div className="text-[10px] font-bold text-sky-600 truncate">{p.category}</div>
+                        <div className="w-full truncate text-[10px] font-bold text-sky-600">{p.category}</div>
                       </div>
                       <div className="flex items-baseline justify-between w-full pt-0.5 border-t border-slate-100">
                         <span className={`num text-[11px] font-bold ${p.stock <= p.minStock ? "text-red-600" : "text-slate-500"}`}>
                           رصيد: {fmtQty(p.stock)}
                         </span>
-                        <span className="num text-[15px] font-black text-[#1d4ed8]">
+                        <span className="num shrink-0 text-[15px] font-black text-[#1d4ed8]">
                           {fmt(priceFor(p, type, state.priceLevel))}
                         </span>
                       </div>
@@ -1445,7 +1469,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
 
               <label className="text-[12px] font-black text-[#1e3a6a]">
                 <span className="flex items-center justify-between gap-1">
-                  <span>{state.paymentType === "credit" ? "المدفوع مقدماً" : "المبلغ المستلم"}</span>
+                  <span>{state.paymentType === "credit" ? "المدفوع" : "المبلغ المستلم"}</span>
                   {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
                   <span className="flex items-center gap-0.5">
                     <button

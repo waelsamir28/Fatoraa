@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS = {
   storeName: "برنامج FATORA",
   userName: "FATORA",
   phone: "01222355769",
-  address: "جمهورية مصر العربية",
+  address: "اكتب عنوانك هنا",
   taxRate: 14,
   currency: "ج.م",
   branchName: "الفرع الرئيسي",
