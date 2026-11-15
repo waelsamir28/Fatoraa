@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, Download, Layers } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import {
@@ -64,28 +63,37 @@ interface HomeSummary {
 
 const SalesSmall: Icon = (p) => <IconSales plus={false} {...p} />;
 
-/** العمليات اليومية — كروت كبيرة واضحة */
-const QUICK: Array<{ href: string | null; label: string; hint: string; Icon: Icon; badge?: string; tone: string }> = [
-  { href: "/sales", label: "فاتورة مبيعات", hint: "F2", Icon: IconSales, badge: "F2", tone: "#2fb3a6" },
-  { href: "/purchases", label: "فاتورة مشتريات", hint: "شراء أصناف", Icon: IconBox, tone: "#3b82f6" },
-  { href: "/returns/sales", label: "مرتجع مبيعات", hint: "إرجاع صنف مباع", Icon: IconReturn, tone: "#0ea5e9" },
-  { href: "/returns/purchases", label: "مرتجع مشتريات", hint: "إرجاع للمورد", Icon: IconReturnBox, tone: "#6366f1" },
-  { href: "/sales/list", label: "سجل الفواتير", hint: "بحث وتعديل", Icon: IconInvoices, tone: "#8b5cf6" },
-  { href: "/customers", label: "العملاء", hint: "أرصدة ومدفوعات", Icon: IconCustomers, tone: "#0284c7" },
-  { href: "/inventory", label: "المخازن والجرد", hint: "أرصدة وتسويات", Icon: IconWarehouse, tone: "#14b8a6" },
-  { href: "/reports", label: "التقارير الشاملة", hint: "F9", Icon: IconReports, tone: "#f5c518" },
-  { href: null, label: "تصدير سريع", hint: "إكسل / طباعة", Icon: IconBackup, tone: "#64748b" },
-];
+interface HomeItem {
+  href: string | null;
+  label: string;
+  Icon: Icon;
+  badge?: string;
+  /** إجراء خاص بدل الانتقال */
+  action?: "export";
+}
 
-/** مجموعات الأدوات (تبويبات) — بدل 29 كارت متناثر */
-const TOOL_GROUPS: Array<{
-  key: string;
+interface HomeGroup {
   title: string;
   tone: string;
-  items: Array<{ href: string | null; label: string; Icon: Icon; badge?: string }>;
-}> = [
+  items: HomeItem[];
+}
+
+/** كل شاشات البرنامج مقسّمة مجموعات — كروت مربّعة ملوّنة */
+const HOME_GROUPS: HomeGroup[] = [
   {
-    key: "items",
+    title: "العمليات اليومية",
+    tone: "#2fb3a6",
+    items: [
+      { href: "/sales", label: "فاتورة مبيعات", Icon: IconSales, badge: "F2" },
+      { href: "/purchases", label: "فاتورة مشتريات", Icon: IconBox },
+      { href: "/returns/sales", label: "مرتجع مبيعات", Icon: IconReturn },
+      { href: "/returns/purchases", label: "مرتجع مشتريات", Icon: IconReturnBox },
+      { href: "/sales/list", label: "سجل الفواتير", Icon: IconInvoices },
+      { href: "/customers", label: "العملاء", Icon: IconCustomers },
+      { href: null, label: "تصدير سريع", Icon: IconBackup, action: "export" },
+    ],
+  },
+  {
     title: "الأصناف والمخزون",
     tone: "#3b82f6",
     items: [
@@ -100,8 +108,7 @@ const TOOL_GROUPS: Array<{
     ],
   },
   {
-    key: "money",
-    title: "العملاء والحسابات",
+    title: "الحسابات والخزينة",
     tone: "#0ea5e9",
     items: [
       { href: "/suppliers", label: "الموردون", Icon: IconSuppliers },
@@ -109,17 +116,23 @@ const TOOL_GROUPS: Array<{
       { href: "/treasury", label: "الخزينة واليومية", Icon: IconTreasury },
       { href: "/expenses", label: "المصروفات", Icon: IconExpense },
       { href: "/shifts", label: "الورديات والكاشير", Icon: IconShifts },
+    ],
+  },
+  {
+    title: "التقارير",
+    tone: "#eab308",
+    items: [
+      { href: "/reports", label: "التقارير الشاملة", Icon: IconReports, badge: "F9" },
       { href: "/profit", label: "تقرير الأرباح", Icon: IconProfit },
       { href: "/dashboard", label: "لوحة المالك", Icon: IconDashboard },
     ],
   },
   {
-    key: "admin",
     title: "الإدارة والدعم",
     tone: "#8b5cf6",
     items: [
       { href: "/settings", label: "الإعدادات والمظهر", Icon: IconSettings },
-      { href: "/users", label: "المستخدمون والصلاحيات", Icon: IconUsers },
+      { href: "/users", label: "المستخدمون", Icon: IconUsers },
       { href: "/branches", label: "الفروع", Icon: IconBranches },
       { href: "/backup", label: "النسخ الاحتياطي", Icon: IconBackup },
       { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IconBackup },
@@ -136,7 +149,6 @@ export function HomeScreen() {
   const { confirm, native, quitApp, activeUser } = useDesktop();
   const [stats, setStats] = useState<HomeSummary | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [tool, setTool] = useState("items");
   const [exportOpen, setExportOpen] = useState(false);
 
   // تحميل موازٍ وخفيف: ملخص الرئيسية + إعدادات الشاشة (بدل تقرير اليوم الكامل)
@@ -172,28 +184,6 @@ export function HomeScreen() {
       alive = false;
     };
   }, []);
-
-  // استرجاع تبويب الأدوات المفضل
-  useEffect(() => {
-    const id = setTimeout(() => {
-      try {
-        const v = localStorage.getItem("fatora.home.tool");
-        if (v) setTool(v);
-      } catch {
-        /* ignore */
-      }
-    }, 0);
-    return () => clearTimeout(id);
-  }, []);
-
-  const pickTool = (k: string) => {
-    setTool(k);
-    try {
-      localStorage.setItem("fatora.home.tool", k);
-    } catch {
-      /* ignore */
-    }
-  };
 
   const exit = async () => {
     if (!(await confirm("هل تريد الخروج من برنامج FATORA؟", { title: "خروج" }))) return;
@@ -248,14 +238,12 @@ export function HomeScreen() {
         <div className="relative z-10 flex h-full w-full flex-col overflow-hidden rounded-xl bg-gradient-to-b from-white/[0.98] to-[#eaf3ff]/[0.97] shadow-[0_14px_38px_rgba(0,0,0,0.35)]">
           {/* ===== مكان البانر المصمم ===== */}
           <div className="relative flex shrink-0 flex-col border-b-2 border-white shadow-sm">
-            {/* البانر مخفّض الارتفاع (أسرع تحميلاً وأفسح للكروت) */}
-            <div className="relative h-[150px] w-full overflow-hidden">
+            <div className="relative h-[212px] w-full overflow-hidden">
               <Image
                 src="/images/main-banner.jpg"
                 alt="بانر البرنامج"
                 fill
                 priority
-                quality={70}
                 sizes="(max-width: 900px) 100vw, 1200px"
                 className="object-cover object-center"
               />
@@ -273,71 +261,48 @@ export function HomeScreen() {
               onExit={() => void exit()}
             />
 
-            <div className="home-main">
-              {/* ===== الكروت الكبيرة للعمليات اليومية ===== */}
-              <div className="quick-tiles">
-                {QUICK.map((t) => {
-                  const inner = (
-                    <>
-                      <span className="quick-tile__ico" style={{ color: t.tone }}>
-                        <t.Icon />
-                      </span>
-                      <span className="quick-tile__text">
-                        <span className="quick-tile__label">{t.label}</span>
-                        <span className="quick-tile__hint">{t.hint}</span>
-                      </span>
-                      <ChevronLeft className="quick-tile__go h-4 w-4" />
-                    </>
-                  );
-                  return t.href ? (
-                    <Link key={t.label} href={t.href} className="quick-tile">
-                      {inner}
-                    </Link>
-                  ) : (
-                    <button key={t.label} type="button" onClick={() => setExportOpen(true)} className="quick-tile" title="تصدير إكسل أو طباعة">
-                      {inner}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="home-cards-wrap">
+              {HOME_GROUPS.map((g) => (
+                <div key={g.title} className="home-group">
+                  <div className="home-group__label">
+                    <span className="home-group__dot" style={{ background: g.tone }} />
+                    <span>{g.title}</span>
+                    <span className="home-group__count" style={{ color: g.tone, background: `${g.tone}1a` }}>
+                      {g.items.length}
+                    </span>
+                    <span className="home-group__line" style={{ background: `linear-gradient(90deg, ${g.tone}55, transparent)` }} />
+                  </div>
 
-              {/* ===== أدوات إضافية (تبويبات) ===== */}
-              <div className="tools-panel">
-                <div className="tools-panel__head">
-                  <Layers className="h-4 w-4" />
-                  <span>أدوات إضافية</span>
-                  <span className="tools-panel__tabs">
-                    {TOOL_GROUPS.map((g) => (
-                      <button
-                        key={g.key}
-                        type="button"
-                        onClick={() => pickTool(g.key)}
-                        className={`tools-tab ${tool === g.key ? "is-on" : ""}`}
-                        style={tool === g.key ? { background: g.tone, borderColor: g.tone } : undefined}
-                      >
-                        {g.title}
-                        <b className="tools-tab__count">{g.items.length}</b>
-                      </button>
-                    ))}
-                  </span>
+                  <div className="home-cards">
+                    {g.items.map((it) => {
+                      const content = (
+                        <>
+                          <span className="home-card__ico" style={{ background: `${g.tone}1f`, color: g.tone }}>
+                            <it.Icon />
+                          </span>
+                          <span className="home-card__label">{it.label}</span>
+                          {it.badge && <span className="home-card__badge">{it.badge}</span>}
+                        </>
+                      );
+                      return it.href ? (
+                        <Link key={it.label} href={it.href} className="home-card" title={it.label}>
+                          {content}
+                        </Link>
+                      ) : (
+                        <button
+                          key={it.label}
+                          type="button"
+                          className="home-card"
+                          title={it.label}
+                          onClick={() => (it.action === "export" ? setExportOpen(true) : void exit())}
+                        >
+                          {content}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="tools-panel__body">
-                  {(TOOL_GROUPS.find((g) => g.key === tool) ?? TOOL_GROUPS[0]).items.map((it) =>
-                    it.href ? (
-                      <Link key={it.label} href={it.href} className="tool-chip" title={it.label}>
-                        <it.Icon className="h-5 w-auto" />
-                        <span>{it.label}</span>
-                        {it.badge && <b className="tool-chip__badge">{it.badge}</b>}
-                      </Link>
-                    ) : (
-                      <button key={it.label} type="button" onClick={() => void exit()} className="tool-chip" title={it.label}>
-                        <it.Icon className="h-5 w-auto" />
-                        <span>{it.label}</span>
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           {/* ===== Footnote صغير أسفل الشاشة ===== */}
