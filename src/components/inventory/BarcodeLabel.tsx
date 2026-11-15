@@ -11,13 +11,20 @@ export function BarcodeLabel({
   price,
   store,
   showPrice = true,
+  widthMm = 58,
+  heightMm = 38,
 }: {
   code: string;
   name: string;
   price: number;
   store: string;
   showPrice?: boolean;
+  /** عرض الملصق بالمليمتر */
+  widthMm?: number;
+  /** ارتفاع الملصق بالمليمتر */
+  heightMm?: number;
 }) {
+  const small = heightMm <= 25;
   const ref = useRef<SVGSVGElement>(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -37,11 +44,16 @@ export function BarcodeLabel({
   }, [code]);
 
   return (
-    <div className="flex h-[38mm] w-[58mm] flex-col items-center justify-between overflow-hidden rounded-[4px] border border-dashed border-slate-400 bg-white px-[2mm] py-[1.5mm] text-center text-black">
-      <div className="w-full truncate text-[10px] font-bold text-slate-600">{store}</div>
-      <div className="w-full truncate text-[12px] font-black leading-tight">{name}</div>
-      <svg ref={ref} className="max-h-[20mm] max-w-full" />
-      {showPrice && <div className="num text-[14px] font-black leading-none">{fmt(price)} ج.م</div>}
+    <div
+      className="flex flex-col items-center justify-between overflow-hidden rounded-[4px] border border-dashed border-slate-400 bg-white px-[2mm] py-[1mm] text-center text-black"
+      style={{ width: `${widthMm}mm`, height: `${heightMm}mm` }}
+    >
+      <div className={`w-full truncate font-bold text-slate-600 ${small ? "text-[8px]" : "text-[10px]"}`}>{store}</div>
+      <div className={`w-full truncate font-black leading-tight ${small ? "text-[9px]" : "text-[12px]"}`}>{name}</div>
+      <svg ref={ref} className="max-w-full" style={{ maxHeight: `${Math.max(8, heightMm - 16)}mm` }} />
+      {showPrice && (
+        <div className={`num font-black leading-none ${small ? "text-[11px]" : "text-[14px]"}`}>{fmt(price)} ج.م</div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,19 @@ import { BarcodeLabel } from "@/components/inventory/BarcodeLabel";
 import { api } from "@/lib/client";
 import type { Product, Settings } from "@/lib/types";
 
-export function BarcodePrint({ items, showPrice, auto }: { items: Array<{ id: number; count: number }>; showPrice: boolean; auto: boolean }) {
+export function BarcodePrint({
+  items,
+  showPrice,
+  auto,
+  widthMm = 58,
+  heightMm = 38,
+}: {
+  items: Array<{ id: number; count: number }>;
+  showPrice: boolean;
+  auto: boolean;
+  widthMm?: number;
+  heightMm?: number;
+}) {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [store, setStore] = useState("");
 
@@ -40,12 +52,12 @@ export function BarcodePrint({ items, showPrice, auto }: { items: Array<{ id: nu
           <Printer className="h-5 w-5" />
           طباعة ({labels.length} ملصق)
         </button>
-        <span className="text-[14px] font-bold text-slate-600">مقاس الملصق 58×38 مم</span>
+        <span className="text-[14px] font-bold text-slate-600">مقاس الملصق {widthMm}×{heightMm} مم</span>
       </div>
       <div className="flex flex-wrap gap-[2mm]">
         {labels.map(({ key, p }) => (
           <div key={key} style={{ breakInside: "avoid" }}>
-            <BarcodeLabel code={p.code} name={p.name} price={p.salePrice} store={store} showPrice={showPrice} />
+            <BarcodeLabel code={p.code} name={p.name} price={p.salePrice} store={store} showPrice={showPrice} widthMm={widthMm} heightMm={heightMm} />
           </div>
         ))}
       </div>

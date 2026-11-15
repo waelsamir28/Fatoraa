@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Eye, FilePlus2, Printer, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Banknote, Eye, FilePlus2, MessageCircle, Printer, RefreshCw, Search, Trash2 } from "lucide-react";
 import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
+import { InvoicePaymentsDialog } from "./InvoicePaymentsDialog";
+import { ShareInvoiceDialog } from "./ShareInvoiceDialog";
 import { Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconBox, IconSales } from "@/components/icons/AppIcons";
@@ -37,6 +39,8 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
   const [sel, setSel] = useState<number | null>(null);
   const [toDelete, setToDelete] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [payFor, setPayFor] = useState<Invoice | null>(null);
+  const [shareFor, setShareFor] = useState<Invoice | null>(null);
 
   const load = useCallback(
     async (f: string, t: string, query: string) => {
@@ -192,6 +196,7 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
                 <th>الضريبة</th>
                 <th>الإجمالي</th>
                 <th>المدفوع</th>
+                <th>المتبقي</th>
                 <th>المستخدم</th>
                 <th>إجراءات</th>
               </tr>
@@ -221,6 +226,13 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
                     <td className="num">{fmt(inv.tax)}</td>
                     <td className="num font-black">{fmt(inv.total)}</td>
                     <td className="num">{fmt(inv.paid)}</td>
+                    <td className="num">
+                      {inv.total - inv.paid > 0.009 ? (
+                        <span className="font-black text-red-600">{fmt(inv.total - inv.paid)}</span>
+                      ) : (
+                        <span className="font-black text-emerald-700">مسددة</span>
+                      )}
+                    </td>
                     <td>{inv.userName}</td>
                     <td className="p-1">
                       <div className="flex justify-center gap-1">
@@ -229,6 +241,28 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
                         </button>
                         <button type="button" className="btn h-7 w-8 p-0" title="طباعة" onClick={(e) => { e.stopPropagation(); print(inv.id); }}>
                           <Printer className="h-4 w-4 text-slate-700" />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn h-7 w-8 p-0"
+                          title="تسجيل دفعة / متابعة الدفعات"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPayFor(inv);
+                          }}
+                        >
+                          <Banknote className={`h-4 w-4 ${inv.total - inv.paid > 0.009 ? "text-emerald-700" : "text-slate-400"}`} />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn h-7 w-8 p-0"
+                          title="إرسال على واتساب"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShareFor(inv);
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4 text-green-600" />
                         </button>
                         <button type="button" className="btn h-7 w-8 p-0" title="حذف" onClick={(e) => { e.stopPropagation(); void del(inv); }}>
                           <Trash2 className="h-4 w-4 text-red-600" />
@@ -240,7 +274,7 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
               })}
               {data && data.items.length === 0 && (
                 <tr className="empty">
-                  <td colSpan={14} className="py-10 text-center text-slate-500">
+                  <td colSpan={15} className="py-10 text-center text-slate-500">
                     لا توجد فواتير في هذه الفترة
                   </td>
                 </tr>
@@ -254,6 +288,7 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
                   <td className="num">{fmt(t?.tax)}</td>
                   <td className="num text-blue-800">{fmt(t?.total)}</td>
                   <td className="num text-green-700">{fmt(t?.paid)}</td>
+                  <td className="num text-red-600">{fmt((t?.total ?? 0) - (t?.paid ?? 0))}</td>
                   <td colSpan={2} />
                 </tr>
               </tfoot>
@@ -261,6 +296,10 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
           </table>
         </div>
       </div>
+
+      {shareFor && <ShareInvoiceDialog invoice={shareFor} onClose={() => setShareFor(null)} />}
+
+      {payFor && <InvoicePaymentsDialog invoiceId={payFor.id} onClose={() => { setPayFor(null); void load(from, to, q); }} />}
 
       {toDelete && (
         <DeleteInvoiceDialog

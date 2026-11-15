@@ -112,6 +112,8 @@ export const invoices = pgTable(
     shiftId: integer("shift_id"),
     /** الفرع الذي صدرت منه الفاتورة */
     branchId: integer("branch_id"),
+    /** فاتورة معلقة (مسودة): لا تُخصم من المخزون ولا تؤثر على أي رصيد حتى تُعتمد */
+    isDraft: boolean("is_draft").notNull().default(false),
     /** حذف آمن (soft delete): الفاتورة تبقى في السجل لكن لا تُحتسب في التقارير والأرصدة */
     deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
     deletedBy: text("deleted_by").notNull().default(""),
@@ -158,9 +160,11 @@ export const payments = pgTable(
     date: ts("date"),
     notes: text("notes").notNull().default(""),
     shiftId: integer("shift_id"),
+    /** الفاتورة التي سُجّلت هذه الدفعة لها (اختياري) — لتسجيل دفعات متعددة على الفاتورة الواحدة */
+    invoiceId: integer("invoice_id"),
     createdAt: ts("created_at"),
   },
-  (t) => [index("payments_party_idx").on(t.partyId)],
+  (t) => [index("payments_party_idx").on(t.partyId), index("payments_invoice_idx").on(t.invoiceId)],
 );
 
 /** حركات المخزون: كل تغيير في رصيد صنف مسجّل هنا (فاتورة، تعديل يدوي، جرد) */

@@ -14,9 +14,15 @@ export function GET(req: Request) {
     const now = new Date();
     const from = parseDate(u.searchParams.get("from")) ?? new Date(now.getFullYear(), now.getMonth(), 1);
     const to = parseDate(u.searchParams.get("to")) ?? new Date(now.getTime() + 86400000);
-    // الفواتير المحذوفة (soft delete) لا تُحتسب في أي تقرير
+    // الفواتير المحذوفة (soft delete) والمسودات المعلقة لا تُحتسب في أي تقرير
     const inRange = (type: string) =>
-      and(eq(invoices.type, type), isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to));
+      and(
+        eq(invoices.type, type),
+        isNull(invoices.deletedAt),
+        eq(invoices.isDraft, false),
+        gte(invoices.date, from),
+        lt(invoices.date, to),
+      );
 
     const agg = (type: string) =>
       db
@@ -75,7 +81,7 @@ export function GET(req: Request) {
         count: sql<number>`count(*)`.mapWith(Number),
       })
       .from(invoices)
-      .where(and(isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to)))
+      .where(and(isNull(invoices.deletedAt), eq(invoices.isDraft, false), gte(invoices.date, from), lt(invoices.date, to)))
       .groupBy(dayExpr, invoices.type)
       .orderBy(dayExpr);
 

@@ -262,10 +262,15 @@ ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "invoice_template" text DEFAULT 
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "template" text DEFAULT 'template-modern-a5' NOT NULL;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "shift_id" integer;
+-- دفعات متعددة مربوطة بالفاتورة
+ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "invoice_id" integer;
+CREATE INDEX IF NOT EXISTS "payments_invoice_idx" ON "payments" ("invoice_id");
 ALTER TABLE "expenses" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "cash_moves" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "invoice_layout" text DEFAULT '' NOT NULL;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "branch_id" integer;
+-- فواتير معلقة (مسودات)
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "is_draft" boolean DEFAULT false NOT NULL;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 
 -- حذف آمن للفواتير (سجل تدقيق)

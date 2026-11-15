@@ -24,12 +24,14 @@ import {
   CreditCard,
   Eye,
   FileCheck2,
+  FileClock,
   FilePlus2,
   Grid,
   Info,
   Landmark,
   LayoutGrid,
   List,
+  MessageCircle,
   PencilLine,
   Plus,
   Printer,
@@ -57,6 +59,8 @@ import { InvoicePreviewModal } from "./InvoicePreviewModal";
 import { ProductSearchModal } from "./ProductSearchModal";
 import { resolveLogo } from "@/lib/logo";
 import { QuickAddCategoryModal } from "./QuickAddCategoryModal";
+import { DraftsPanel } from "./DraftsPanel";
+import { ShareInvoiceDialog } from "./ShareInvoiceDialog";
 
 interface Row {
   key: string;
@@ -293,6 +297,8 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [shareInvoice, setShareInvoice] = useState<Invoice | null>(null);
   const [clock, setClock] = useState("");
 
   const productRef = useRef<HTMLInputElement>(null);
@@ -681,6 +687,65 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
     toast("تم التراجع عن التعديلات", "info");
   };
 
+  /** تعليق الفاتورة الحالية كمسودة (بدون أي تأثير على المخزون والأرصدة) */
+  const holdDraft = async () => {
+    if (!state.rows.length) {
+      playError();
+      await msg({ text: "أضف صنفاً واحداً على الأقل قبل تعليق الفاتورة.", kind: "warning" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const keepTime = state.originalDate && isoToDateInput(state.originalDate) === state.date ? state.originalDate : null;
+      const payload = {
+        type,
+        partyId: state.party.id,
+        partyName: state.party.name,
+        date: dateInputToISO(state.date, keepTime),
+        paymentType: state.paymentType,
+        paymentMethod: state.paymentMethod,
+        priceLevel: state.priceLevel,
+        extraDiscount: Math.max(0, toNum(state.extraDiscount)),
+        taxRate: 0,
+        paid: Math.max(0, toNum(state.paid)),
+        notes: state.notes,
+        userName: activeUser || settings?.userName || "FATORA",
+        items: state.rows.map((r) => ({
+          productId: r.productId,
+          productName: r.productName,
+          unit: r.unit,
+          qty: r.qty,
+          price: r.price,
+          discount: r.discount,
+        })),
+        isDraft: true,
+      };
+      const draft = state.invoiceId
+        ? await api<Invoice>(`/api/invoices/${state.invoiceId}`, { method: "PUT", json: payload })
+        : await api<Invoice>("/api/invoices", { method: "POST", json: payload });
+      playSuccess();
+      toast(`تم تعليق الفاتورة رقم ${draft.number} — يمكنك استكمالها لاحقاً من زر «المعلقة»`);
+      await startNew();
+    } catch (e) {
+      playError();
+      await msg({ text: errMsg(e), kind: "error" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** استكمال مسودة داخل شاشة الفاتورة */
+  const resumeDraft = (draft: Invoice) => {
+    loadInvoice(draft, partiesList);
+    setShowDrafts(false);
+    toast(`تم فتح المسودة رقم ${draft.number} — استكملها ثم اضغط «حفظ الفاتورة»`, "info");
+  };
+
+  const openDrafts = async () => {
+    if (!(await guard())) return;
+    setShowDrafts(true);
+  };
+
   const cancelInvoice = async () => {
     if (!state.rows.length && !state.invoiceId) {
       productRef.current?.focus();
@@ -899,6 +964,28 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                 onClick={() => void pdf()}
               >
                 <PdfIcon className="h-6 w-6" />
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-green h-[32px] px-2.5 text-[13px] font-black"
+                title="إرسال الفاتورة على واتساب"
+                onClick={async () => {
+                  if (state.invoiceId && !dirty) {
+                    try {
+                      const inv = await api<Invoice>(`/api/invoices/${state.invoiceId}`);
+                      setShareInvoice(inv);
+                    } catch (e) {
+                      toast(errMsg(e), "error");
+                    }
+                    return;
+                  }
+                  const saved = await save();
+                  if (saved) setShareInvoice(saved);
+                }}
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>واتساب</span>
               </button>
 
               {/* المستخدم الحالي — بجوار زر الطباعة */}
@@ -1434,7 +1521,7 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
         {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
         <div className="flex h-[196px] shrink-0 gap-2">
           {/* أزرار العمليات */}
-          <div className="grid w-[22%] min-w-[240px] max-w-[320px] shrink-0 grid-cols-2 grid-rows-2 gap-1.5">
+          <div className="grid w-[26%] min-w-[260px] max-w-[340px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5">
             <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
               <FilePlus2 />
               <span>فاتورة جديدة</span>
@@ -1454,6 +1541,29 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
             <button type="button" className="btn btn-red btn-big" onClick={() => void cancelInvoice()}>
               <X strokeWidth={4} />
               <span>إلغاء الفاتورة</span>
+            </button>
+
+            {/* تعليق الفاتورة كمسودة */}
+            <button
+              type="button"
+              className="btn btn-big"
+              onClick={() => void holdDraft()}
+              disabled={saving}
+              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
+            >
+              <FileClock className="text-amber-600" />
+              <span>تعليق الفاتورة</span>
+            </button>
+
+            {/* قائمة الفواتير المعلقة */}
+            <button
+              type="button"
+              className="btn btn-big"
+              onClick={() => void openDrafts()}
+              title="عرض الفواتير المعلقة واستكمالها"
+            >
+              <List className="text-blue-700" />
+              <span>الفواتير المعلقة</span>
             </button>
           </div>
 
@@ -1617,6 +1727,12 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
             addProduct(p, q);
           }}
         />
+      )}
+
+      {shareInvoice && <ShareInvoiceDialog invoice={shareInvoice} onClose={() => setShareInvoice(null)} />}
+
+      {showDrafts && (
+        <DraftsPanel type={type} onResume={resumeDraft} onClose={() => setShowDrafts(false)} />
       )}
 
       {showPriceInquiry && (

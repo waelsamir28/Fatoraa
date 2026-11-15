@@ -50,6 +50,18 @@ export function BackupScheduleView() {
   const [items, setItems] = useState<BackupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  // إعدادات الجدولة
+  const [sched, setSched] = useState<{
+    enabled: boolean;
+    everyHours: number;
+    keepCount: number;
+    hour: number;
+    sendTelegram: boolean;
+    lastRun: string;
+    lastStatus: string;
+    nextRun?: string;
+  } | null>(null);
+  const [savingSched, setSavingSched] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,7 +77,24 @@ export function BackupScheduleView() {
 
   useEffect(() => {
     void load();
+    api<typeof sched>("/api/backups/schedule")
+      .then(setSched)
+      .catch(() => undefined);
   }, [load]);
+
+  /** حفظ إعدادات الجدولة */
+  const saveSched = async (patch: Partial<NonNullable<typeof sched>>) => {
+    setSavingSched(true);
+    try {
+      const saved = await api<NonNullable<typeof sched>>("/api/backups/schedule", { method: "PUT", json: patch });
+      setSched({ ...saved, nextRun: saved.lastRun ? new Date(new Date(saved.lastRun).getTime() + saved.everyHours * 3600000).toISOString() : new Date().toISOString() });
+      toast("تم حفظ إعدادات الجدولة ✓");
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setSavingSched(false);
+    }
+  };
 
   const runNow = async () => {
     setBusy(true);
@@ -75,6 +104,8 @@ export function BackupScheduleView() {
       });
       toast(`تم إنشاء نسخة احتياطية (${kb(r.sizeBytes)}) ✓`);
       await load();
+      const s2 = await api<NonNullable<typeof sched>>("/api/backups/schedule").catch(() => null);
+      if (s2) setSched(s2);
     } catch (e) {
       toast(errMsg(e), "error");
     } finally {
@@ -140,13 +171,104 @@ export function BackupScheduleView() {
           </button>
         </div>
 
+        {/* ===== إعدادات الجدولة ===== */}
+        <div className="mb-3 overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+          <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-2 text-[14px] font-black text-white">
+            <CalendarClock className="h-4 w-4 text-[#f5c518]" />
+            جدولة النسخ الاحتياطي التلقائي
+          </div>
+          {!sched ? (
+            <div className="grid place-items-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <div className="space-y-2 p-3">
+              <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-[#f8fafd] px-3 py-2">
+                <span>
+                  <span className="block text-[13.5px] font-black text-[#0f2942]">تشغيل النسخ التلقائي</span>
+                  <span className="block text-[11px] font-bold text-slate-500">
+                    يعمل تلقائياً عند فتح البرنامج حسب الجدول أدناه
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 accent-[#2fb3a6]"
+                  checked={sched.enabled}
+                  onChange={(e) => void saveSched({ enabled: e.target.checked })}
+                />
+              </label>
+
+              <div className="grid grid-cols-3 gap-2">
+                <label className="block rounded-lg border border-slate-200 bg-white p-2">
+                  <span className="mb-1 block text-[11.5px] font-black text-[#0f2942]">كل كم ساعة؟</span>
+                  <select
+                    className="win-input w-full text-[12.5px] font-bold"
+                    value={sched.everyHours}
+                    onChange={(e) => void saveSched({ everyHours: Number(e.target.value) })}
+                  >
+                    <option value={1}>كل ساعة</option>
+                    <option value={3}>كل 3 ساعات</option>
+                    <option value={6}>كل 6 ساعات</option>
+                    <option value={12}>كل 12 ساعة</option>
+                    <option value={24}>كل يوم</option>
+                    <option value={48}>كل يومين</option>
+                    <option value={72}>كل 3 أيام</option>
+                  </select>
+                </label>
+                <label className="block rounded-lg border border-slate-200 bg-white p-2">
+                  <span className="mb-1 block text-[11.5px] font-black text-[#0f2942]">الاحتفاظ بآخر</span>
+                  <select
+                    className="win-input w-full text-[12.5px] font-bold"
+                    value={sched.keepCount}
+                    onChange={(e) => void saveSched({ keepCount: Number(e.target.value) })}
+                  >
+                    {[7, 15, 30, 60, 100, 200].map((n) => (
+                      <option key={n} value={n}>
+                        {n} نسخة
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block rounded-lg border border-slate-200 bg-white p-2">
+                  <span className="mb-1 block text-[11.5px] font-black text-[#0f2942]">إرسال لتيليجرام</span>
+                  <select
+                    className="win-input w-full text-[12.5px] font-bold"
+                    value={sched.sendTelegram ? "1" : "0"}
+                    onChange={(e) => void saveSched({ sendTelegram: e.target.value === "1" })}
+                  >
+                    <option value="1">نعم — نسخة على السحابة</option>
+                    <option value="0">محلي فقط</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 rounded-lg bg-[#eef4fa] px-2.5 py-1.5 text-[11.5px] font-bold text-slate-700">
+                <span>
+                  آخر نسخة:{" "}
+                  <b className="num">
+                    {sched.lastRun ? new Date(sched.lastRun).toLocaleString("ar-EG") : "لم تُنشأ بعد"}
+                  </b>
+                </span>
+                <span className="text-slate-400">|</span>
+                <span>
+                  القادمة:{" "}
+                  <b className="num">
+                    {sched.nextRun ? new Date(sched.nextRun).toLocaleString("ar-EG") : "—"}
+                  </b>
+                </span>
+                {savingSched && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600" />}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* التوزيع */}
         <div className="mb-3 grid gap-2 sm:grid-cols-3">
           <Info
             icon={<CalendarClock className="h-5 w-5" />}
             title="التكرار"
-            value="يومياً تلقائياً"
-            note="مرة واحدة في اليوم عند أول تشغيل"
+            value={sched ? (sched.enabled ? `كل ${sched.everyHours} ساعة` : "متوقف") : "—"}
+            note={sched?.enabled ? "نسخ تلقائي مجدول" : "النسخ التلقائي متوقف"}
           />
           <Info
             icon={<Database className="h-5 w-5" />}

@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { invoices, parties, payments } from "@/db/schema";
 import { INVOICE_LABELS } from "@/lib/constants";
@@ -25,7 +25,7 @@ export function GET(_req: Request, { params }: Ctx) {
         paid: invoices.paid,
       })
       .from(invoices)
-      .where(eq(invoices.partyId, id))
+      .where(and(eq(invoices.partyId, id), isNull(invoices.deletedAt), eq(invoices.isDraft, false)))
       .orderBy(asc(invoices.date));
     const pays = await db.select().from(payments).where(eq(payments.partyId, id)).orderBy(asc(payments.date));
 
