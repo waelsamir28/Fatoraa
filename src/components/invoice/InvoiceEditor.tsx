@@ -49,6 +49,7 @@ import { Dialog, Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { AddUserIcon, PdfIcon, UserAvatar } from "@/components/icons/AppIcons";
 import { api, errMsg } from "@/lib/client";
+import { enqueueInvoice } from "@/lib/offline";
 import { PAYMENT_METHODS, type PaymentMethodKey } from "@/lib/constants";
 import { dateInputToISO, fmt, fmtQty, fmtTime, isoToDateInput, round2, round3, todayInput, uid } from "@/lib/format";
 import type { Invoice, InvoiceType, Party, PaymentType, Product, Settings } from "@/lib/types";
@@ -601,9 +602,25 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
       };
       const inv = state.invoiceId
         ? await api<Invoice>(`/api/invoices/${state.invoiceId}`, { method: "PUT", json: payload })
-        : await api<Invoice>("/api/invoices", { method: "POST", json: payload });
+        : await api<Invoice>("/api/invoices", { method: "POST", json: payload }).catch((e: unknown) => {
+            // أوفلاين: نحفظ الفاتورة في طابور المتصفح ونكملها عند عودة الشبكة
+            if (typeof navigator !== "undefined" && navigator.onLine === false) {
+              enqueueInvoice(
+                payload as Record<string, unknown>,
+                `${type === "sale" ? "بيع" : "فاتورة"} — ${state.party.name || "عميل نقدي"}`,
+              );
+              toast(
+                "لا يوجد اتصال — تم حفظ الفاتورة في طابور الأوفلاين وسيتم إرسالها تلقائياً عند عودة الإنترنت",
+                "info",
+              );
+              return { ...(payload as unknown as Invoice), id: 0, number: 0, offline: true } as Invoice;
+            }
+            throw e;
+          });
 
       playSuccess();
+      // فاتورة محفوظة محلياً (أوفلاين) — لا نُحمّلها كفاتورة محفوظة لأن رقمها لم يُصدر بعد
+      if ((inv as { offline?: boolean }).offline) return inv;
       const [plist] = await Promise.all([loadParties(), loadProducts()]);
       loadInvoice(inv, plist);
 

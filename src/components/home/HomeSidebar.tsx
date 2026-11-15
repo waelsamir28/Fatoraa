@@ -169,6 +169,21 @@ export function HomeSidebar({
     return () => clearTimeout(id);
   }, []);
 
+  // Ctrl+B من أي مكان: طيّ/بسط القائمة
+  useEffect(() => {
+    const onToggle = () => setMini((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem("fatora.nav.mini", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+    window.addEventListener("fatora:toggle-nav", onToggle);
+    return () => window.removeEventListener("fatora:toggle-nav", onToggle);
+  }, []);
+
   const toggleMini = () =>
     setMini((v) => {
       const next = !v;

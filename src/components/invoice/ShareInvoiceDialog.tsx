@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy, ExternalLink, Loader2, MessageCircle, Printer, Send, Share2 } from "lucide-react";
+import { Copy, ExternalLink, Loader2, MessageCircle, Printer, Send, Share2, Sparkles } from "lucide-react";
 import { Dialog } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { api, errMsg } from "@/lib/client";
@@ -21,9 +21,19 @@ export function ShareInvoiceDialog({ invoice, onClose }: { invoice: Invoice; onC
   const [qr, setQr] = useState<QrData | null>(null);
   const [loading, setLoading] = useState(true);
   const [withImage, setWithImage] = useState(true);
+  /** رسالة الشكر/العرض التلقائية بعد أول فاتورة للعميل */
+  const [thanks, setThanks] = useState<{ enabled: boolean; text: string; whatsapp: string } | null>(null);
 
   useEffect(() => {
     api<Settings>("/api/settings").then(setSettings).catch(() => undefined);
+    api<{ isFirst: boolean; phone: string }>(`/api/invoices/${invoice.id}/first-visit`)
+      .then((r) =>
+        api<{ enabled: boolean; text: string; whatsapp: string }>("/api/thanks", {
+          method: "POST",
+          json: { name: invoice.partyName, phone: r.phone, total: invoice.total, isFirst: r.isFirst },
+        }).then(setThanks),
+      )
+      .catch(() => undefined);
     api<QrData>(`/api/invoices/${invoice.id}/qr`)
       .then(setQr)
       .catch((e) => setQr({ error: errMsg(e) }))
@@ -151,6 +161,43 @@ export function ShareInvoiceDialog({ invoice, onClose }: { invoice: Invoice; onC
             {message}
           </pre>
         </div>
+
+        {/* رسالة الشكر / العرض — تظهر تلقائياً بعد أول فاتورة للعميل */}
+        {thanks?.enabled && (
+          <div className="rounded-lg border-2 border-emerald-300 bg-emerald-50/70 p-2.5">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[13px] font-black text-emerald-900">
+                <Sparkles className="h-4 w-4 text-emerald-600" /> رسالة شكر وعرض ترحيبي (تلقائية)
+              </span>
+              <div className="flex items-center gap-1">
+                <button type="button" className="btn h-7 px-2 text-[11.5px] font-black" onClick={() => void copy(thanks.text, "رسالة الشكر")}>
+                  <Copy className="h-3.5 w-3.5" /> نسخ
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-green h-7 px-2 text-[11.5px] font-black"
+                  onClick={() => {
+                    const phone = cleanPhone(phoneFromInvoice(invoice));
+                    window.open(
+                      phone
+                        ? `https://wa.me/${phone}?text=${encodeURIComponent(thanks.text)}`
+                        : `https://wa.me/?text=${encodeURIComponent(thanks.text)}`,
+                      "_blank",
+                    );
+                  }}
+                >
+                  <Send className="h-3.5 w-3.5" /> إرسال
+                </button>
+              </div>
+            </div>
+            <pre className="max-h-[130px] overflow-auto whitespace-pre-wrap rounded bg-white p-2 font-[inherit] text-[11.5px] font-bold leading-relaxed text-emerald-950">
+              {thanks.text}
+            </pre>
+            <div className="mt-1 text-[10.5px] font-bold text-emerald-800">
+              يمكنك تعديل نص الرسالة ونسبة العرض من شاشة الإعدادات — وتظهر فقط في أول تعامل للعميل.
+            </div>
+          </div>
+        )}
 
         <label className="flex items-center gap-2 rounded-md bg-[#eef4fa] px-2.5 py-1.5 text-[12px] font-bold text-slate-700">
           <input type="checkbox" className="h-4 w-4 accent-[#2fb3a6]" checked={withImage} onChange={(e) => setWithImage(e.target.checked)} />

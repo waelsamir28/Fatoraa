@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { cashMoves, expenses, invoiceItems, invoices, parties, payments, products, settings } from "@/db/schema";
 import { HttpError, handle, readJson } from "@/lib/server/http";
 import { DEFAULT_SETTINGS, clearAllData, resetDemoData } from "@/lib/server/seed";
+import { backupBeforeDestructive } from "@/lib/server/destructive-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -56,12 +57,17 @@ export function POST(req: Request) {
   return handle(async () => {
     const action = new URL(req.url).searchParams.get("action") ?? "restore";
     if (action === "reset") {
+      // نسخة احتياطية تلقائية قبل استبدال كل البيانات
+      const guard = await backupBeforeDestructive("استعادة البيانات التجريبية");
+      if (!guard.ok) throw new HttpError(500, guard.error || "تعذّر أخذ نسخة احتياطية");
       await resetDemoData();
-      return { ok: true, message: "تمت استعادة البيانات التجريبية بنجاح" };
+      return { ok: true, message: "تمت استعادة البيانات التجريبية بنجاح (نسخة احتياطية: " + (guard.fileName || "-") + ")" };
     }
     if (action === "clear") {
+      const guard = await backupBeforeDestructive("حذف جميع البيانات");
+      if (!guard.ok) throw new HttpError(500, guard.error || "تعذّر أخذ نسخة احتياطية");
       await clearAllData();
-      return { ok: true, message: "تم حذف جميع البيانات" };
+      return { ok: true, message: "تم حذف جميع البيانات (نسخة احتياطية: " + (guard.fileName || "-") + ")" };
     }
 
     const body = await readJson(req);

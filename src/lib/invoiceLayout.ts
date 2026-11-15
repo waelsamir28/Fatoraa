@@ -46,6 +46,62 @@ export interface InvoiceLayout {
   watermark: string;
   /** نص التوقيع */
   signatureText: string;
+
+  // ===== نصوص الترويسة القابلة للتعديل =====
+  /** إظهار اسم المحل في الترويسة */
+  showStoreName: boolean;
+  /** نص بديل لاسم المحل (فاضي = يستخدم اسم المحل من الإعدادات) */
+  storeNameText: string;
+  /** الوصف تحت اسم المحل */
+  storeDescText: string;
+  /** إظهار سطر الهاتف */
+  showPhone: boolean;
+  /** بادئة سطر الهاتف */
+  phoneLabel: string;
+  /** إظهار العنوان */
+  showAddress: boolean;
+  /** بادئة سطر العنوان */
+  addressLabel: string;
+  /** إظهار رقم الفاتورة في المربع */
+  showInvoiceNumber: boolean;
+  /** إظهار التاريخ في المربع */
+  showInvoiceDate: boolean;
+  /** إظهار الوقت في المربع */
+  showInvoiceTime: boolean;
+  /** عنوان المربع (فاضي = اسم نوع الفاتورة) */
+  invoiceTypeText: string;
+
+  // ===== اللوجو =====
+  /** موضع اللوجو داخل الترويسة */
+  logoPosition: "start" | "center" | "end" | "above" | "hidden";
+  /** حجم اللوجو بالمليمتر */
+  logoSize: number;
+  /** مساحة بيضاء حول اللوجو */
+  logoPadding: number;
+  /** إطار حول اللوجو */
+  logoBorder: boolean;
+  /** خلفية اللوجو */
+  logoBg: string;
+  /** صورة مخصصة للفاتورة فقط (data URL) — فاضي = شعار البرنامج */
+  logoUrl: string;
+
+  // ===== التذييل =====
+  /** إظهار التذييل بالكامل */
+  showFooter: boolean;
+  /** السطر الأول (فاضي = نص تذييل الإعدادات) */
+  footerLine1: string;
+  /** السطر الثاني (فاضي = اسم البرنامج + الدعم) */
+  footerLine2: string;
+  /** إظهار اسم البرنامج والدعم */
+  showSupportLine: boolean;
+  /** إظهار خط «شكراً لتعاملكم» */
+  showThanksLine: boolean;
+  /** نص الشكر */
+  thanksText: string;
+  /** موضع التذييل */
+  footerAlign: "right" | "center" | "left";
+  /** نص أسفل جدول الإجماليات (بدل خط التوقيع القديم) */
+  totalsNoteText: string;
 }
 
 export const DEFAULT_LAYOUT: InvoiceLayout = {
@@ -69,6 +125,34 @@ export const DEFAULT_LAYOUT: InvoiceLayout = {
   showBorder: true,
   watermark: "",
   signatureText: "توقيع المستلم",
+
+  showStoreName: true,
+  storeNameText: "",
+  storeDescText: "تجارة الأدوات المدرسية والمكتبية والخردوات وخدمات الطباعة والتصميم",
+  showPhone: true,
+  phoneLabel: "تليفون",
+  showAddress: true,
+  addressLabel: "العنوان",
+  showInvoiceNumber: true,
+  showInvoiceDate: true,
+  showInvoiceTime: true,
+  invoiceTypeText: "",
+
+  logoPosition: "start",
+  logoSize: 18,
+  logoPadding: 0,
+  logoBorder: false,
+  logoBg: "",
+  logoUrl: "",
+
+  showFooter: true,
+  footerLine1: "",
+  footerLine2: "",
+  showSupportLine: true,
+  showThanksLine: true,
+  thanksText: "شكراً لتعاملكم معنا",
+  footerAlign: "center",
+  totalsNoteText: "",
 };
 
 /** قوالب جاهزة يمكن البدء منها */
@@ -120,7 +204,11 @@ export function parseLayout(raw: string | null | undefined): InvoiceLayout {
     const merged: InvoiceLayout = { ...DEFAULT_LAYOUT, ...o };
     if (!["a5", "a4", "thermal"].includes(merged.paper)) merged.paper = "a5";
     if (!["right", "center", "left"].includes(merged.headerAlign)) merged.headerAlign = "right";
+    if (!["right", "center", "left"].includes(merged.footerAlign)) merged.footerAlign = "center";
+    if (!["start", "center", "end", "above", "hidden"].includes(merged.logoPosition)) merged.logoPosition = "start";
     merged.scale = Math.min(140, Math.max(70, Number(merged.scale) || 100));
+    merged.logoSize = Math.min(60, Math.max(6, Number(merged.logoSize) || 18));
+    merged.logoPadding = Math.min(10, Math.max(0, Number(merged.logoPadding) || 0));
     return merged;
   } catch {
     return { ...DEFAULT_LAYOUT };

@@ -2,6 +2,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { products } from "@/db/schema";
 import { HttpError, handle, readJson, str } from "@/lib/server/http";
+import { backupBeforeDestructive } from "@/lib/server/destructive-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -95,11 +96,19 @@ export function DELETE(req: Request) {
   return handle(async () => {
     const name = str(new URL(req.url).searchParams.get("name"));
     if (!name) throw new HttpError(400, "يرجى تحديد المجموعة المطلوب حذفها");
+    // نسخة احتياطية تلقائية قبل النقل الجماعي
+    const guard = await backupBeforeDestructive(`حذف مجموعة أصناف «${name}»`);
+    if (!guard.ok) throw new HttpError(500, guard.error || "تعذّر أخذ نسخة احتياطية");
     const res = await db
       .update(products)
       .set({ category: "عام" })
       .where(eq(products.category, name))
       .returning({ id: products.id });
-    return { ok: true, message: `تم حذف مجموعة "${name}" ونقل ${res.length} صنف إلى مجموعة (عام)`, moved: res.length };
+    return {
+      ok: true,
+      message: `تم حذف مجموعة "${name}" ونقل ${res.length} صنف إلى مجموعة (عام)`,
+      moved: res.length,
+      backup: guard.fileName || guard.where || "",
+    };
   });
 }

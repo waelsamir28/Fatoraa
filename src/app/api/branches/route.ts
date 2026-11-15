@@ -3,6 +3,7 @@ import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { branches, invoices, users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
+import { backupBeforeDestructive } from "@/lib/server/destructive-guard";
 import { requireSession } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +93,10 @@ export async function DELETE(req: Request) {
       );
     }
 
+    const guard = await backupBeforeDestructive(`حذف فرع #${id}`);
+    if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: 500 });
+
     await db.delete(branches).where(eq(branches.id, id));
-    return { ok: true };
+    return { ok: true, backup: guard.fileName || guard.where || "" };
   });
 }

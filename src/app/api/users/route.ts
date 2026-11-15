@@ -5,6 +5,7 @@ import { users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
 import { hashPassword, ROLE_LABELS } from "@/lib/server/auth";
 import { requireSession, invalidateAuthCache } from "@/lib/server/session";
+import { backupBeforeDestructive } from "@/lib/server/destructive-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -147,8 +148,11 @@ export async function DELETE(req: Request) {
       }
     }
 
+    const guard = await backupBeforeDestructive(`حذف مستخدم «${target.username}»`);
+    if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: 500 });
+
     await db.delete(users).where(eq(users.id, id));
     invalidateAuthCache();
-    return { ok: true };
+    return { ok: true, backup: guard.fileName || guard.where || "" };
   });
 }

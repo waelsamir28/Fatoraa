@@ -16,6 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { ThanksMessageEditor } from "@/components/settings/ThanksMessageEditor";
 import { Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { CartLogo, IconBackup, IconSettings } from "@/components/icons/AppIcons";
@@ -70,7 +71,7 @@ export function SettingsForm() {
   const [f, setF] = useState<SForm | null>(null);
   const [savedForm, setSavedForm] = useState<SForm | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding">("appearance");
+  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding" | "thanks">("appearance");
   const [editorOpen, setEditorOpen] = useState(false);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
@@ -179,12 +180,13 @@ export function SettingsForm() {
   const scale = Number(f?.fontScale ?? prefs.fontScale ?? 100);
 
   // ===== تبويبات الإعدادات =====
-  type TabKey = "appearance" | "store" | "invoices" | "branding";
+  type TabKey = "appearance" | "store" | "invoices" | "branding" | "thanks";
   const TABS: { key: TabKey; label: string; hint: string }[] = [
     { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والأزرار" },
     { key: "store", label: "بيانات المحل", hint: "الاسم والهاتف والعنوان والضريبة" },
     { key: "invoices", label: "قوالب الفواتير", hint: "القالب والمقاس والتذييل" },
     { key: "branding", label: "الشعار والخلفية", hint: "اللوجو والشاشة الرئيسية" },
+    { key: "thanks", label: "رسالة الترحيب", hint: "شكر وعرض بعد أول فاتورة" },
   ];
   const dirty = Boolean(f && savedForm && JSON.stringify(f) !== JSON.stringify(savedForm));
   const activeTabTheme = THEMES.find((t) => t.key === prefs.theme) ?? THEMES[0];
@@ -221,7 +223,7 @@ export function SettingsForm() {
               <div className="flex flex-col">
                 <span className="text-[16.5px] font-black">إعدادات البرنامج</span>
                 <span className="text-[11.5px] font-bold text-blue-200">
-                  4 أقسام — اختر القسم من التبويبات بالأسفل
+                  5 أقسام — اختر القسم من التبويبات بالأسفل
                 </span>
               </div>
               <div className="ms-auto flex flex-wrap items-center gap-1.5">
@@ -539,6 +541,9 @@ export function SettingsForm() {
                   </div>
                 </>
               )}
+
+              {/* ---------- 5) رسالة الترحيب ---------- */}
+              {tab === "thanks" && <ThanksMessageEditor />}
 
               {/* ---------- 4) الشعار والخلفية ---------- */}
               {tab === "branding" && (
