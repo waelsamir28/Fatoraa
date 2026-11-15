@@ -9,12 +9,11 @@ import {
   CheckSquare,
   Cloud as IconCloud,
   LayoutDashboard as IconDashboard,
-  PanelRightClose,
-  PanelRightOpen,
   TrendingUp as IconProfit,
   Users as IconUsers,
 } from "lucide-react";
 import { Window } from "@/components/win/Window";
+import { HomeSidebar } from "./HomeSidebar";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import {
   IconBackup,
@@ -92,38 +91,14 @@ const TILES: Array<{ href: string | null; label: string; Icon: Icon; badge?: str
   { href: null, label: "خروج", Icon: IconExit },
 ];
 
-const NAV: Array<{ href: string; label: string; Icon: Icon }> = [
-  { href: "/", label: "الرئيسية", Icon: IconHome },
-  { href: "/sales", label: "المبيعات", Icon: SalesSmall },
-  { href: "/purchases", label: "المشتريات", Icon: IconBox },
-  { href: "/products-manager", label: "الأصناف والمجموعات", Icon: IconCategories },
-  { href: "/smart-orders", label: "الشراء الذكي", Icon: IconSmartOrders },
-  { href: "/shifts", label: "الورديات", Icon: IconShifts },
-  { href: "/installments", label: "الأقساط", Icon: IconInstallments },
-  { href: "/treasury", label: "الخزينة", Icon: IconTreasury },
-  { href: "/price-checker", label: "استعلام الأسعار", Icon: IconInfo },
-  { href: "/reports", label: "التقارير", Icon: IconReports },
-  { href: "/settings", label: "الإعدادات", Icon: IconSettings },
-  { href: "/connection", label: "ربط قاعدة البيانات", Icon: IconCloud },
-  { href: "/dashboard", label: "لوحة المالك", Icon: IconDashboard },
-  { href: "/profit", label: "الأرباح", Icon: IconProfit },
-  { href: "/users", label: "المستخدمون", Icon: IconUsers },
-  { href: "/branches", label: "الفروع", Icon: IconBranches },
-];
 
 export function HomeScreen() {
   const router = useRouter();
   const { confirm, native, quitApp, activeUser } = useDesktop();
   const [stats, setStats] = useState<TodaySummary | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    try {
-      if (localStorage.getItem("aljamal.sidebar") === "0") setSidebarOpen(false);
-    } catch {
-      /* ignore */
-    }
     const t = todayInput();
     const r = rangeToISO(t, t);
     api<TodaySummary>(
@@ -138,18 +113,6 @@ export function HomeScreen() {
       })
       .catch(() => setSettings(null));
   }, []);
-
-  const toggleSidebar = () => {
-    setSidebarOpen((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem("aljamal.sidebar", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  };
 
   const exit = async () => {
     if (!(await confirm("هل تريد الخروج من برنامج FATORA؟", { title: "خروج" }))) return;
@@ -183,9 +146,7 @@ export function HomeScreen() {
             <b className="num text-[14px] text-red-600">{stats?.counts.lowStock ?? 0}</b>
           </span>
           <span className="ms-auto flex items-center gap-2">
-            <button type="button" className="font-black text-blue-800 underline-offset-2 hover:underline" onClick={toggleSidebar}>
-              {sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية"}
-            </button>
+            <span className="hidden text-blue-800 sm:inline">القائمة الجانبية: زر التصغير أعلى القائمة</span>
             <span className="sep" />
             <span>الإصدار {APP_VERSION}</span>
             <span className="sep" />
@@ -220,27 +181,14 @@ export function HomeScreen() {
 
           {/* ===== Body: Sidebar + Tiles ===== */}
           <div className="relative flex min-h-0 flex-1 gap-3 px-3 pb-1.5 pt-2">
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              title={sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية"}
-              className="absolute top-2 z-30 grid h-7 w-7 place-items-center rounded-full border border-white bg-white text-blue-800 shadow-md transition hover:bg-blue-50"
-              style={{ right: sidebarOpen ? 199 : 4 }}
-            >
-              {sidebarOpen ? <PanelRightClose className="h-4 w-4" strokeWidth={2.6} /> : <PanelRightOpen className="h-4 w-4" strokeWidth={2.6} />}
-            </button>
+            <HomeSidebar
+              activeUser={activeUser || settings?.userName || "FATORA"}
+              lowStock={Number(stats?.counts.lowStock ?? 0)}
+              onExit={() => void exit()}
+            />
 
-            <nav className={`side-nav ${sidebarOpen ? "" : "side-collapsed"} flex w-[190px] shrink-0 flex-col justify-center gap-1`}>
-              {NAV.map((n, i) => (
-                <Link key={n.label} href={n.href} className={`side-btn !h-[34px] !text-[15px] ${i === 0 ? "active" : ""}`}>
-                  <n.Icon />
-                  <span className="flex-1 truncate text-center">{n.label}</span>
-                </Link>
-              ))}
-            </nav>
-
-            <div className={`grid flex-1 gap-2 pe-1 ${sidebarOpen ? "grid-cols-6 grid-rows-3" : "grid-cols-8 grid-rows-3"}`}>
-              {TILES.slice(0, sidebarOpen ? 18 : 24).map((t) =>
+            <div className="tiles-grid">
+              {TILES.map((t) =>
                 t.href ? (
                   <Link key={t.label} href={t.href} className="tile group relative !p-1">
                     {t.badge && (
