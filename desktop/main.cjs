@@ -456,13 +456,15 @@ let updater = null;
 try {
   // electron-updater اختياري: لو غير متاح يعمل البرنامج عادي بدون تحديث تلقائي
   updater = require("electron-updater").autoUpdater;
-  updater.autoDownload = false;
+  // تنزيل التحديث في الخلفية تلقائياً، والقرار النهائي للتثبيت يبقى للمستخدم
+  updater.autoDownload = true;
   updater.autoInstallOnAppQuit = true;
   updater.logger = { info: log, warn: log, error: log, debug: () => undefined };
 } catch (e) {
   log(`electron-updater not available: ${e}`);
 }
 
+let updateTimer = null;
 let updateState = {
   status: "idle", // idle | checking | available | none | downloading | downloaded | error
   currentVersion: app.getVersion(),
@@ -494,9 +496,29 @@ function wireUpdater() {
   );
   updater.on("update-not-available", () => setUpdateState({ status: "none", latestVersion: app.getVersion() }));
   updater.on("download-progress", (p) => setUpdateState({ status: "downloading", progress: Math.round(p?.percent || 0) }));
-  updater.on("update-downloaded", (info) =>
-    setUpdateState({ status: "downloaded", latestVersion: info?.version || updateState.latestVersion, progress: 100 }),
-  );
+  updater.on("update-downloaded", (info) => {
+    setUpdateState({ status: "downloaded", latestVersion: info?.version || updateState.latestVersion, progress: 100 });
+    // إشعار المستخدم بعد تنزيل التحديث في الخلفية
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog
+        .showMessageBox(mainWindow, {
+          type: "info",
+          title: "تحديث جديد جاهز",
+          message: `تم تنزيل الإصدار ${info?.version || ""} من برنامج FATORA`,
+          detail: "هل تريد إعادة تشغيل البرنامج الآن لتثبيت التحديث؟ (لن تفقد أي بيانات — التثبيت يستغرق ثوانٍ)",
+          buttons: ["إعادة التشغيل والتثبيت", "لاحقاً"],
+          defaultId: 0,
+          cancelId: 1,
+        })
+        .then((r) => {
+          if (r.response === 0) {
+            quitting = true;
+            setImmediate(() => updater.quitAndInstall(false, true));
+          }
+        })
+        .catch(() => undefined);
+    }
+  });
   updater.on("error", (e) =>
     setUpdateState({ status: "error", error: e?.message ? String(e.message) : "تعذر التحقق من التحديثات" }),
   );
@@ -675,6 +697,11 @@ async function start() {
     if (DEV) mainWindow.loadURL(`${baseUrl}/`);
     // فحص التحديثات بعد فتح البرنامج (بدون إزعاج المستخدم)
     setTimeout(() => checkForUpdates(false), 8000);
+    // ثم كل 4 ساعات طالما البرنامج يعمل
+    updateTimer = setInterval(() => {
+      if (!app.isPackaged) return;
+      void checkForUpdates(false);
+    }, 4 * 60 * 60 * 1000);
   } catch (err) {
     log(`startup failed: ${err && err.stack ? err.stack : err}`);
     dialog.showErrorBox(APP_TITLE, `تعذر تشغيل البرنامج:\n${err && err.message ? err.message : err}\n\nملف السجل:\n${logFile()}`);
@@ -685,6 +712,7 @@ async function start() {
 
 app.on("before-quit", () => {
   quitting = true;
+  if (updateTimer) clearInterval(updateTimer);
   try {
     server?.kill();
   } catch {

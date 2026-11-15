@@ -137,6 +137,21 @@ CREATE TABLE IF NOT EXISTS "purchase_orders" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "audit_log" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"action" text DEFAULT '' NOT NULL,
+	"entity" text DEFAULT '' NOT NULL,
+	"entity_id" integer,
+	"label" text DEFAULT '' NOT NULL,
+	"details" text DEFAULT '' NOT NULL,
+	"user_id" integer,
+	"user_name" text DEFAULT '' NOT NULL,
+	"user_role" text DEFAULT '' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "audit_created_idx" ON "audit_log" ("created_at");
+CREATE INDEX IF NOT EXISTS "audit_entity_idx" ON "audit_log" ("entity");
+
 CREATE TABLE IF NOT EXISTS "license_activations" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"device_id" text DEFAULT '' NOT NULL,
@@ -159,6 +174,7 @@ CREATE TABLE IF NOT EXISTS "app_config" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+
 CREATE TABLE IF NOT EXISTS "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"username" text NOT NULL,
@@ -168,6 +184,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"active" boolean DEFAULT true NOT NULL,
 	"branch_id" integer,
 	"last_login_at" timestamp with time zone,
+	"pin_hash" text DEFAULT '' NOT NULL,
+	"permissions" text DEFAULT '[]' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -192,6 +210,7 @@ CREATE TABLE IF NOT EXISTS "backups" (
 	"message" text DEFAULT '' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
+
 
 CREATE TABLE IF NOT EXISTS "settings" (
 	"id" integer PRIMARY KEY NOT NULL,
@@ -296,6 +315,11 @@ ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "deleted_at" timestamp with time zone;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "deleted_by" text DEFAULT '' NOT NULL;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "delete_reason" text DEFAULT '' NOT NULL;
+
+-- أعمدة أُضيفت في تحديث الصلاحيات و PIN والوضع الليلي (للقواعد القديمة)
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "pin_hash" text DEFAULT '' NOT NULL;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "permissions" text DEFAULT '[]' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "mode" text DEFAULT 'light' NOT NULL;
 
 -- حركات المخزون
 CREATE TABLE IF NOT EXISTS "stock_movements" (

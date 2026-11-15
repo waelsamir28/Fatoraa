@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   DatabaseBackup,
+  Loader2,
   Download,
   Image as ImageIcon,
   LayoutTemplate,
@@ -26,6 +27,7 @@ import { api, errMsg } from "@/lib/client";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { DEFAULT_LOGO } from "@/lib/constants";
 import { BANNER_SPEC, RAIL_SPEC, imageSize, pxToCm, ratioText, resizeDataUrl } from "@/lib/homeImages";
+import type { BackupPreview } from "@/lib/backup-preview";
 import type { Settings } from "@/lib/types";
 import {
   BUTTON_STYLES,
@@ -52,6 +54,7 @@ const toForm = (s: Settings): SForm => ({
   salesRep: s.salesRep,
   invoiceFooter: s.invoiceFooter,
   theme: s.theme || "classic-blue",
+  mode: s.mode || "light",
   buttonStyle: s.buttonStyle || "glossy-3d",
   fontFamily: s.fontFamily || "cairo",
   tableHeaderColor: s.tableHeaderColor || "navy-dark",
@@ -211,6 +214,7 @@ export function SettingsForm() {
       setSavedForm(form);
       const applied: UiPrefs = {
         theme: form.theme,
+        mode: form.mode,
         fontFamily: form.fontFamily,
         fontScale: Number(form.fontScale) || 100,
         buttonStyle: form.buttonStyle,
@@ -236,6 +240,7 @@ export function SettingsForm() {
       setF(savedForm);
       const applied: UiPrefs = {
         theme: savedForm.theme,
+        mode: savedForm.mode,
         fontFamily: savedForm.fontFamily,
         fontScale: Number(savedForm.fontScale) || 100,
         buttonStyle: savedForm.buttonStyle,
@@ -348,6 +353,41 @@ export function SettingsForm() {
               {/* ---------- 1) المظهر ---------- */}
               {tab === "appearance" && (
                 <>
+                  {/* الوضع الليلي */}
+                  <div className="flex items-center justify-between rounded-xl border-2 border-[#c9d8ee] bg-white p-3 shadow-sm">
+                    <div>
+                      <div className="text-[14px] font-black text-[#0f2942]">الوضع الليلي</div>
+                      <div className="text-[11.5px] font-bold text-slate-600">
+                        مريح للعين في الإضاءة المنخفضة — يعمل مع كل الثيمات
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setF({ ...f, mode: "light" });
+                          preview({ mode: "light" } as Partial<UiPrefs>);
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-[12px] font-black ${
+                          f.mode !== "dark" ? "bg-[#0f2942] text-white" : "bg-[#eef5fd] text-[#0f2942]"
+                        }`}
+                      >
+                        ☀ نهاري
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setF({ ...f, mode: "dark" });
+                          preview({ mode: "dark" } as Partial<UiPrefs>);
+                        }}
+                        className={`rounded-lg px-3 py-1.5 text-[12px] font-black ${
+                          f.mode === "dark" ? "bg-[#0f2942] text-white" : "bg-[#eef5fd] text-[#0f2942]"
+                        }`}
+                      >
+                        🌙 ليلي
+                      </button>
+                    </div>
+                  </div>
                   <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
                     <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
                       <Palette className="h-4 w-4 text-[#f5c518]" />
@@ -923,29 +963,46 @@ export function BackupView() {
     toast("جاري تحميل النسخة الاحتياطية المتكاملة...", "info");
   };
 
+  /** معاينة النسخة قبل الاستعادة (عدد الأصناف/الفواتير + مقارنة بالحالي) */
+  const [backupPreview, setBackupPreview] = useState<BackupPreview | null>(null);
+  const [pendingJson, setPendingJson] = useState<unknown>(null);
+
   const restore = async (file: File) => {
     try {
       const text = await file.text();
       const json = JSON.parse(text) as unknown;
-      const ok = await confirm(
-        `سيتم استبدال جميع البيانات الحالية بالبيانات الموجودة في الملف:\n${file.name}\nهل تريد المتابعة؟`,
-        {
-          title: "استعادة نسخة احتياطية",
-          danger: true,
-          okText: "استعادة",
-          cancelText: "إلغاء",
-          kind: "warning",
-        },
-      );
-      if (!ok) return;
       setBusy(true);
-      const r = await api<{ message: string }>("/api/backup?action=restore", { method: "POST", json });
-      toast(r.message);
+      // 1) معاينة أولاً — لا نستبدل أي بيانات قبل موافقة المستخدم
+      const pv = await api<BackupPreview>("/api/backup/validate", { method: "POST", json });
+      if (!pv.valid) {
+        toast(pv.error || "الملف غير صالح", "error");
+        return;
+      }
+      setBackupPreview({ ...pv, fileName: file.name });
+      setPendingJson(json);
     } catch (e) {
       toast(e instanceof SyntaxError ? "الملف ليس نسخة احتياطية صالحة" : errMsg(e), "error");
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  /** تنفيذ الاستعادة بعد تأكيد المعاينة */
+  const doRestore = async () => {
+    if (!pendingJson) return;
+    try {
+      setBusy(true);
+      const json = pendingJson;
+      setBackupPreview(null);
+      setPendingJson(null);
+      const r = await api<{ message: string }>("/api/backup?action=restore", { method: "POST", json });
+      toast(r.message);
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1052,7 +1109,109 @@ export function BackupView() {
           </Card>
         </div>
       </div>
+
+      {/* ===== معاينة النسخة الاحتياطية قبل الاستعادة ===== */}
+      {backupPreview?.valid && (
+        <div className="fixed inset-0 z-[130] grid place-items-center bg-[rgba(5,20,55,.5)] p-4">
+          <div className="w-full max-w-[560px] overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-[#0f2942] px-4 py-2.5 text-white">
+              <div className="flex items-center gap-2 text-[15px] font-black">
+                <DatabaseBackup className="h-4 w-4 text-amber-300" />
+                معاينة النسخة الاحتياطية قبل الاستعادة
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setBackupPreview(null);
+                  setPendingJson(null);
+                }}
+                className="rounded px-2 hover:bg-white/20"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] space-y-2 overflow-auto p-4">
+              <div className="rounded-lg border border-[#c9d8ee] bg-[#f7fbff] p-2 text-[12px] font-bold text-[#0f2942]">
+                الملف: <b className="num">{backupPreview.fileName}</b>
+                {backupPreview.meta?.exportedAt ? (
+                  <>
+                    {" "}
+                    — بتاريخ{" "}
+                    <b className="num">{new Date(String(backupPreview.meta.exportedAt)).toLocaleString("ar-EG")}</b>
+                  </>
+                ) : null}
+                {backupPreview.storeName ? <> — محل «{backupPreview.storeName}»</> : null}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[12px] font-bold">
+                <CompareRow label="الأصناف" from={backupPreview.current?.products ?? 0} to={backupPreview.counts?.products ?? 0} />
+                <CompareRow label="الفواتير" from={backupPreview.current?.invoices ?? 0} to={backupPreview.counts?.invoices ?? 0} />
+                <CompareRow label="العملاء والموردون" from={backupPreview.current?.parties ?? 0} to={backupPreview.counts?.parties ?? 0} />
+                <CompareRow label="تفاصيل الأصناف" from={0} to={backupPreview.counts?.invoiceItems ?? 0} noFrom />
+                <CompareRow label="المدفوعات" from={0} to={backupPreview.counts?.payments ?? 0} noFrom />
+                <CompareRow label="المصروفات" from={0} to={backupPreview.counts?.expenses ?? 0} noFrom />
+              </div>
+
+              {backupPreview.lastInvoice?.date && (
+                <div className="rounded-lg bg-[#eef5fd] px-2 py-1.5 text-[11.5px] font-bold text-[#0f2942]">
+                  آخر فاتورة في النسخة: رقم <b className="num">{String(backupPreview.lastInvoice.number)}</b> بتاريخ{" "}
+                  <b className="num">{new Date(backupPreview.lastInvoice.date).toLocaleDateString("ar-EG")}</b>
+                </div>
+              )}
+
+              {backupPreview.warnings?.length ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11.5px] font-bold text-amber-900">
+                  {backupPreview.warnings.map((w) => (
+                    <div key={w}>⚠ {w}</div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[11.5px] font-black text-red-800">
+                سيتم حذف كل البيانات الحالية واستبدالها ببيانات هذا الملف. العملية لا يمكن التراجع عنها.
+                <div className="mt-0.5 font-bold">سيتم أخذ نسخة احتياطية تلقائية من بياناتك الحالية قبل الاستعادة.</div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t bg-[#f7faff] px-4 py-2.5">
+              <button
+                type="button"
+                className="btn h-9 px-3 text-[13px]"
+                onClick={() => {
+                  setBackupPreview(null);
+                  setPendingJson(null);
+                }}
+              >
+                إلغاء
+              </button>
+              <button type="button" className="btn btn-red h-9 px-4 text-[13px]" onClick={() => void doRestore()} disabled={busy}>
+                {busy ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
+                نعم، استعادة الآن
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Window>
+  );
+}
+
+/** صف مقارنة: البيانات الحالية ← بيانات النسخة */
+function CompareRow({ label, from, to, noFrom }: { label: string; from: number; to: number; noFrom?: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-[#e2ecf8] bg-white px-2 py-1">
+      <span className="text-slate-600">{label}</span>
+      <span className="flex items-center gap-1">
+        {!noFrom && (
+          <>
+            <b className="num text-slate-400">{from}</b>
+            <span className="text-slate-400">←</span>
+          </>
+        )}
+        <b className={`num ${to > from ? "text-emerald-700" : to < from ? "text-red-600" : "text-[#0f2942]"}`}>{to}</b>
+      </span>
+    </div>
   );
 }
 

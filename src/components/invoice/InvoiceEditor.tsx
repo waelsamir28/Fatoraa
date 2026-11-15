@@ -36,6 +36,7 @@ import {
   Plus,
   Printer,
   Save,
+  ScanLine,
   Search,
   Tag,
   Trash2,
@@ -48,7 +49,7 @@ import {
 import { Dialog, Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { AddUserIcon, PdfIcon, UserAvatar } from "@/components/icons/AppIcons";
-import { api, errMsg } from "@/lib/client";
+import { api, errMsg, isNetworkError } from "@/lib/client";
 import { enqueueInvoice } from "@/lib/offline";
 import { PAYMENT_METHODS, type PaymentMethodKey } from "@/lib/constants";
 import { dateInputToISO, fmt, fmtQty, fmtTime, isoToDateInput, round2, round3, todayInput, uid } from "@/lib/format";
@@ -62,6 +63,7 @@ import { resolveLogo } from "@/lib/logo";
 import { QuickAddCategoryModal } from "./QuickAddCategoryModal";
 import { DraftsPanel } from "./DraftsPanel";
 import { ShareInvoiceDialog } from "./ShareInvoiceDialog";
+import { CameraScan } from "./CameraScan";
 
 interface Row {
   key: string;
@@ -262,7 +264,16 @@ function TotRow({
   );
 }
 
-export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialId: number | null }) {
+export function InvoiceEditor({
+  type,
+  initialId,
+  autoScan,
+}: {
+  type: InvoiceType;
+  initialId: number | null;
+  /** فتح ماسح باركود الفاتورة الأصلية تلقائياً (مرتجعات) */
+  autoScan?: boolean;
+}) {
   const cfg = CONFIG[type];
   const router = useRouter();
   const { msg, confirm, toast, activeUser } = useDesktop();
@@ -281,6 +292,8 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
   const [category, setCategory] = useState("");
   const [partiesList, setPartiesList] = useState<Party[]>([]);
   const [barcodeMode, setBarcodeMode] = useState(true);
+  /** مسح فاتورة أصلية لتحميل أصنافها (مرتجعات) */
+  const [scanOpen, setScanOpen] = useState(Boolean(autoScan));
   const [mergeSame, setMergeSame] = useState(true);
   const [searchMode, setSearchMode] = useState<"name" | "code">("name");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
@@ -546,6 +559,63 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
     }
   };
 
+  /**
+   * تحميل فاتورة أصلية من باركودها/رقمها (للمرتجعات).
+   * يقبل: رقم الفاتورة فقط، أو رابط الفاتورة العامة /i/<id>-<number>-<token>،
+   * أو صيغة INV-<number>.
+   */
+  const loadOriginalInvoice = useCallback(
+    async (raw: string) => {
+      setScanOpen(false);
+      const text = String(raw || "").trim();
+      if (!text) return;
+      // استخراج الرقم من روابط QR أو الأكواد النصية
+      let num = 0;
+      const urlMatch = text.match(/\/i\/(\d+)-(\d+)-/);
+      if (urlMatch) num = Number(urlMatch[2]);
+      if (!num) {
+        const digits = text.replace(/[^0-9]/g, "");
+        num = Number(digits);
+      }
+      if (!Number.isInteger(num) || num <= 0) {
+        toast("الباركود غير معروف — امسح باركود فاتورة أو اكتب رقمها", "error");
+        return;
+      }
+      // المرتجع يُبنى على الفاتورة الأصلية من النوع المقابل
+      const sourceType: InvoiceType =
+        type === "sale_return" ? "sale" : type === "purchase_return" ? "purchase" : type;
+      try {
+        const r = await api<{ invoice: Invoice | null }>(
+          `/api/invoices/find?type=${sourceType}&dir=exact&number=${num}`,
+        );
+        if (!r.invoice) {
+          toast(`لا توجد فاتورة ${sourceType === "sale" ? "مبيعات" : "مشتريات"} رقم ${num}`, "error");
+          return;
+        }
+        const original = r.invoice;
+        // تحميل أصناف الفاتورة الأصلية في المحرّر الحالي (مع الحفاظ على نوع المستند الحالي)
+        const loaded = stateFromInvoice(original, partiesList.find((x) => x.id === original.partyId));
+        applyState({
+          ...loaded,
+          invoiceId: null, // مستند جديد (مرتجع) وليس تعديلاً على الأصل
+          originalDate: null,
+          rows: loaded.rows.map((rw) => ({ ...rw, key: uid() })),
+        });
+        const buyer = partiesList.find((x) => x.id === original.partyId);
+        setPartyPhone(buyer?.phone || "");
+        toast(
+          `تم تحميل ${loaded.rows.length} صنف من الفاتورة الأصلية #${original.number}` +
+            (original.partyName ? ` — ${original.partyName}` : ""),
+          "success",
+        );
+        setTimeout(() => productRef.current?.focus(), 60);
+      } catch (e) {
+        toast(errMsg(e), "error");
+      }
+    },
+    [applyState, partiesList, productRef, toast, type],
+  );
+
   const navigate = async (dir: "first" | "prev" | "next" | "last" | "exact", number?: number) => {
     if (!(await guard())) return;
     try {
@@ -604,7 +674,9 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
         ? await api<Invoice>(`/api/invoices/${state.invoiceId}`, { method: "PUT", json: payload })
         : await api<Invoice>("/api/invoices", { method: "POST", json: payload }).catch((e: unknown) => {
             // أوفلاين: نحفظ الفاتورة في طابور المتصفح ونكملها عند عودة الشبكة
-            if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            // (نكتشف الانقطاع من نوع الخطأ مش من navigator.onLine فقط — لأن
+            //  onLine قد تبقى true مع شبكة ضعيفة أو سيرفر متوقف)
+            if (isNetworkError(e) || (typeof navigator !== "undefined" && navigator.onLine === false)) {
               enqueueInvoice(
                 payload as Record<string, unknown>,
                 `${type === "sale" ? "بيع" : "فاتورة"} — ${state.party.name || "عميل نقدي"}`,
@@ -929,6 +1001,18 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
                   }}
                 />
               </div>
+
+              {(type === "sale_return" || type === "purchase_return") && (
+                <button
+                  type="button"
+                  className="btn h-[32px] min-w-[104px] px-2 text-[13.5px] font-black"
+                  onClick={() => setScanOpen(true)}
+                  title="امسح باركود الفاتورة الأصلية لتحميل أصنافها تلقائياً في المرتجع"
+                >
+                  <ScanLine className="h-4 w-4 text-blue-700" strokeWidth={3} />
+                  <span>مسح الأصل</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1743,6 +1827,14 @@ export function InvoiceEditor({ type, initialId }: { type: InvoiceType; initialI
           onSelectProduct={(p, q) => {
             addProduct(p, q);
           }}
+        />
+      )}
+
+      {scanOpen && (
+        <CameraScan
+          title={`مسح باركود الفاتورة الأصلية — ${cfg.title}`}
+          onDetect={(code) => void loadOriginalInvoice(code)}
+          onClose={() => setScanOpen(false)}
         />
       )}
 

@@ -6,6 +6,8 @@ import type { Settings } from "@/lib/types";
 
 export interface UiPrefs {
   theme: string;
+  /** light | dark */
+  mode: string;
   fontFamily: string;
   fontScale: number;
   buttonStyle: string;
@@ -14,6 +16,7 @@ export interface UiPrefs {
 
 export const DEFAULT_PREFS: UiPrefs = {
   theme: "classic-blue",
+  mode: "light",
   fontFamily: "cairo",
   fontScale: 100,
   buttonStyle: "glossy-3d",
@@ -91,6 +94,7 @@ export function applyUiPrefs(p: UiPrefs) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.setAttribute("data-theme", normalizeTheme(p.theme));
+  root.setAttribute("data-mode", p.mode === "dark" ? "dark" : "light");
   root.setAttribute("data-buttons", p.buttonStyle || "glossy-3d");
   root.setAttribute("data-table", p.tableHeaderColor || "navy-dark");
   root.setAttribute("data-font", p.fontFamily || "cairo");
@@ -129,6 +133,7 @@ export function useUiPrefs(): Ctx {
 
 const fromSettings = (s: Partial<Settings>): UiPrefs => ({
   theme: normalizeTheme(s.theme),
+  mode: s.mode === "dark" ? "dark" : "light",
   fontFamily: s.fontFamily || DEFAULT_PREFS.fontFamily,
   fontScale: typeof s.fontScale === "number" && s.fontScale > 0 ? s.fontScale : DEFAULT_PREFS.fontScale,
   buttonStyle: s.buttonStyle || DEFAULT_PREFS.buttonStyle,

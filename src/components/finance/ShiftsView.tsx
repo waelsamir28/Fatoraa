@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Clock, DoorClosed, DoorOpen, Plus, RefreshCw, Save, ShieldAlert, UserCheck } from "lucide-react";
+import { CheckCircle2, Clock, DoorClosed, DoorOpen, Plus, Printer, RefreshCw, Save, ShieldAlert, UserCheck } from "lucide-react";
 import { Dialog, Field, Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { api, errMsg } from "@/lib/client";
@@ -89,8 +89,9 @@ export function ShiftsView() {
           notes,
         },
       });
-      toast("تم إغلاق الوردية وحفظ تقرير الكاشير بنجاح");
+      toast("تم إغلاق الوردية — جاري فتح تقرير Z للطباعة");
       setCloseModal(false);
+      window.open(`/print/shift/${current.id}`, "_blank", "width=460,height=760");
       void load();
     } catch (e) {
       toast(errMsg(e), "error");
@@ -172,6 +173,7 @@ export function ShiftsView() {
                 <th>الفرق / العجز / الزيادة</th>
                 <th>الحالة</th>
                 <th>ملاحظات</th>
+                <th>تقرير Z</th>
               </tr>
             </thead>
             <tbody>
@@ -192,6 +194,17 @@ export function ShiftsView() {
                     </span>
                   </td>
                   <td className="max-w-[200px] truncate text-right text-slate-600">{s.notes}</td>
+                  <td>
+                    <button
+                      type="button"
+                      onClick={() => window.open(`/print/shift/${s.id}`, "_blank", "width=460,height=760")}
+                      className="flex items-center gap-1 rounded bg-[#0f2942] px-2 py-1 text-[11px] font-black text-white hover:bg-[#1b3f5f]"
+                      title="طباعة تقرير تقفيل الوردية (Z)"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      تقرير Z
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -27,6 +27,8 @@ interface UserRow {
   active: boolean;
   branchId: number | null;
   lastLoginAt: string | null;
+  permissions: string[];
+  hasPin: boolean;
 }
 
 interface BranchRow {
@@ -41,7 +43,36 @@ const ROLES = [
   { key: "cashier", label: "كاشير" },
 ];
 
-const emptyForm = { id: 0, username: "", password: "", fullName: "", role: "cashier", branchId: "", active: true };
+/** الصلاحيات التفصيلية القابلة للتخصيص لكل مستخدم */
+const GRANULAR: Array<{ key: string; label: string; group: string }> = [
+  { key: "view_cost", label: "رؤية سعر التكلفة", group: "الأسعار" },
+  { key: "edit_price", label: "تعديل أسعار البيع", group: "الأسعار" },
+  { key: "invoice_discount", label: "عمل خصم على الفاتورة", group: "المبيعات" },
+  { key: "delete_invoice", label: "حذف فواتير", group: "المبيعات" },
+  { key: "edit_saved_invoice", label: "تعديل فاتورة محفوظة", group: "المبيعات" },
+  { key: "view_profit", label: "رؤية الأرباح", group: "التقارير" },
+  { key: "view_reports", label: "فتح التقارير", group: "التقارير" },
+  { key: "manage_products", label: "إضافة/تعديل الأصناف", group: "المخزون" },
+  { key: "delete_product", label: "حذف الأصناف", group: "المخزون" },
+  { key: "manage_users", label: "إدارة المستخدمين", group: "الإدارة" },
+  { key: "manage_settings", label: "تغيير الإعدادات", group: "الإدارة" },
+  { key: "manage_backup", label: "النسخ الاحتياطي والاستعادة", group: "الإدارة" },
+  { key: "view_audit", label: "فتح سجل المراجعة", group: "الإدارة" },
+  { key: "manage_treasury", label: "الخزينة والمصروفات", group: "المالية" },
+  { key: "manage_shifts", label: "فتح/تقفيل الورديات", group: "المالية" },
+];
+
+const emptyForm = {
+  id: 0,
+  username: "",
+  password: "",
+  fullName: "",
+  role: "cashier",
+  branchId: "",
+  active: true,
+  pin: "",
+  permissions: [] as string[],
+};
 
 export function UsersView() {
   const { toast, confirm } = useDesktop();
@@ -92,6 +123,8 @@ export function UsersView() {
         branchId: form.branchId ? Number(form.branchId) : null,
       };
       if (form.password) payload.password = form.password;
+      if (form.pin) payload.pin = form.pin;
+      if (form.id) payload.permissions = form.permissions;
       if (form.id) {
         payload.id = form.id;
         await api("/api/users", { method: "PATCH", json: payload });
@@ -247,6 +280,8 @@ export function UsersView() {
                   <th className="px-3 py-2 font-black">اسم الدخول</th>
                   <th className="px-3 py-2 font-black">الدور</th>
                   <th className="px-3 py-2 font-black">الفرع</th>
+                  <th className="px-3 py-2 font-black">الصلاحيات</th>
+                  <th className="px-3 py-2 font-black">PIN</th>
                   <th className="px-3 py-2 font-black">الحالة</th>
                   <th className="px-3 py-2 font-black">آخر دخول</th>
                   <th className="px-3 py-2 font-black">إجراءات</th>
@@ -283,6 +318,20 @@ export function UsersView() {
                       {branches.find((b) => b.id === u.branchId)?.name || "—"}
                     </td>
                     <td className="px-3 py-2">
+                      <span className="rounded bg-[#eef5fd] px-1.5 py-0.5 text-[10.5px] font-black text-[#0f2942]">
+                        {u.role === "owner" ? "كل الصلاحيات" : `${(u.permissions || []).length} إضافية`}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10.5px] font-black ${
+                          u.hasPin ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {u.hasPin ? "محدد ✓" : "بدون"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
                       <button
                         type="button"
                         onClick={() => toggle(u)}
@@ -309,6 +358,8 @@ export function UsersView() {
                               role: u.role,
                               branchId: u.branchId ? String(u.branchId) : "",
                               active: u.active,
+                              pin: "",
+                              permissions: u.permissions || [],
                             })
                           }
                           className="rounded bg-slate-100 p-1 text-slate-700 hover:bg-slate-200"
@@ -331,7 +382,7 @@ export function UsersView() {
                 ))}
                 {!items.length && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
+                    <td colSpan={9} className="px-3 py-8 text-center text-slate-500">
                       لا يوجد مستخدمون بعد
                     </td>
                   </tr>
@@ -399,6 +450,50 @@ export function UsersView() {
                   ))}
                 </select>
               </FormRow>
+              <FormRow label="رمز الدخول السريع PIN (4-6 أرقام — اختياري)">
+                <input
+                  dir="ltr"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={form.pin}
+                  onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })}
+                  className="h-9 w-full rounded border-2 border-[#c9d8ee] px-2 text-center font-mono text-[15px] font-black tracking-[0.4em] focus:border-blue-600 focus:outline-none"
+                  placeholder={form.id ? "اتركه فارغاً بدون تغيير" : "1234"}
+                />
+              </FormRow>
+
+              {form.role !== "owner" && (
+                <div className="rounded-lg border border-[#c9d8ee] bg-[#f7faff] p-2">
+                  <div className="mb-1 text-[12px] font-black text-slate-600">صلاحيات إضافية لهذا المستخدم</div>
+                  <div className="grid max-h-[170px] grid-cols-2 gap-x-3 gap-y-0.5 overflow-auto">
+                    {GRANULAR.map((g) => {
+                      const on = form.permissions.includes(g.key);
+                      return (
+                        <label
+                          key={g.key}
+                          className="flex cursor-pointer items-center gap-1.5 text-[11.5px] font-bold text-slate-700"
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5"
+                            checked={on}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                permissions: e.target.checked
+                                  ? [...form.permissions, g.key]
+                                  : form.permissions.filter((k) => k !== g.key),
+                              })
+                            }
+                          />
+                          {g.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <FormRow label="الفرع">
                 <select
                   value={form.branchId}

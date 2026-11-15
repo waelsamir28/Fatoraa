@@ -13,6 +13,7 @@ import {
   updateInvoice,
 } from "@/lib/server/invoices";
 import { getSession } from "@/lib/server/session";
+import { audit } from "@/lib/server/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,15 @@ export function DELETE(req: Request, { params }: Ctx) {
     }
     const session = await getSession();
     const actor = session?.name || session?.username || "";
-    return deleteInvoice(id, actor, reason);
+    const result = await deleteInvoice(id, actor, reason);
+    await audit({
+      action: "delete_invoice",
+      entity: "invoice",
+      entityId: id,
+      label: `حذف فاتورة #${id}${reason ? ` — ${reason}` : ""}`,
+      details: { reason, actor },
+    });
+    return result;
   });
 }
 

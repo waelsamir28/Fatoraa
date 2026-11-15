@@ -40,6 +40,7 @@ export async function GET() {
       roleLabel: ROLE_LABELS[session.role] || session.role,
       branchId: session.branchId,
       permissions: ROLE_PERMISSIONS[session.role] || [],
+      perms: session.perms || [],
     },
   });
 }

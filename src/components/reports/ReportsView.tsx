@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Download, FileText, RefreshCw, Search } from "lucide-react";
+import { Download, FileText, Printer, RefreshCw, Search } from "lucide-react";
 import { Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconReports } from "@/components/icons/AppIcons";
@@ -290,6 +290,19 @@ export function ReportsView() {
             >
               <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
               {exporting ? "جاري التصدير..." : "تصدير Excel"}
+            </button>
+            <button
+              type="button"
+              className="btn h-[34px] px-3 text-[13px] font-black"
+              onClick={() => {
+                const f = applied?.from || from || monthStartInput();
+                const t = applied?.to || to || todayInput();
+                window.open(`/print/report?from=${f}&to=${t}&auto=1`, "_blank", "noopener,width=900,height=1000");
+              }}
+              title="طباعة التقرير أو حفظه PDF"
+            >
+              <Printer className="h-4 w-4 text-blue-700" />
+              طباعة PDF
             </button>
             <Link href="/sales/list" className="btn h-[34px] px-3 text-[13px]">
               <FileText className="h-4 w-4 text-blue-700" />

@@ -1197,6 +1197,99 @@ html[data-theme="steel-blue"] {
   --ui-side-to: #153a5f;
 }
 
+
+/* ==================================================================
+   الوضع الليلي — html[data-mode="dark"]
+   يغطّي المساحات والنصوص والجداول والحقول مع الحفاظ على ثيم الأزرق المختار
+   ================================================================== */
+html[data-mode="dark"] {
+  color-scheme: dark;
+  --c-ink: #e6eefb;
+  --c-ink-2: #b7c9e2;
+  --c-ink-3: #8ba2bf;
+  --c-line: #1e2f47;
+  --c-line-2: #2a3f5c;
+  --c-line-3: #3a5474;
+  --c-surface: #101d2e;
+  --c-surface-2: #0d1826;
+  --c-surface-3: #0a1420;
+  --c-page: #070f19;
+}
+html[data-mode="dark"] body {
+  background: #050b13;
+  color: var(--c-ink);
+}
+/* الأسطح البيضاء في الشاشات (Tailwind) تتحول لأسطح داكنة */
+html[data-mode="dark"] .bg-white,
+html[data-mode="dark"] .panel,
+html[data-mode="dark"] .win-shell,
+html[data-mode="dark"] .win-body {
+  background-color: #101d2e !important;
+  color: var(--c-ink);
+}
+html[data-mode="dark"] .bg-\[\#f7faff\],
+html[data-mode="dark"] .bg-\[\#f4f8fd\],
+html[data-mode="dark"] .bg-\[\#f8fbff\],
+html[data-mode="dark"] .bg-\[\#f3f6fb\],
+html[data-mode="dark"] .bg-\[\#eef3fa\],
+html[data-mode="dark"] .bg-\[\#eef5fd\],
+html[data-mode="dark"] .bg-\[\#edf2f8\],
+html[data-mode="dark"] .bg-\[\#f5f9ff\],
+html[data-mode="dark"] .bg-\[\#f2f8ff\],
+html[data-mode="dark"] .bg-slate-50,
+html[data-mode="dark"] .bg-slate-100 {
+  background-color: #16263a !important;
+}
+html[data-mode="dark"] .text-\[\#0b2350\],
+html[data-mode="dark"] .text-\[\#0f2942\],
+html[data-mode="dark"] .text-slate-900,
+html[data-mode="dark"] .text-slate-800,
+html[data-mode="dark"] .text-slate-700 {
+  color: var(--c-ink) !important;
+}
+html[data-mode="dark"] .text-slate-600,
+html[data-mode="dark"] .text-slate-500 {
+  color: var(--c-ink-2) !important;
+}
+html[data-mode="dark"] .border-\[\#c9d8ee\],
+html[data-mode="dark"] .border-\[\#d5deea\],
+html[data-mode="dark"] .border-slate-200,
+html[data-mode="dark"] .border-slate-300 {
+  border-color: var(--c-line-2) !important;
+}
+html[data-mode="dark"] table thead tr {
+  background: linear-gradient(180deg, #1b2f49, #12233a);
+  color: #e6eefb;
+}
+html[data-mode="dark"] table tbody tr:hover {
+  background-color: #16263a !important;
+}
+html[data-mode="dark"] .win-input,
+html[data-mode="dark"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-mode="dark"] select,
+html[data-mode="dark"] textarea {
+  background-color: #0d1826;
+  color: var(--c-ink);
+  border-color: var(--c-line-2);
+}
+html[data-mode="dark"] .win-input::placeholder,
+html[data-mode="dark"] input::placeholder {
+  color: #6d86a4;
+}
+html[data-mode="dark"] .hs {
+  background: #071019;
+}
+html[data-mode="dark"] .hs-card {
+  background: linear-gradient(180deg, #16263a, #101d2e);
+  border-color: #24405e;
+}
+html[data-mode="dark"] .hs-card__label {
+  color: #dbe7f6;
+}
+html[data-mode="dark"] .hs-sec__title {
+  color: #dbe7f6;
+}
+
 /* ألوان ترويسة الجداول */
 html[data-table="navy-dark"] {
   --ui-table-from: #1d6ff2;
