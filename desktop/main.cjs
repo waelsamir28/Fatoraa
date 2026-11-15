@@ -332,6 +332,15 @@ function createMainWindow() {
     },
   });
 
+  // السماح بالكاميرا والميكروفون داخل نسخة الويندوز (قارئ باركود / مسح بالكاميرا)
+  const allowedPermissions = new Set(["media", "mediaKeySystem", "camera", "microphone", "clipboard-read", "clipboard-sanitized-write", "notifications"]);
+  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(allowedPermissions.has(permission));
+  });
+  mainWindow.webContents.session.setPermissionCheckHandler((_wc, permission) => allowedPermissions.has(permission));
+  // بعض أجهزة ويندوز بتحتاج تحديد الجهاز صراحةً
+  mainWindow.webContents.session.setDevicePermissionHandler(() => true);
+
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
     if (splash && !splash.isDestroyed()) splash.destroy();

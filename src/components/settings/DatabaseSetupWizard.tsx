@@ -27,6 +27,11 @@ interface Status {
   envConfigured: boolean;
   envMasked: string;
   mode: "embedded" | "postgres";
+  activeMode?: "local" | "cloud";
+  localChoice?: boolean;
+  dataDir?: string;
+  dbSizeBytes?: number;
+  serverless?: boolean;
   isOwner: boolean;
 }
 
@@ -44,7 +49,10 @@ export function DatabaseSetupWizard() {
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [test, setTest] = useState<TestResult | null>(null);
-  const [output, setOutput] = useState<{ envFile: string; settingsFile: string } | null>(null);
+  const [output, setOutput] = useState<{ envFile: string; settingsFile: string; steps?: string[] } | null>(null);
+  /** اختيار المستخدم: قاعدة محلية مدمجة أم سحابية */
+  const [choice, setChoice] = useState<"local" | "cloud" | null>(null);
+  const [savingLocal, setSavingLocal] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -97,6 +105,32 @@ export function DatabaseSetupWizard() {
     } finally {
       setSaving(false);
     }
+  };
+
+  /** اختيار قاعدة البيانات المحلية المدمجة */
+  const chooseLocal = async () => {
+    setSavingLocal(true);
+    setOutput(null);
+    try {
+      const r = await api<{ message: string; envFile: string; settingsFile: string; steps: string[] }>(
+        "/api/server-config",
+        { method: "POST", json: { mode: "local" } },
+      );
+      setChoice("local");
+      setOutput({ envFile: r.envFile, settingsFile: r.settingsFile, steps: r.steps });
+      toast(r.message || "تم اختيار قاعدة البيانات المحلية");
+      void load();
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setSavingLocal(false);
+    }
+  };
+
+  const sizeLabel = (b?: number) => {
+    if (!b) return "—";
+    if (b < 1024 * 1024) return `${Math.max(1, Math.round(b / 1024))} كيلوبايت`;
+    return `${(b / (1024 * 1024)).toFixed(1)} ميجابايت`;
   };
 
   const download = (name: string, content: string) => {
@@ -172,7 +206,107 @@ export function DatabaseSetupWizard() {
             </button>
           </div>
 
+          {/* ===== اختيار نوع قاعدة البيانات ===== */}
+          <div className="rounded-xl border-2 border-[#c9d8ee] bg-white p-3 shadow-sm">
+            <div className="mb-2 flex items-center gap-2">
+              <Database className="h-4 w-4 text-[#0f2942]" />
+              <div className="text-[16px] font-black text-[#0f2942]">اختار مكان قاعدة البيانات</div>
+              <span className="ms-auto text-[11.5px] font-bold text-slate-500">الخيارين متاحين — تقدر تغيّر في أي وقت</span>
+            </div>
+
+            <div className="grid gap-2.5 md:grid-cols-2">
+              {/* محلية */}
+              <button
+                type="button"
+                onClick={() => void chooseLocal()}
+                disabled={savingLocal}
+                className={`relative rounded-xl border-2 p-3 text-right transition ${
+                  (choice ?? (status?.activeMode === "local" ? "local" : null)) === "local"
+                    ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200"
+                    : "border-slate-200 bg-white hover:border-emerald-400 hover:bg-emerald-50/40"
+                }`}
+              >
+                {(choice ?? (status?.activeMode === "local" ? "local" : null)) === "local" && (
+                  <span className="absolute left-2 top-2 rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                    مُفعّل الآن
+                  </span>
+                )}
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-100 text-emerald-700">
+                    <HardDrive className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <div className="text-[14.5px] font-black text-[#0f2942]">قاعدة بيانات محلية على الجهاز</div>
+                    <div className="text-[11px] font-bold text-emerald-700">موصى بها للمحل الواحد — بدون إنترنت</div>
+                  </div>
+                </div>
+                <ul className="space-y-0.5 text-[11.5px] font-bold text-slate-700">
+                  <li>✓ تشتغل بدون إنترنت نهائياً</li>
+                  <li>✓ أسرع استجابة (كل البيانات على الجهاز)</li>
+                  <li>✓ مش محتاج Vercel ولا سيرفر ولا اشتراك</li>
+                  <li>✗ مش بتتزامن بين أكتر من جهاز</li>
+                </ul>
+                <div className="mt-1.5 flex items-center justify-between gap-1 rounded-md bg-slate-50 px-2 py-1 text-[10.5px] font-bold text-slate-600">
+                  <span className="truncate" dir="ltr">{status?.dataDir || "./aljamal-data"}</span>
+                  <span className="shrink-0">الحجم: {sizeLabel(status?.dbSizeBytes)}</span>
+                </div>
+                {savingLocal && (
+                  <div className="mt-1 flex items-center gap-1 text-[11px] font-black text-emerald-700">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> جاري التفعيل…
+                  </div>
+                )}
+              </button>
+
+              {/* سحابية */}
+              <button
+                type="button"
+                onClick={() => {
+                  setChoice("cloud");
+                  setOutput(null);
+                }}
+                disabled={savingLocal}
+                className={`relative rounded-xl border-2 p-3 text-right transition ${
+                  (choice ?? (status?.activeMode === "cloud" ? "cloud" : null)) === "cloud"
+                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                    : "border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50/40"
+                }`}
+              >
+                {(choice ?? (status?.activeMode === "cloud" ? "cloud" : null)) === "cloud" && (
+                  <span className="absolute left-2 top-2 rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                    مُفعّل الآن
+                  </span>
+                )}
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-blue-100 text-blue-700">
+                    <Cloud className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <div className="text-[14.5px] font-black text-[#0f2942]">قاعدة بيانات سحابية (رابط)</div>
+                    <div className="text-[11px] font-bold text-blue-700">Neon / Supabase / Vercel Postgres</div>
+                  </div>
+                </div>
+                <ul className="space-y-0.5 text-[11.5px] font-bold text-slate-700">
+                  <li>✓ تشتغل من أكتر من جهاز وفرع</li>
+                  <li>✓ بياناتك محفوظة على السحابة (نسخ تلقائي)</li>
+                  <li>✗ محتاجة إنترنت دائم</li>
+                  <li>✗ أبطأ قليلاً من المحلية</li>
+                </ul>
+                <div className="mt-1.5 rounded-md bg-slate-50 px-2 py-1 text-[10.5px] font-bold text-slate-600">
+                  {status?.envMasked || status?.savedMasked || "لسه مفيش رابط محفوظ"}
+                </div>
+              </button>
+            </div>
+
+            {status?.serverless && (
+              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-bold leading-relaxed text-amber-900">
+                إنت شغّال دلوقتي على نسخة ويب مستضافة: القاعدة المحلية بياناتها مؤقتة على الخادم، فالأفضل هنا القاعدة السحابية.
+                القاعدة المحلية مثالية لنسخة الويندوز أو التشغيل على جهازك.
+              </div>
+            )}
+          </div>
+
           {/* الخطوات */}
+          {choice !== "local" && (
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#0f2942] text-[13px] font-black text-white">
@@ -205,7 +339,9 @@ export function DatabaseSetupWizard() {
               </a>
             </div>
           </div>
+          )}
 
+          {choice !== "local" && (
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-3 flex items-center gap-2">
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#0f2942] text-[13px] font-black text-white">
@@ -265,16 +401,30 @@ export function DatabaseSetupWizard() {
               </button>
             </div>
           </div>
+          )}
 
           {/* الملفات الجاهزة */}
           {output && (
             <div className="panel border-2 border-emerald-300 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-[13px] font-black text-white">
-                  3
+                  {output.steps ? "✓" : "3"}
                 </span>
-                <div className="text-[17px] font-black text-[#0f2942]">نزّل الملفات وارفعها</div>
+                <div className="text-[17px] font-black text-[#0f2942]">
+                  {output.steps ? "القاعدة المحلية جاهزة — الخطوات" : "نزّل الملفات وارفعها"}
+                </div>
               </div>
+
+              {output.steps && (
+                <div className="mb-2 space-y-1 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5">
+                  {output.steps.map((st, i) => (
+                    <div key={i} className="flex gap-1.5 text-[12.5px] font-bold leading-relaxed text-emerald-900">
+                      <span className="font-black text-emerald-600">{i + 1}.</span>
+                      <span>{st}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="grid gap-2 md:grid-cols-2">
                 {/* Vercel */}

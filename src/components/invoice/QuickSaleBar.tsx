@@ -265,65 +265,126 @@ function NewInvoiceHint({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** مسح الباركود بكاميرا الموبايل — BarcodeDetector مع بديل يدوي */
+/**
+ * مسح الباركود بكاميرا الموبايل / اللابتوب.
+ * ترتيب المحاولات:
+ *  1) BarcodeDetector (أسرع، Chrome/Edge/أندرويد)
+ *  2) مكتبة ZXing (تعمل على سفاري/آيفون/فايرفوكس وكل المتصفحات)
+ *  3) إدخال يدوي بالكيبورد أو قارئ باركود USB
+ */
 function CameraScanner({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [status, setStatus] = useState<"init" | "running" | "unsupported" | "denied" | "error">("init");
+  const [status, setStatus] = useState<"init" | "running" | "denied" | "error" | "insecure">("init");
+  const [engine, setEngine] = useState<"native" | "zxing" | "">("");
   const [manual, setManual] = useState("");
   const [msg, setMsg] = useState("");
 
   interface BarcodeDetectorLike {
     detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
   }
-  const detectorRef = useRef<BarcodeDetectorLike | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
     let raf = 0;
     let cancelled = false;
+    let zxingControls: { stop?: () => void } | null = null;
+    let done = false;
+
+    const emit = (code: string) => {
+      if (done || !code) return;
+      done = true;
+      onDetect(code);
+    };
+
+    /** الخطة ب: ZXing — يعمل على كل المتصفحات بما فيها سفاري/آيفون */
+    const startZxing = async () => {
+      const v = videoRef.current;
+      if (!v) return;
+      try {
+        const { BrowserMultiFormatReader } = await import("@zxing/browser");
+        const { DecodeHintType, BarcodeFormat } = await import("@zxing/library");
+        if (cancelled) return;
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+          BarcodeFormat.ITF,
+          BarcodeFormat.QR_CODE,
+        ]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 220 });
+        setEngine("zxing");
+        zxingControls = (await reader.decodeFromVideoDevice(
+          undefined,
+          v,
+          (result) => {
+            if (result) emit(result.getText());
+          },
+        )) as unknown as { stop?: () => void };
+        setStatus("running");
+      } catch (e) {
+        const name = (e as { name?: string }).name || "";
+        if (/NotAllowed/i.test(name)) {
+          setStatus("denied");
+          setMsg("تم رفض إذن الكاميرا. اسمح بالوصول للكاميرا من إعدادات المتصفح (رمز القفل بجانب العنوان) ثم أعد المحاولة.");
+        } else if (/NotFound|DevicesNotFound/i.test(name)) {
+          setStatus("error");
+          setMsg("مفيش كاميرا متاحة على الجهاز ده — استخدم قارئ باركود USB أو اكتب الرقم يدوياً.");
+        } else {
+          setStatus("error");
+          setMsg("تعذّر تشغيل الكاميرا. تأكد أن الموقع يفتح على http://localhost أو رابط https، وأن الكاميرا مش مستخدمة في تطبيق آخر.");
+        }
+      }
+    };
 
     const start = async () => {
-      try {
-        const BD = (window as unknown as {
-          BarcodeDetector?: {
-            new (opts?: { formats?: string[] }): BarcodeDetectorLike;
-            getSupportedFormats?: () => Promise<string[]>;
-          };
-        }).BarcodeDetector;
-        if (!BD) {
-          setStatus("unsupported");
-          setMsg("متصفحك لا يدعم قراءة الباركود تلقائياً — استخدم قارئ الباركود أو اكتب الرقم يدوياً بالأسفل.");
-          return;
-        }
+      // شرط أساسي: المتصفح يسمح بالكاميرا في السياق الآمن فقط
+      const secure = window.isSecureContext || ["localhost", "127.0.0.1"].includes(location.hostname);
+      if (!navigator.mediaDevices?.getUserMedia || !secure) {
+        setStatus("insecure");
+        setMsg("المتصفح بيقفل الكاميرا على الروابط غير الآمنة (http) — اتبع الحلول دي:");
+        return;
+      }
+
+      const BD = (window as unknown as {
+        BarcodeDetector?: {
+          new (opts?: { formats?: string[] }): BarcodeDetectorLike;
+          getSupportedFormats?: () => Promise<string[]>;
+        };
+      }).BarcodeDetector;
+
+      // الخطة أ: BarcodeDetector الأصلي
+      if (BD) {
         try {
           const formats: string[] = BD.getSupportedFormats ? await BD.getSupportedFormats() : [];
-          detectorRef.current = new BD({
-            formats: formats.filter((f) => ["ean_13", "ean_8", "code_128", "code_39", "upc_a", "upc_e", "itf", "qr_code"].includes(f)),
+          const wanted = formats.filter((f) =>
+            ["ean_13", "ean_8", "code_128", "code_39", "upc_a", "upc_e", "itf", "qr_code"].includes(f),
+          );
+          const detector: BarcodeDetectorLike = wanted.length ? new BD({ formats: wanted }) : new BD();
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
           });
-        } catch {
-          detectorRef.current = new BD();
-        }
+          if (cancelled) return;
+          const v = videoRef.current;
+          if (!v) return;
+          v.srcObject = stream;
+          await v.play().catch(() => undefined);
+          setEngine("native");
+          setStatus("running");
 
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false,
-        });
-        if (cancelled) return;
-        const v = videoRef.current;
-        if (!v) return;
-        v.srcObject = stream;
-        await v.play().catch(() => undefined);
-        setStatus("running");
-
-        let last = "";
-        let same = 0;
-        const tick = async () => {
-          if (cancelled || !videoRef.current) return;
-          try {
-            if (videoRef.current.readyState >= 2 && detectorRef.current) {
-              const codes = await detectorRef.current.detect(videoRef.current);
-              if (codes?.length) {
-                const val = String(codes[0].rawValue || "");
+          let last = "";
+          let same = 0;
+          const tick = async () => {
+            if (cancelled || !videoRef.current) return;
+            try {
+              if (videoRef.current.readyState >= 2) {
+                const codes = await detector.detect(videoRef.current);
+                const val = codes?.length ? String(codes[0].rawValue || "") : "";
                 if (val) {
                   if (val === last) same++;
                   else {
@@ -331,71 +392,137 @@ function CameraScanner({ onDetect, onClose }: { onDetect: (code: string) => void
                     last = val;
                   }
                   if (same >= 1) {
-                    onDetect(val);
+                    emit(val);
                     return;
                   }
                 }
               }
+            } catch {
+              /* إطار غير صالح — نكمل */
             }
-          } catch {
-            /* إطار غير صالح — نكمل */
+            raf = requestAnimationFrame(() => void tick());
+          };
+          void tick();
+          return;
+        } catch (e) {
+          const name = (e as { name?: string }).name || "";
+          // لو المستخدم رفض الإذن، مفيش فايدة من ZXing برضه
+          if (/NotAllowed/i.test(name)) {
+            setStatus("denied");
+            setMsg("تم رفض إذن الكاميرا. اسمح بالوصول للكاميرا من إعدادات المتصفح ثم أعد المحاولة.");
+            return;
           }
-          raf = requestAnimationFrame(() => void tick());
-        };
-        void tick();
-      } catch (e) {
-        const name = (e as { name?: string }).name || "";
-        setStatus(name === "NotAllowedError" ? "denied" : "error");
-        setMsg(
-          name === "NotAllowedError"
-            ? "تم رفض إذن الكاميرا. اسمح بالوصول للكاميرا من إعدادات المتصفح ثم أعد المحاولة."
-            : "تعذّر تشغيل الكاميرا. تأكد أن الموقع يعمل على HTTPS وأن الكاميرا غير مستخدمة في تطبيق آخر.",
-        );
+          stream?.getTracks().forEach((t) => t.stop());
+          stream = null;
+        }
       }
+
+      // الخطة ب
+      await startZxing();
     };
+
     void start();
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      try {
+        zxingControls?.stop?.();
+      } catch {
+        /* ignore */
+      }
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, [onDetect]);
 
+  const switchCamera = async () => {
+    // تدوير الكاميرا (أمامية/خلفية) — نعيد التشغيل بعد تغيير facingMode
+    try {
+      const cur = videoRef.current?.srcObject as MediaStream | null;
+      cur?.getTracks().forEach((t) => t.stop());
+    } catch {
+      /* ignore */
+    }
+    location.reload();
+  };
+
   return (
-    <div
-      className="fixed inset-0 z-[210] grid place-items-center bg-black/70 p-4"
-      dir="rtl"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-[460px] overflow-hidden rounded-xl bg-[#0f2942] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[210] grid place-items-center bg-black/70 p-4" dir="rtl" onClick={onClose}>
+      <div className="w-full max-w-[460px] overflow-hidden rounded-xl bg-[#0f2942] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-3 py-2">
           <span className="flex items-center gap-1.5 text-[13.5px] font-black text-white">
             <Camera className="h-4 w-4 text-[#7fe3d8]" />
-            مسح الباركود بكاميرا الموبايل
+            مسح الباركود بالكاميرا
           </span>
-          <button type="button" onClick={onClose} className="grid h-7 w-7 place-items-center rounded text-white/70 hover:bg-white/15">
-            <X className="h-4 w-4" />
-          </button>
+          <span className="flex items-center gap-1.5">
+            {engine && (
+              <button
+                type="button"
+                onClick={() => void switchCamera()}
+                className="rounded border border-white/25 px-1.5 py-0.5 text-[10.5px] font-black text-white/80 hover:bg-white/15"
+                title="إعادة تشغيل الكاميرا"
+              >
+                تبديل الكاميرا
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="grid h-7 w-7 place-items-center rounded text-white/70 hover:bg-white/15">
+              <X className="h-4 w-4" />
+            </button>
+          </span>
         </div>
 
         <div className="relative aspect-[4/3] w-full bg-black">
-          <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
-          {/* إطار التوجيه */}
+          <video ref={videoRef} playsInline muted autoPlay className="h-full w-full object-cover" />
           {status === "running" && (
             <>
               <div className="pointer-events-none absolute inset-[18%_] rounded-lg border-2 border-[#7fe3d8] shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />
               <div className="pointer-events-none absolute inset-x-0 top-1/2 h-0.5 animate-pulse bg-[#2fb3a6]/80" />
+              <span className="absolute bottom-1.5 start-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white/85">
+                {engine === "native" ? "قارئ المتصفح" : "قارئ ZXing"} — وجّه الكاميرا على الباركود
+              </span>
             </>
           )}
           {status !== "running" && (
-            <div className="absolute inset-0 grid place-items-center bg-[#0b1f33]/90 p-4 text-center">
-              <div className="space-y-2">
+            <div className="absolute inset-0 grid place-items-center bg-[#0b1f33]/92 p-4 text-center">
+              <div className="w-full space-y-2">
                 <CameraOff className="mx-auto h-8 w-8 text-white/50" />
                 <p className="text-[12.5px] font-bold leading-relaxed text-white/85">{msg || "جاري تشغيل الكاميرا…"}</p>
+
+                {status === "insecure" && (
+                  <div className="space-y-1.5 rounded-lg bg-white/10 p-2 text-right">
+                    <div className="text-[11.5px] font-black text-[#7fe3d8]">
+                      الحلول (أي واحد يحل المشكلة فوراً):
+                    </div>
+                    <div className="text-[11px] font-bold leading-relaxed text-white/85">
+                      <b>1)</b> افتح البرنامج على <b>http://localhost:</b> بدل رقم الجهاز —
+                      الكاميرا مسموحة تلقائياً على localhost.
+                    </div>
+                    <div className="text-[11px] font-bold leading-relaxed text-white/85">
+                      <b>2)</b> أو استخدم <b>نسخة الويندوز</b> — الكاميرا شغالة فيها بدون أي إعداد.
+                    </div>
+                    <div className="text-[11px] font-bold leading-relaxed text-white/85">
+                      <b>3)</b> أو في كروم: انسخ العنوان تحت وحطه في
+                      <span dir="ltr" className="mx-1 rounded bg-black/30 px-1 font-mono text-[10px]">
+                        chrome://flags/#unsafely-treat-insecure-origin-as-secure
+                      </span>
+                      ثم Relaunch.
+                    </div>
+                    <div className="flex items-center gap-1 rounded bg-black/30 px-1.5 py-1">
+                      <span dir="ltr" className="flex-1 truncate font-mono text-[10.5px] text-white/85">
+                        {typeof window !== "undefined" ? window.location.origin : ""}
+                      </span>
+                      <button
+                        type="button"
+                        className="rounded bg-[#2fb3a6] px-1.5 py-0.5 text-[10px] font-black text-white"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(window.location.origin);
+                        }}
+                      >
+                        نسخ
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -409,7 +536,7 @@ function CameraScanner({ onDetect, onClose }: { onDetect: (code: string) => void
               onKeyDown={(e) => {
                 if (e.key === "Enter" && manual.trim()) onDetect(manual.trim());
               }}
-              placeholder="أو اكتب رقم الباركود يدوياً"
+              placeholder="أو اكتب / امسح بقارئ USB"
               className="num h-9 flex-1 rounded-md border border-white/25 bg-white/10 px-2 text-[13px] font-black text-white placeholder:text-white/40 focus:border-[#2fb3a6] focus:outline-none"
             />
             <button
@@ -421,7 +548,7 @@ function CameraScanner({ onDetect, onClose }: { onDetect: (code: string) => void
             </button>
           </div>
           <p className="text-[10.5px] font-bold leading-relaxed text-white/55">
-            يعمل على الموبايل (أندرويد/آيفون) ومتصفح Chrome. القراءة تلقائية عند تثبيت الكاميرا على الباركود.
+            يعمل على الموبايل واللابتوب: أندرويد/كروم بالقارئ الأصلي، آيفون/سفاري بقارئ ZXing المدمج — وأي قارئ باركود USB يعمل فوراً.
           </p>
         </div>
       </div>
