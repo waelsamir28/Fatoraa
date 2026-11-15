@@ -38,6 +38,8 @@ import {
   RailBackup,
   RailDatabase,
   RailHome,
+  RailInfo,
+  RailSupport,
   RailSettings,
   RailShifts,
   RailUsers,
@@ -69,30 +71,56 @@ interface Section {
   items: Card[];
 }
 
-/** الأقسام الثلاثة كما في الصورة المرجعية — بأزرار برنامجنا */
+/** كل شاشات البرنامج موزّعة على 5 أقسام (بلا سكرول) */
 const SECTIONS: Section[] = [
   {
     id: "main",
     title: "العمليات الرئيسية",
     items: [
       { href: "/sales", label: "فاتورة مبيعات", Icon: IcCartPlus },
+      { href: "/purchases", label: "فاتورة مشتريات", Icon: IcReportDoc },
       { href: "/returns/sales", label: "مرتجع مبيعات", Icon: IcReturnBox },
-      { href: "/inventory", label: "مخزن منتجات", Icon: IcBoxStack },
+      { href: "/returns/purchases", label: "مرتجع مشتريات", Icon: IcReturnBox },
       { href: "/sales/list", label: "سجل الفواتير", Icon: IcClipboardCheck },
       { href: "/customers", label: "العملاء", Icon: IcCustomers },
-      { href: "/reports", label: "تقرير المبيعات", Icon: IcReportDoc },
     ],
   },
   {
     id: "stock",
-    title: "إدارة المخزون",
+    title: "المخزون والأصناف",
     items: [
       { href: "/products-manager", label: "المخازن", Icon: IcWarehouse },
       { href: "/products-manager?new=1", label: "إضافة صنف", Icon: IcAddBox },
       { href: "/products-manager", label: "تعديل صنف", Icon: IcEditBox },
       { href: "/products-manager", label: "حذف صنف", Icon: IcDeleteBox },
-      { href: "/sales", label: "جرد المخزون", Icon: IcBarcodeScan },
+      { href: "/inventory", label: "جرد المخزون", Icon: IcBarcodeScan },
       { href: "/inventory", label: "تقرير المخزون", Icon: IcChartBars },
+      { href: "/barcode", label: "طباعة الباركود", Icon: IcBarcodeScan },
+      { href: "/low-stock", label: "النواقص", Icon: IcBoxStack },
+    ],
+  },
+  {
+    id: "accounts",
+    title: "الحسابات والخزينة",
+    items: [
+      { href: "/suppliers", label: "الموردون", Icon: IcBuilding },
+      { href: "/installments", label: "الأقساط", Icon: IcClipboardCheck },
+      { href: "/treasury", label: "الخزينة واليومية", Icon: IcChartBars },
+      { href: "/expenses", label: "المصروفات", Icon: IcDeleteBox },
+      { href: "/shifts", label: "الورديات", Icon: IcClockUsers },
+      { href: "/profit", label: "تقرير الأرباح", Icon: IcReportDoc },
+    ],
+  },
+  {
+    id: "reports",
+    title: "التقارير والتحليلات",
+    items: [
+      { href: "/reports", label: "تقرير المبيعات", Icon: IcChartBars },
+      { href: "/dashboard", label: "لوحة المالك", Icon: IcChartBars },
+      { href: "/item-card", label: "كارت الصنف", Icon: IcInfo },
+      { href: "/stock-movements", label: "حركات المخزون", Icon: IcClipboardCheck },
+      { href: "/smart-orders", label: "الشراء الذكي", Icon: IcBoxStack },
+      { href: "/price-checker", label: "كشك السعر", Icon: IcBarcodeScan },
     ],
   },
   {
@@ -101,9 +129,11 @@ const SECTIONS: Section[] = [
     items: [
       { href: "/settings", label: "إعدادات البرنامج", Icon: IcGear },
       { href: "/users", label: "المستخدمين", Icon: IcUserGear },
-      { href: "/users", label: "صلاحيات المستخدمين", Icon: IcShieldCheck },
+      { href: "/users", label: "الصلاحيات", Icon: IcShieldCheck },
       { href: "/connection", label: "قاعدة البيانات", Icon: IcDatabase },
       { href: "/backup", label: "النسخ الاحتياطي", Icon: IcBackup },
+      { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IcBackup },
+      { href: "/branches", label: "الفروع", Icon: IcBuilding },
       { href: "/about", label: "حول البرنامج", Icon: IcInfo },
     ],
   },
@@ -117,6 +147,8 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
   { href: "/connection", label: "ربط قاعدة البيانات", Icon: RailDatabase },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: RailBackup },
+  { href: "/support", label: "الدعم الفني", Icon: RailSupport },
+  { href: "/about", label: "معلومات البرنامج", Icon: RailInfo },
   { href: null, label: "خروج", Icon: IcPower as unknown as RawIcon, danger: true, action: "exit" },
 ];
 
@@ -128,6 +160,7 @@ export function HomeScreen() {
   const [stats, setStats] = useState<HomeSummary | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [avatar, setAvatar] = useState("");
   const [openSection, setOpenSection] = useState<Record<string, boolean>>({});
   const [now, setNow] = useState<Date | null>(null);
 
@@ -145,6 +178,9 @@ export function HomeScreen() {
     } catch {
       /* ignore */
     }
+    api<{ avatar: string }>("/api/users/avatar")
+      .then((r) => alive && setAvatar(r.avatar))
+      .catch(() => undefined);
     api<Settings>("/api/settings")
       .then((st) => {
         if (!alive) return;
@@ -207,26 +243,25 @@ export function HomeScreen() {
       }
     >
       <div className="hs" dir="rtl">
-        {/* ================= الترويسة: البانر + كارت المستخدم ================= */}
+        {/* ================= الترويسة: خلفية واحدة + لوجو كبير + صورة المستخدم يمين ================= */}
         <div className="hs-top">
-          <div className="hs-banner">
-            <Image src="/images/home-banner.png" alt="FATORA" fill priority sizes="(max-width: 900px) 70vw, 1100px" className="hs-banner__bg" />
-            <div className="hs-banner__brand">
-              <div className="hs-banner__word">فاتورة</div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={settings?.customLogoUrl || DEFAULT_LOGO} alt={APP_TITLE} className="hs-banner__logo" />
-              <div className="hs-banner__tag">إدارة أسهل .. مبيعات أذكى</div>
-            </div>
-          </div>
+          <Image src="/images/home-bg.jpg" alt="" fill priority sizes="1400px" className="hs-top__bg" />
+          <div className="hs-top__veil" />
 
+          {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
           <div className="hs-user">
             <div className="hs-user__ring">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/avatar-user.png" alt={userName} className="hs-user__img" />
+              <img src={avatar || "/images/avatar-user.png"} alt={userName} className="hs-user__img" />
             </div>
             <div className="hs-user__name">{roleLabel}</div>
             <div className="hs-user__sub">{userName}</div>
-            <div className="hs-user__line" />
+          </div>
+
+          {/* اللوجو في منتصف البانر */}
+          <div className="hs-top__brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={settings?.customLogoUrl || DEFAULT_LOGO} alt={APP_TITLE} className="hs-top__logo" />
           </div>
         </div>
 
@@ -234,6 +269,8 @@ export function HomeScreen() {
         <div className="hs-body">
           {/* ---- يمين: القائمة الثابتة ---- */}
           <nav className="hs-rail">
+            <Image src="/images/home-bg.jpg" alt="" fill sizes="220px" className="hs-rail__bg" />
+            <div className="hs-rail__inner">
             {RAIL.map((r) => {
               const on = r.href ? (r.href === "/" ? pathname === "/" : pathname === r.href || pathname.startsWith(`${r.href}/`)) : false;
               const inner = (
@@ -266,6 +303,132 @@ export function HomeScreen() {
                 <Lock className="h-5 w-5" />
               </span>
             </button>
+            </div>
+          </nav>
+
+          {/* ---- وسط: اللوحة ---- */}
+          <div className="hs-main">
+            {/* شريط الأدوات العلوي */}
+            <div className="hs-toolbar">
+              <div className="hs-tools">
+                <button type="button" className="hs-tool hs-tool--green" title="تحديث البيانات" onClick={() => void api<HomeSummary>("/api/home?fresh=1").then(setStats).catch(() => undefined)}>
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="hs-tool hs-tool--blue"
+                  title="بحث سريع في كل الشاشات (Ctrl+K)"
+                  onClick={() => window.dispatchEvent(new Event("fatora:search"))}
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+                <button type="button" className="hs-tool hs-tool--white" title="تصدير سريع" onClick={() => setExportOpen(true)}>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="hs-hello">
+                <span className="hs-hello__text">أهلا بك في برنامج فاتورة لإدارة المبيعات والمخزون</span>
+                <span className="hs-pill">النسخة مفتوحة</span>
+              </div>
+            </div>
+
+            {/* الأقسام */}
+            <div className="hs-board">
+              {SECTIONS.map((sec) => {
+                const collapsed = openSection[sec.id] === false;
+                return (
+                  <div key={sec.id} className="hs-sec">
+                    <button type="button" className="hs-sec__head" onClick={() => toggle(sec.id)}>
+                      <span className="hs-sec__title">{sec.title}</span>
+                      <Star className="hs-sec__star h-4 w-4" />
+                    </button>
+
+                    {!collapsed && (
+                      <div className="hs-cards">
+                        {sec.items.map((it) => (
+                          <button key={it.label} type="button" className="hs-card" onClick={() => runCard(it)} title={it.label}>
+                            <span className="hs-card__ico">
+                              <it.Icon className="h-full w-full" />
+                            </span>
+                            <span className="hs-card__label">{it.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* شريط الحالة السفلي */}
+            <div className="hs-footer">
+              <span className="hs-footer__box">
+                <b className="num">{dateStr}</b>
+                <span className="hs-footer__sep">|</span>
+                <b className="num">{timeStr}</b>
+              </span>
+
+              <span className="hs-footer__state">
+                <span className="hs-footer__badge">✓</span>
+                حالة النظام : يعمل بشكل طبيعي
+              </span>
+
+              <span className="hs-footer__info">
+                <span>مبيعات اليوم: <b className="num">{fmt(stats?.salesTotal ?? 0)}</b> ج.م ({stats?.salesCount ?? 0} فاتورة)</span>
+                <span className="hs-footer__sep">|</span>
+                <span>الأصناف: <b className="num">{stats?.products ?? 0}</b></span>
+                <span className="hs-footer__sep">|</span>
+                <span>العملاء: <b className="num">{stats?.customers ?? 0}</b></span>
+                <span className="hs-footer__sep">|</span>
+                <span className="hs-footer__low">النواقص: <b className="num">{stats?.lowStock ?? 0}</b></span>
+                <span className="hs-footer__sep">|</span>
+                <span>الإصدار {APP_VERSION}</span>
+                <span className="hs-footer__sep">|</span>
+                <span>الدعم: <b className="num">{SUPPORT_PHONE}</b></span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= المحتوى: الكروت + القائمة اليمنى ================= */}
+        <div className="hs-body">
+          {/* ---- يمين: القائمة الثابتة ---- */}
+          <nav className="hs-rail">
+            <Image src="/images/home-bg.jpg" alt="" fill sizes="220px" className="hs-rail__bg" />
+            <div className="hs-rail__inner">
+            {RAIL.map((r) => {
+              const on = r.href ? (r.href === "/" ? pathname === "/" : pathname === r.href || pathname.startsWith(`${r.href}/`)) : false;
+              const inner = (
+                <>
+                  <span className="hs-rail__text">{r.label}</span>
+                  <span className="hs-rail__ico">
+                    <r.Icon className="h-6 w-6" />
+                  </span>
+                </>
+              );
+              return r.href ? (
+                <Link key={r.label} href={r.href} className={`hs-rail__btn ${on ? "is-on" : ""} ${r.danger ? "is-danger" : ""}`}>
+                  {inner}
+                </Link>
+              ) : (
+                <button key={r.label} type="button" onClick={() => void exit()} className={`hs-rail__btn ${r.danger ? "is-danger" : ""}`}>
+                  {inner}
+                </button>
+              );
+            })}
+            <div className="hs-rail__spacer" />
+            <button
+              type="button"
+              className="hs-rail__btn hs-rail__btn--lock"
+              onClick={() => window.dispatchEvent(new Event("fatora:lock"))}
+              title="قفل الشاشة (Ctrl+L)"
+            >
+              <span className="hs-rail__text">قفل الشاشة</span>
+              <span className="hs-rail__ico">
+                <Lock className="h-5 w-5" />
+              </span>
+            </button>
+            </div>
           </nav>
 
           {/* ---- وسط: اللوحة ---- */}
