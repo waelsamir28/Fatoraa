@@ -25,6 +25,7 @@ import { TEMPLATE_PRESETS } from "@/lib/invoiceLayout";
 import { api, errMsg } from "@/lib/client";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { DEFAULT_LOGO } from "@/lib/constants";
+import { BANNER_SPEC, RAIL_SPEC, imageSize, pxToCm, ratioText, resizeDataUrl } from "@/lib/homeImages";
 import type { Settings } from "@/lib/types";
 import {
   BUTTON_STYLES,
@@ -75,6 +76,13 @@ export function SettingsForm() {
   const [editorOpen, setEditorOpen] = useState(false);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
+  const bannerFileRef = useRef<HTMLInputElement>(null);
+  const railFileRef = useRef<HTMLInputElement>(null);
+  // صور البانر وخلفية الأزرار (مستقلة عن باقي الإعدادات — تُحفظ فوراً)
+  const [bannerImg, setBannerImg] = useState("");
+  const [railImg, setRailImg] = useState("");
+  const [bannerDims, setBannerDims] = useState<{ width: number; height: number } | null>(null);
+  const [railDims, setRailDims] = useState<{ width: number; height: number } | null>(null);
 
   const load = () => {
     api<Settings>("/api/settings")
@@ -85,6 +93,70 @@ export function SettingsForm() {
       })
       .catch((e) => toast(errMsg(e), "error"));
   };
+
+  // تحميل صور الرئيسية
+  const loadHomeImages = () => {
+    (["banner", "rail"] as const).forEach((kind) => {
+      api<{ url: string }>(`/api/home/images?kind=${kind}`)
+        .then(async (r) => {
+          const sec = kind === "banner" ? setBannerImg : setRailImg;
+          sec(r.url || "");
+          if (r.url) {
+            const d = await imageSize(r.url).catch(() => null);
+            if (kind === "banner") setBannerDims(d);
+            else setRailDims(d);
+          } else if (kind === "banner") setBannerDims(null);
+          else setRailDims(null);
+        })
+        .catch(() => undefined);
+    });
+  };
+
+  /** رفع صورة البانر أو خلفية الأزرار (تُصغَّر تلقائياً إن كانت كبيرة) */
+  const uploadHomeImage = async (kind: "banner" | "rail", file: File) => {
+    const spec = kind === "banner" ? BANNER_SPEC : RAIL_SPEC;
+    if (!/^image\//.test(file.type)) {
+      toast("الملف ليس صورة — استخدم PNG أو JPG", "error");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast("الصورة كبيرة جداً (أكثر من 6 ميجا) — استخدم صورة أصغر", "error");
+      return;
+    }
+    try {
+      const dataUrl = await new Promise<string>((res, rej) => {
+        const rd = new FileReader();
+        rd.onload = () => res(rd.result as string);
+        rd.onerror = () => rej(new Error("تعذّر قراءة الملف"));
+        rd.readAsDataURL(file);
+      });
+      const dims = await imageSize(dataUrl);
+      // تصغير تلقائي إلى أقصى عرض للـ spec مع الحفاظ على النسبة
+      const maxW = Math.max(spec.width, 1);
+      const shrunk = dims.width > maxW * 1.5 ? await resizeDataUrl(dataUrl, maxW * 1.5) : dataUrl;
+      const final = shrunk.length > 1_300_000 ? await resizeDataUrl(shrunk, maxW) : shrunk;
+      const r = await api<{ ok: boolean; url: string }>("/api/home/images", {
+        method: "PUT",
+        json: { kind, url: final },
+      });
+      if (kind === "banner") {
+        setBannerImg(r.url);
+        setBannerDims(dims);
+      } else {
+        setRailImg(r.url);
+        setRailDims(dims);
+      }
+      toast(`تم حفظ ${spec.label} بنجاح ✓`);
+    } catch (e) {
+      toast(errMsg(e), "error");
+    }
+  };
+
+  useEffect(() => {
+    load();
+    loadHomeImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     load();
@@ -613,6 +685,45 @@ export function SettingsForm() {
                       <input className="win-input w-full font-bold" value={f.customTagline} onChange={set("customTagline")} />
                     </Field>
 
+                    {/* ===== صور الشاشة الرئيسية: البانر + خلفية الأزرار ===== */}
+                    <HomeImageCard
+                      spec={BANNER_SPEC}
+                      current={bannerImg}
+                      dims={bannerDims}
+                      fallback="/images/home-shell.jpg"
+                      fileRef={bannerFileRef}
+                      onPick={() => bannerFileRef.current?.click()}
+                      onFile={(file) => void uploadHomeImage("banner", file)}
+                      onReset={() => {
+                        void api("/api/home/images", { method: "PUT", json: { kind: "banner", url: "" } })
+                          .then(() => {
+                            setBannerImg("");
+                            setBannerDims(null);
+                            toast("تمت استعادة بانر البرنامج الافتراضي");
+                          })
+                          .catch((e) => toast(errMsg(e), "error"));
+                      }}
+                    />
+
+                    <HomeImageCard
+                      spec={RAIL_SPEC}
+                      current={railImg}
+                      dims={railDims}
+                      fallback=""
+                      fileRef={railFileRef}
+                      onPick={() => railFileRef.current?.click()}
+                      onFile={(file) => void uploadHomeImage("rail", file)}
+                      onReset={() => {
+                        void api("/api/home/images", { method: "PUT", json: { kind: "rail", url: "" } })
+                          .then(() => {
+                            setRailImg("");
+                            setRailDims(null);
+                            toast("تمت إزالة خلفية الأزرار — رجعت للخلفية الافتراضية");
+                          })
+                          .catch((e) => toast(errMsg(e), "error"));
+                      }}
+                    />
+
                     <div className="col-span-2">
                       <span className="form-label">صورة خلفية مخصصة للرئيسية (اختياري)</span>
                       <div className="flex items-center gap-2">
@@ -787,11 +898,14 @@ export function BackupView() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    try {
-      setLast(localStorage.getItem("aljamal.lastBackup"));
-    } catch {
-      setLast(null);
-    }
+    const id = setTimeout(() => {
+      try {
+        setLast(localStorage.getItem("aljamal.lastBackup"));
+      } catch {
+        setLast(null);
+      }
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const download = () => {
@@ -939,5 +1053,128 @@ export function BackupView() {
         </div>
       </div>
     </Window>
+  );
+}
+
+/** كارت رفع صورة + بيان المقاس بالسنتيمتر والبكسل */
+function HomeImageCard({
+  spec,
+  current,
+  dims,
+  fallback,
+  fileRef,
+  onPick,
+  onFile,
+  onReset,
+}: {
+  spec: typeof BANNER_SPEC;
+  current: string;
+  dims: { width: number; height: number } | null;
+  fallback: string;
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  onPick: () => void;
+  onFile: (file: File) => void;
+  onReset: () => void;
+}) {
+  const preview = current || fallback;
+  return (
+    <div className="col-span-2 rounded-lg border-2 border-[#c9d8ee] bg-white p-2.5">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-[14px] font-black text-[#0f2942]">{spec.label}</div>
+          <div className="text-[11.5px] font-bold text-slate-600">{spec.hint}</div>
+        </div>
+        <span className="rounded bg-[#eef5fd] px-2 py-0.5 text-[11px] font-black text-[#0f2942]">
+          PNG أو JPG — حتى {spec.maxKb} كيلوبايت
+        </span>
+      </div>
+
+      {/* المقاس المطلوب بالبكسل والسنتيمتر */}
+      <div className="mb-2 rounded-md border border-[#dbe8f7] bg-[#f4fafd] p-2">
+        <div className="mb-1 flex items-center gap-1.5 text-[12px] font-black text-[#0f2942]">
+          <ImageIcon className="h-3.5 w-3.5 text-[#1a6fd0]" />
+          المقاس المطلوب للصورة
+        </div>
+        <div className="grid gap-1 text-[11.5px] font-bold text-slate-700 sm:grid-cols-2">
+          <div>
+            <span className="text-slate-500">بالبكسل: </span>
+            <b className="num text-[#0f2942]">
+              {spec.width} × {spec.height}
+            </b>{" "}
+            بكسل
+          </div>
+          <div>
+            <span className="text-slate-500">بالسنتيمتر: </span>
+            <b className="num text-[#0f2942]">
+              {pxToCm(spec.width).toFixed(1)} × {pxToCm(spec.height).toFixed(1)}
+            </b>{" "}
+            سم
+          </div>
+          <div>
+            <span className="text-slate-500">النسبة: </span>
+            <b className="num text-[#0f2942]">{ratioText(spec.width, spec.height)}</b>
+          </div>
+          <div>
+            <span className="text-slate-500">أقل عرض مقبول: </span>
+            <b className="num text-[#0f2942]">{spec.minWidth} بكسل</b>
+          </div>
+        </div>
+        <div className="mt-1 text-[10.5px] font-bold text-slate-500">
+          أي صورة أكبر من المقاس بتتصغّر تلقائياً وبتحافظ على النسبة — والبرنامج بيعرضها «تغطية كاملة» بدون تشويه.
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="grid h-[70px] w-[130px] shrink-0 place-items-center overflow-hidden rounded-md border border-slate-300 bg-slate-100">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt={spec.label} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-[10.5px] font-bold text-slate-500">الخلفية الافتراضية</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-1">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onFile(file);
+              e.target.value = "";
+            }}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-blue h-9 px-4 text-[13.5px]" onClick={onPick}>
+              <Upload className="h-4 w-4" />
+              رفع صورة من الكمبيوتر
+            </button>
+            {current && (
+              <button type="button" className="btn btn-red h-9 px-3 text-[13px]" onClick={onReset}>
+                <Trash2 className="h-4 w-4" />
+                إزالة الصورة
+              </button>
+            )}
+          </div>
+          <span className="text-[11px] font-bold text-slate-600">
+            {dims ? (
+              <>
+                الصورة المرفوعة:{" "}
+                <b className="num text-[#0f2942]">
+                  {dims.width} × {dims.height}
+                </b>{" "}
+                بكسل
+                {dims.width < spec.minWidth && (
+                  <span className="text-amber-700"> — أقل من المقاس الموصى به، قد تبان غير واضحة</span>
+                )}
+              </>
+            ) : (
+              "لا توجد صورة مرفوعة — البرنامج يستخدم الخلفية الافتراضية"
+            )}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
