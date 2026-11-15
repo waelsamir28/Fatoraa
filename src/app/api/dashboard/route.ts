@@ -21,7 +21,7 @@ export function GET() {
 
     // الفواتير المحذوفة لا تُحتسب
     const range = (from: Date, to: Date) =>
-      and(eq(invoices.type, "sale"), isNull(invoices.deletedAt), gte(invoices.date, from), lt(invoices.date, to));
+      and(eq(invoices.type, "sale"), isNull(invoices.deletedAt), eq(invoices.isDraft, false), gte(invoices.date, from), lt(invoices.date, to));
 
     const [today] = await db
       .select({
@@ -106,7 +106,7 @@ export function GET() {
         type: invoices.type,
       })
       .from(invoices)
-      .where(and(eq(invoices.type, "sale"), isNull(invoices.deletedAt)))
+      .where(and(eq(invoices.type, "sale"), isNull(invoices.deletedAt), eq(invoices.isDraft, false)))
       .orderBy(desc(invoices.date))
       .limit(6);
 

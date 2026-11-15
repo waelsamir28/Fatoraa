@@ -16,7 +16,8 @@ export async function shiftCashSummary(shift: { id: number; openedAt: Date | nul
   const from = shift.openedAt ?? new Date(0);
   const untilNow = new Date();
   const opened = gte(invoices.date, from);
-  const notDeleted = isNull(invoices.deletedAt);
+  // الفواتير المحذوفة والمسودات لا تدخل في حساب الوردية
+  const notDeleted = and(isNull(invoices.deletedAt), eq(invoices.isDraft, false));
 
   const [sales] = await db
     .select({

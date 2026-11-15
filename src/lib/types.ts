@@ -92,6 +92,8 @@ export interface Invoice {
   shiftId?: number | null;
   items: InvoiceItem[];
   itemsCount?: number;
+  /** رقم تليفون العميل — يُرجَع من /api/invoices/[id] لشاشة المشاركة */
+  partyPhone?: string;
 }
 
 export interface StatementRow {

@@ -4,6 +4,7 @@ import { UiPrefsProvider } from "@/components/win/UiPrefs";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { ErrorBoundary } from "@/components/win/ErrorBoundary";
+import { BackgroundTasks } from "@/components/win/BackgroundTasks";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <AuthProvider>
         <DesktopProvider>
           <ErrorBoundary>
-            <AuthGate>{children}</AuthGate>
+            <AuthGate>
+              <BackgroundTasks />
+              {children}
+            </AuthGate>
           </ErrorBoundary>
         </DesktopProvider>
       </AuthProvider>

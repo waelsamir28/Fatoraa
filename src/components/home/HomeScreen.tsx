@@ -78,6 +78,7 @@ const TILES: Array<{ href: string | null; label: string; Icon: Icon; badge?: str
   { href: "/price-checker", label: "كشك استعلام السعر", Icon: IconInfo, badge: "للزبائن" },
   { href: "/reports", label: "التقارير الشاملة", Icon: IconReports },
   { href: "/barcode", label: "طباعة الباركود", Icon: IconBarcode },
+  { href: "/low-stock", label: "تنبيهات النواقص", Icon: IconWarehouse, badge: "تنبيه" },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: IconBackup },
   { href: "/settings", label: "الإعدادات والمظهر", Icon: IconSettings },
   { href: "/dashboard", label: "لوحة المالك", Icon: IconDashboard },

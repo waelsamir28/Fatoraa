@@ -193,7 +193,30 @@ export async function isDailyBackupDue(): Promise<boolean> {
   }
 }
 
-/** تشغيل النسخة اليومية عند أول طلب في اليوم (لا يعطل الطلب لو فشلت) */
+/**
+ * تشغيل النسخة التلقائية حسب الجدول المحفوظ في الإعدادات:
+ * - تعمل فقط لو مفعّلة
+ * - تحترم الفاصل الزمني (كل كام ساعة)
+ * - تحذف النسخ القديمة فوق الحد المسموح
+ */
+export async function maybeRunScheduledBackup(): Promise<{ ran: boolean; reason?: string }> {
+  try {
+    const { isScheduleDue, getSchedule, markRun, pruneOldBackups } = await import("./backup-schedule");
+    const due = await isScheduleDue();
+    if (!due) return { ran: false, reason: "لم يحن الوقت بعد" };
+    const schedule = await getSchedule();
+    const res = await runBackup({ kind: "auto", source: "schedule" });
+    await markRun(res.ok ? `${res.location} — ${res.fileName}` : "فشل");
+    const removed = await pruneOldBackups(schedule.keepCount);
+    if (removed > 0) console.info(`pruned ${removed} old backups`);
+    return { ran: true };
+  } catch (e) {
+    console.warn("scheduled backup skipped", e);
+    return { ran: false, reason: e instanceof Error ? e.message : "خطأ" };
+  }
+}
+
+/** نسخة متوافقة للخلف */
 export async function maybeRunDailyBackup(): Promise<boolean> {
   try {
     if (!(await isDailyBackupDue())) return false;

@@ -242,6 +242,113 @@ export async function findInvoice(type: InvoiceType, number: number, dir: string
   return rows[0] ? getInvoice(rows[0].id) : null;
 }
 
+/**
+ * حفظ فاتورة معلقة (مسودة):
+ * - لا تُخصم من المخزون ولا تُحرّك أرصدة العملاء/الموردين.
+ * - تُحفظ بالكامل مع أصنافها حتى يستكملها المستخدم لاحقاً.
+ */
+export async function saveDraft(input: InvoiceInput) {
+  const id = await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(${LOCK_ID[input.type]})`);
+    const party = await resolveParty(tx, input);
+    const items = await buildItems(tx, input);
+    const t = computeTotals(input);
+    const number = await nextNumber(input.type, tx);
+    const now = new Date();
+    const [inv] = await tx
+      .insert(invoices)
+      .values({
+        type: input.type,
+        number,
+        partyId: party.partyId,
+        partyName: party.partyName,
+        date: input.date,
+        paymentType: input.paymentType,
+        paymentMethod: input.paymentMethod,
+        priceLevel: input.priceLevel,
+        subtotal: t.subtotal,
+        discount: t.discount,
+        extraDiscount: input.extraDiscount,
+        taxRate: input.taxRate,
+        tax: t.tax,
+        total: t.total,
+        paid: t.paid,
+        cost: round2(items.reduce((s, it) => s + it.qty * it.cost, 0)),
+        notes: input.notes,
+        userName: input.userName,
+        branchId: input.branchId ?? null,
+        isDraft: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    await tx.insert(invoiceItems).values(items.map((it) => ({ ...it, invoiceId: inv.id })));
+    return inv.id;
+  });
+  return getInvoice(id);
+}
+
+/** بحث/تعديل مسودة موجودة (تحديث بياناتها بدون أي تأثير على المخزون) */
+export async function updateDraft(id: number, input: InvoiceInput) {
+  await db.transaction(async (tx) => {
+    const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
+    if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
+    if (!old.isDraft) throw new HttpError(400, "هذه الفاتورة معتمدة بالفعل — لا يمكن تعديلها كمسودة");
+    const party = await resolveParty(tx, input);
+    const items = await buildItems(tx, input);
+    const t = computeTotals(input);
+    await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+    await tx
+      .update(invoices)
+      .set({
+        partyId: party.partyId,
+        partyName: party.partyName,
+        date: input.date,
+        paymentType: input.paymentType,
+        paymentMethod: input.paymentMethod,
+        priceLevel: input.priceLevel,
+        subtotal: t.subtotal,
+        discount: t.discount,
+        extraDiscount: input.extraDiscount,
+        taxRate: input.taxRate,
+        tax: t.tax,
+        total: t.total,
+        paid: t.paid,
+        cost: round2(items.reduce((s, it) => s + it.qty * it.cost, 0)),
+        notes: input.notes,
+        userName: input.userName || old.userName,
+        isDraft: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(invoices.id, id));
+    await tx.insert(invoiceItems).values(items.map((it) => ({ ...it, invoiceId: id })));
+  });
+  return getInvoice(id);
+}
+
+/** اعتماد المسودة: تتحول لفاتورة فعلية وتُطبَّق تأثيراتها مرة واحدة فقط */
+export async function commitDraft(id: number, userName = "") {
+  await db.transaction(async (tx) => {
+    const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
+    if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
+    if (!old.isDraft) throw new HttpError(400, "هذه الفاتورة معتمدة بالفعل");
+    const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+    if (!oldItems.length) throw new HttpError(400, "لا يمكن اعتماد مسودة بدون أصناف");
+    const [inv] = await tx
+      .update(invoices)
+      .set({ isDraft: false, userName: userName || old.userName, updatedAt: new Date() })
+      .where(eq(invoices.id, id))
+      .returning();
+    await applyEffects(tx, { ...inv, id: inv.id, number: inv.number, userName: inv.userName }, oldItems, 1);
+    await updatePurchaseCosts(
+      tx,
+      inv.type as InvoiceType,
+      oldItems.map((it) => ({ productId: it.productId, price: it.price })),
+    );
+  });
+  return getInvoice(id);
+}
+
 export async function createInvoice(input: InvoiceInput) {
   const id = await db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(${LOCK_ID[input.type]})`);
@@ -289,6 +396,7 @@ export async function updateInvoice(id: number, input: InvoiceInput) {
     const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
     if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
     if (old.type !== input.type) throw new HttpError(400, "لا يمكن تغيير نوع الفاتورة");
+    if (old.isDraft) throw new HttpError(400, "هذه مسودة — استخدم تحديث المسودة أو اعتمادها");
     const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
     await applyEffects(tx, old, oldItems, -1);
     await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
@@ -337,6 +445,12 @@ export async function deleteInvoice(id: number, deletedBy = "", reason = "") {
     const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
     if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
     if (old.deletedAt) throw new HttpError(400, "الفاتورة محذوفة بالفعل");
+    // المسودة لم تُطبَّق على المخزون أو الأرصدة — تُحذف فعلياً بدون عكس أي تأثير
+    if (old.isDraft) {
+      await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, id));
+      await tx.delete(invoices).where(eq(invoices.id, id));
+      return;
+    }
     const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
     await applyEffects(tx, { ...old, id: old.id, number: old.number, userName: old.userName }, oldItems, -1);
     await tx
@@ -358,6 +472,10 @@ export async function restoreInvoice(id: number) {
     const [old] = await tx.select().from(invoices).where(eq(invoices.id, id)).for("update");
     if (!old) throw new HttpError(404, "الفاتورة غير موجودة");
     if (!old.deletedAt) throw new HttpError(400, "الفاتورة غير محذوفة");
+    if (old.isDraft) {
+      await tx.update(invoices).set({ deletedAt: null, deletedBy: "", deleteReason: "", updatedAt: new Date() }).where(eq(invoices.id, id));
+      return;
+    }
     const oldItems = await tx.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, id));
     await applyEffects(tx, { ...old, id: old.id, number: old.number, userName: old.userName }, oldItems, 1);
     await tx

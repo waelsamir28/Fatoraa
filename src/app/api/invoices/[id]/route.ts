@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { parties } from "@/db/schema";
 import { HttpError, handle, parseId, readJson, str } from "@/lib/server/http";
-import { deleteInvoice, getInvoice, parseInvoiceInput, restoreInvoice, updateInvoice } from "@/lib/server/invoices";
+import {
+  commitDraft,
+  deleteInvoice,
+  getInvoice,
+  parseInvoiceInput,
+  restoreInvoice,
+  updateDraft,
+  updateInvoice,
+} from "@/lib/server/invoices";
 import { getSession } from "@/lib/server/session";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +22,23 @@ export function GET(_req: Request, { params }: Ctx) {
   return handle(async () => {
     const inv = await getInvoice(parseId((await params).id));
     if (!inv) throw new HttpError(404, "الفاتورة غير موجودة");
-    return inv;
+    // رقم تليفون العميل — تحتاجه شاشة مشاركة الفاتورة على واتساب
+    let partyPhone = "";
+    if (inv.partyId) {
+      const [p] = await db.select({ phone: parties.phone }).from(parties).where(eq(parties.id, inv.partyId));
+      partyPhone = p?.phone || "";
+    }
+    return { ...inv, partyPhone };
   });
 }
 
 export function PUT(req: Request, { params }: Ctx) {
   return handle(async () => {
     const id = parseId((await params).id);
-    const input = parseInvoiceInput(await readJson(req));
+    const body = await readJson(req);
+    const input = parseInvoiceInput(body);
+    // تعديل مسودة محفوظة (بدون تأثير على المخزون)
+    if (body.isDraft === true) return updateDraft(id, input);
     return updateInvoice(id, input);
   });
 }
@@ -48,7 +68,13 @@ export function POST(req: Request, { params }: Ctx) {
   return handle(async () => {
     const id = parseId((await params).id);
     const body = await readJson(req).catch(() => ({}) as Record<string, unknown>);
-    if (str(body.action) !== "restore") {
+    const action = str(body.action);
+    // اعتماد مسودة → تصبح فاتورة فعلية وتُطبَّق تأثيراتها
+    if (action === "commit") {
+      const session = await getSession();
+      return commitDraft(id, session?.name || "");
+    }
+    if (action !== "restore") {
       throw new HttpError(400, "إجراء غير صالح");
     }
     await restoreInvoice(id);

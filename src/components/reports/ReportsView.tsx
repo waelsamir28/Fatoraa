@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { FileText, RefreshCw, Search } from "lucide-react";
+import { Download, FileText, RefreshCw, Search } from "lucide-react";
 import { Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconReports } from "@/components/icons/AppIcons";
 import { api, errMsg } from "@/lib/client";
-import { paymentMethodLabel } from "@/lib/constants";
-import { daysAgoInput, fmt, fmtQty, monthStartInput, rangeToISO, toDateInput, todayInput, tzOffset } from "@/lib/format";
-import type { Product } from "@/lib/types";
+import { downloadSheet } from "@/lib/xlsx";
+import { INVOICE_LABELS, paymentMethodLabel, paymentTypeLabel } from "@/lib/constants";
+import { daysAgoInput, fmt, fmtDate, fmtQty, monthStartInput, rangeToISO, toDateInput, todayInput, tzOffset } from "@/lib/format";
+import type { Invoice, Product } from "@/lib/types";
 
 interface Agg {
   count: number;
@@ -72,6 +73,7 @@ export function ReportsView() {
   const [applied, setApplied] = useState<{ from: string; to: string } | null>(null);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(
     async (f: string, t: string) => {
@@ -95,6 +97,109 @@ export function ReportsView() {
   useEffect(() => {
     void load(monthStartInput(), todayInput());
   }, [load]);
+
+  /** تصدير التقرير كاملاً إلى ملف Excel بأربع أوراق */
+  const exportExcel = async () => {
+    if (!data || !applied) {
+      toast("اعرض التقرير أولاً ثم اضغط تصدير", "info");
+      return;
+    }
+    setExporting(true);
+    try {
+      const r = rangeToISO(applied.from, applied.to);
+      const q = `from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}`;
+
+      // فواتير المبيعات والمشتريات الخام
+      const [sales, purchases] = await Promise.all([
+        api<{ items: Invoice[] }>(`/api/invoices?type=sale&limit=2000&${q}`),
+        api<{ items: Invoice[] }>(`/api/invoices?type=purchase&limit=2000&${q}`),
+      ]);
+
+      const invRows = (rows: Invoice[]) => [
+        ["رقم الفاتورة", "التاريخ", "العميل/المورد", "نوع الدفع", "طريقة الدفع", "الإجمالي", "المدفوع", "المتبقي", "الضريبة", "الخصم", "الربح"],
+        ...rows.map((i) => [
+          i.number,
+          fmtDate(i.date),
+          i.partyName,
+          paymentTypeLabel(i.paymentType),
+          paymentMethodLabel(i.paymentMethod),
+          i.total,
+          i.paid,
+          Math.max(0, i.total - i.paid),
+          i.tax,
+          i.discount + i.extraDiscount,
+          i.subtotal - i.discount - i.cost,
+        ]),
+      ];
+
+      await downloadSheet(
+        [
+          {
+            name: "ملخص التقرير",
+            rows: [
+              ["تقرير FATORA", `من ${applied.from} إلى ${applied.to}`],
+              [],
+              ["البيان", "القيمة"],
+              ["عدد فواتير المبيعات", data.sales.count],
+              ["إجمالي المبيعات", data.sales.total],
+              ["إجمالي الخصومات", data.sales.discount],
+              ["الضريبة المحصلة", data.sales.tax],
+              ["مرتجع المبيعات (قيمة)", data.salesReturns.total],
+              ["مرتجع المبيعات (عدد)", data.salesReturns.count],
+              ["إجمالي المشتريات", data.purchases.total],
+              ["عدد فواتير المشتريات", data.purchases.count],
+              ["مرتجع المشتريات", data.purchaseReturns.total],
+              ["المصروفات", data.expenses],
+              ["مجمل الربح", data.profit],
+              ["صافي الربح", data.netProfit],
+              ["مستحقات العملاء", data.counts.receivables],
+              ["مستحقات الموردين", data.counts.payables],
+              ["قيمة المخزون بالتكلفة", data.counts.stockCost],
+              ["قيمة المخزون بالبيع", data.counts.stockSale],
+              ["عدد الأصناف", data.counts.products],
+              ["أصناف تحت الحد الأدنى", data.counts.lowStock],
+            ],
+          },
+          {
+            name: "المبيعات اليومية",
+            rows: [
+              ["اليوم", "المبيعات", "المشتريات"],
+              ...days.map((d) => [d.day, d.sale, d.purchase]),
+            ],
+          },
+          {
+            name: "الأصناف الأكثر بيعاً",
+            rows: [
+              ["الصنف", "الكمية", "الإجمالي", "الربح"],
+              ...data.topProducts.map((t) => [t.name, t.qty, t.total, t.profit]),
+            ],
+          },
+          {
+            name: "أفضل العملاء",
+            rows: [
+              ["العميل", "عدد الفواتير", "الإجمالي"],
+              ...data.topCustomers.map((c) => [c.name, c.count, c.total]),
+            ],
+          },
+          { name: "فواتير المبيعات", rows: invRows(sales.items ?? []) },
+          { name: "فواتير المشتريات", rows: invRows(purchases.items ?? []) },
+          {
+            name: "الأصناف الناقصة",
+            rows: [
+              ["الكود", "الصنف", "الرصيد", "الحد الأدنى", "سعر الشراء"],
+              ...data.lowStock.map((p) => [p.code, p.name, p.stock, p.minStock, p.costPrice]),
+            ],
+          },
+        ],
+        `تقرير-FATORA-${applied.from}_${applied.to}`,
+      );
+      toast("تم تصدير التقرير إلى ملف Excel ✓");
+    } catch (e) {
+      toast(errMsg(e), "error");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const quick = (f: string, t: string) => {
     setFrom(f);
@@ -175,6 +280,16 @@ export function ReportsView() {
           <div className="ms-auto flex gap-2">
             <button type="button" className="btn h-[34px] px-3" onClick={() => void load(from, to)} title="تحديث">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-green h-[34px] px-3 text-[13px] font-black"
+              onClick={() => void exportExcel()}
+              disabled={exporting || !data}
+              title="تصدير كامل التقرير إلى Excel"
+            >
+              <Download className={`h-4 w-4 ${exporting ? "animate-pulse" : ""}`} />
+              {exporting ? "جاري التصدير..." : "تصدير Excel"}
             </button>
             <Link href="/sales/list" className="btn h-[34px] px-3 text-[13px]">
               <FileText className="h-4 w-4 text-blue-700" />

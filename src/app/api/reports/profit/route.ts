@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { expenses, invoiceItems, invoices, products } from "@/db/schema";
 import { handle, num, parseDate } from "@/lib/server/http";
@@ -34,7 +34,15 @@ export function GET(req: Request) {
           count: sql<number>`count(*)`.mapWith(Number),
         })
         .from(invoices)
-        .where(and(eq(invoices.type, type), gte(invoices.date, from), lt(invoices.date, to)));
+        .where(
+          and(
+            eq(invoices.type, type),
+            isNull(invoices.deletedAt),
+            eq(invoices.isDraft, false),
+            gte(invoices.date, from),
+            lt(invoices.date, to),
+          ),
+        );
       return {
         net: Number(row?.net ?? 0),
         gross: Number(row?.gross ?? 0),
