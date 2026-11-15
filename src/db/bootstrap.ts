@@ -241,6 +241,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS "branches_code_idx" ON "branches" USING btree 
 CREATE INDEX IF NOT EXISTS "backups_created_idx" ON "backups" USING btree ("created_at");
 
 CREATE INDEX IF NOT EXISTS "products_name_idx" ON "products" USING btree ("name");
+-- فهارس بحث سريع (باركود / فواتير غير محذوفة / أصناف الفاتورة)
+CREATE INDEX IF NOT EXISTS "invoice_items_product_idx" ON "invoice_items" USING btree ("product_id");
+
 CREATE INDEX IF NOT EXISTS "po_items_order_idx" ON "purchase_order_items" USING btree ("order_id");
 CREATE INDEX IF NOT EXISTS "purchase_orders_supplier_idx" ON "purchase_orders" USING btree ("supplier_id");
 CREATE INDEX IF NOT EXISTS "shifts_status_idx" ON "shifts" USING btree ("status");

@@ -1347,6 +1347,197 @@ html[data-font="cairo-play"] body {
   }
 }
 
+/* ===== الشاشة الرئيسية: كروت كبيرة + أدوات في تبويبات ===== */
+.home-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-inline-end: 2px;
+}
+.quick-tiles {
+  display: grid;
+  flex: none;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+}
+.quick-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 66px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid #cfe0f2;
+  background: linear-gradient(180deg, #ffffff, #eef5fd);
+  box-shadow: 0 1px 3px rgba(15, 41, 66, 0.1), inset 0 1px 0 #fff;
+  color: var(--c-ink);
+  text-align: start;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.quick-tile:hover {
+  border-color: #7fb3ea;
+  background: linear-gradient(180deg, #ffffff, #e2eefc);
+}
+.quick-tile:active {
+  background: linear-gradient(180deg, #e7f1fd, #d7e7fa);
+}
+.quick-tile__ico {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #f4f9ff;
+  border: 1px solid #e0ecf8;
+}
+.quick-tile__ico svg {
+  width: 30px;
+  height: auto;
+}
+.quick-tile__text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+}
+.quick-tile__label {
+  font-size: 14.5px;
+  font-weight: 900;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quick-tile__hint {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5b7793;
+}
+.quick-tile__go {
+  flex: none;
+  color: #93b4d4;
+}
+
+.tools-panel {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid #cfe0f2;
+  background: #fff;
+  overflow: hidden;
+}
+.tools-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid #dbe7f5;
+  background: linear-gradient(180deg, #f7fbff, #eaf3fd);
+  font-size: 13px;
+  font-weight: 900;
+  color: #0f2942;
+}
+.tools-panel__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+.tools-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #c9d8ee;
+  background: #fff;
+  color: #24466d;
+  font-size: 11.5px;
+  font-weight: 900;
+}
+.tools-tab:hover {
+  border-color: #86b6ee;
+  background: #f2f8ff;
+}
+.tools-tab.is-on {
+  color: #fff;
+  border-color: #2fb3a6;
+  background: #2fb3a6;
+}
+.tools-tab__count {
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+}
+.tools-tab:not(.is-on) .tools-tab__count {
+  background: #e7f0fa;
+}
+.tools-panel__body {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+.tool-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  border: 1px solid #dbe7f5;
+  background: linear-gradient(180deg, #ffffff, #f4f9ff);
+  color: #16324f;
+  font-size: 12.5px;
+  font-weight: 900;
+  text-align: start;
+}
+.tool-chip svg { flex: none; }
+.tool-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tool-chip:hover {
+  border-color: #7fb3ea;
+  background: linear-gradient(180deg, #ffffff, #e6f1fd);
+}
+.tool-chip__badge {
+  margin-inline-start: auto;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: #1d6ff2;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 900;
+}
+
+@media (max-width: 1100px) {
+  .quick-tiles { grid-template-columns: repeat(auto-fill, minmax(164px, 1fr)); }
+  .tools-panel__body { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+}
+@media (max-width: 760px) {
+  .quick-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+  .quick-tile { min-height: 58px; padding: 6px 8px; }
+  .quick-tile__label { font-size: 13px; }
+  .quick-tile__ico { width: 36px; height: 36px; }
+  .quick-tile__ico svg { width: 24px; }
+}
+
 /* ===== شريط البيع السريع ===== */
 .quick-sale {
   display: flex;
@@ -1587,6 +1778,21 @@ html[data-font="cairo-play"] body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   transition: background 0.14s ease, border-color 0.14s ease;
+}
+.nav-btn.is-active {
+  background: linear-gradient(90deg, rgba(47, 179, 166, 0.85), rgba(47, 179, 166, 0.45));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border-color: rgba(127, 227, 216, 0.7);
+}
+.nav-btn.is-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 3px;
+  background: #f5c518;
 }
 .nav-btn:hover {
   background: rgba(255, 255, 255, 0.2);
