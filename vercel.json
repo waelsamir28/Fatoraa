@@ -26,8 +26,8 @@
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/health?full=1",
-      "schedule": "0 */6 * * *"
+      "path": "/api/health",
+      "schedule": "0 10 * * *"
     }
   ]
 }
