@@ -79,7 +79,7 @@ export function POST(req: Request) {
       return saveDraft(input);
     }
 
-    const license = getCurrentLicense();
+    const license = await getCurrentLicense();
 
     // التحقق من حالة النسخة التجريبية وحدود الفواتير
     if (!license.isActivated) {

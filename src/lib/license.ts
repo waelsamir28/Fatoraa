@@ -8,23 +8,37 @@ export const TRIAL_DAYS = 15;
 export const MAX_TRIAL_PRODUCTS = 50;
 export const MAX_TRIAL_INVOICES = 30;
 
-/** توليد بصمة ثابتة وفريدة لجهاز العميل */
+/**
+ * بصمة الجهاز الطبيعيّة (نظام التشغيل + المعالج + الرام).
+ * تُستخدم كقيمة أوّلية لكود الجهاز على النسخة المثبّتة (exe).
+ * ملاحظة: على السيرفرات السحابية (Vercel) هذه البصمة تتغيّر، لذلك لا تُستخدم
+ * مباشرة في التفعيل — بل الكود الثابت المحفوظ في قاعدة البيانات (انظر license-store).
+ */
 export function getMachineId(): string {
-  const raw = [
-    os.hostname(),
-    os.platform(),
-    os.arch(),
-    os.cpus()[0]?.model || "cpu",
-    os.totalmem().toString(),
-  ].join("|");
+  // في نسخة الويندوز يرسل الـ Electron بصمة الجهاز الحقيقية (نفسها في الوضعين
+  // المحلي والسحابي) فيبقى كود الجهاز واحداً مهما اشتغل البرنامج.
+  const hint = (process.env.FATORA_DEVICE_HINT || "").trim();
+  const raw =
+    hint ||
+    [os.hostname(), os.platform(), os.arch(), os.cpus()[0]?.model || "cpu", os.totalmem().toString()].join("|");
 
   const hash = crypto.createHash("sha256").update(raw).digest("hex").toUpperCase();
   return `FAT-${hash.slice(0, 4)}-${hash.slice(4, 8)}`;
 }
 
-/** حساب كود التفعيل الصحيح بناءً على بصمة الجهاز */
-export function generateActivationCode(machineId: string): string {
-  const cleanId = machineId.trim().toUpperCase();
+/** هل النص كود جهاز صالح؟ (FAT-XXXX-XXXX) */
+export function isValidDeviceId(id: string): boolean {
+  return /^FAT-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(String(id || "").trim().toUpperCase());
+}
+
+/** تنظيم كود الجهاز (حروف كبيرة بدون مسافات) */
+export function normalizeDeviceId(id: string): string {
+  return String(id || "").trim().toUpperCase();
+}
+
+/** حساب كود التفعيل الصحيح بناءً على كود الجهاز */
+export function generateActivationCode(deviceId: string): string {
+  const cleanId = normalizeDeviceId(deviceId);
   const hash = crypto
     .createHmac("sha256", SECRET_SALT)
     .update(cleanId)
@@ -35,10 +49,10 @@ export function generateActivationCode(machineId: string): string {
 }
 
 /** التحقق من صحة كود التفعيل الذي أدخله العميل */
-export function verifyActivationCode(machineId: string, inputCode: string): boolean {
+export function verifyActivationCode(deviceId: string, inputCode: string): boolean {
   if (!inputCode) return false;
-  const expected = generateActivationCode(machineId);
-  return expected === inputCode.trim().toUpperCase();
+  const expected = generateActivationCode(deviceId);
+  return expected === String(inputCode).trim().toUpperCase();
 }
 
 export interface LicenseStatus {
@@ -46,6 +60,7 @@ export interface LicenseStatus {
   isExpired: boolean;
   isClockTampered: boolean;
   daysLeft: number;
+  /** كود الجهاز الثابت المستخدم في التفعيل */
   machineId: string;
   limits: {
     maxProducts: number;
@@ -54,12 +69,15 @@ export interface LicenseStatus {
 }
 
 /** فحص حالة النسخة (مفعلة / تجريبية / منتهية / تلاعب بالتاريخ) */
-export function checkLicense(data: {
-  firstRunAt?: string | null;
-  lastRunAt?: string | null;
-  activationKey?: string | null;
-}): LicenseStatus {
-  const machineId = getMachineId();
+export function checkLicense(
+  data: {
+    firstRunAt?: string | null;
+    lastRunAt?: string | null;
+    activationKey?: string | null;
+  },
+  deviceId: string
+): LicenseStatus {
+  const machineId = normalizeDeviceId(deviceId);
   const isActivated = verifyActivationCode(machineId, data.activationKey || "");
 
   if (isActivated) {
