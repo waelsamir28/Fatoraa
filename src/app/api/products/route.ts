@@ -48,7 +48,7 @@ export function GET(req: Request) {
 /** إضافة صنف أو إدراج قائمة أصناف مجمعة (Excel Import) */
 export function POST(req: Request) {
   return handle(async () => {
-    const license = getCurrentLicense();
+    const license = await getCurrentLicense();
 
     // التحقق من حالة النسخة التجريبية وحدود الأصناف
     if (!license.isActivated) {

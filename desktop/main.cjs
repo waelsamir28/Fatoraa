@@ -5,6 +5,7 @@
 const { app, BrowserWindow, ipcMain, utilityProcess, dialog, shell, Menu, screen } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
+const os = require("node:os");
 const net = require("node:net");
 const http = require("node:http");
 
@@ -243,6 +244,14 @@ async function startServer() {
   if (databaseUrl) log("database: cloud (DATABASE_URL from settings)");
   else log("database: embedded (PGlite) - no DATABASE_URL configured");
 
+  // ملف الترخيص (lic.dat) ثابت داخل بيانات البرنامج — وليس مؤقتاً
+  const licenseDir = path.join(app.getPath("userData"), "license");
+  try {
+    fs.mkdirSync(licenseDir, { recursive: true });
+  } catch {
+    /* ignore */
+  }
+
   server = utilityProcess.fork(entry, [], {
     cwd: serverDir,
     stdio: "pipe",
@@ -252,6 +261,10 @@ async function startServer() {
       NODE_ENV: "production",
       PORT: String(port),
       HOSTNAME: "127.0.0.1",
+      // مجلد ثابت لملف الترخيص (بدل /tmp)
+      FATORA_DATA_DIR: licenseDir,
+      // بصمة الجهاز من نظام التشغيل (نفس البصمة في الوضع المحلي والسحابي)
+      FATORA_DEVICE_HINT: [os.hostname(), process.platform, process.arch, os.cpus()[0]?.model || "cpu", os.totalmem().toString()].join("|"),
       // لو مفيش رابط قاعدة بيانات نستخدم القاعدة المدمجة على الجهاز
       ...(databaseUrl ? { DATABASE_URL: databaseUrl, DB_DRIVER: "postgres" } : { DB_DRIVER: "pglite", PGLITE_DATA_DIR: dataDir }),
       NEXT_TELEMETRY_DISABLED: "1",

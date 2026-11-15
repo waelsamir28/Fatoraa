@@ -63,7 +63,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/license", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activationKey: code.trim() }),
+        body: JSON.stringify({ activationKey: code.trim(), machineId: info?.machineId || "" }),
       });
       const data = await res.json();
       if (res.ok && data.ok) {
