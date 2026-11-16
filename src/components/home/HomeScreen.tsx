@@ -319,17 +319,6 @@ export function HomeScreen() {
               );
             })}
             <div className="hs-rail__spacer" />
-            <button
-              type="button"
-              className="hs-rail__btn hs-rail__btn--lock"
-              onClick={() => window.dispatchEvent(new Event("fatora:lock"))}
-              title="قفل الشاشة (Ctrl+L)"
-            >
-              <span className="hs-rail__text">قفل الشاشة</span>
-              <span className="hs-rail__ico">
-                <Lock className="h-5 w-5" />
-              </span>
-            </button>
             </div>
           </nav>
 
@@ -356,6 +345,15 @@ export function HomeScreen() {
               <div className="hs-hello">
                 <span className="hs-hello__text">أهلا بك في برنامج فاتورة لإدارة المبيعات والمخزون</span>
                 <span className="hs-pill">النسخة مفتوحة</span>
+                <button
+                  type="button"
+                  className="hs-lock"
+                  onClick={() => window.dispatchEvent(new Event("fatora:lock"))}
+                  title="قفل الشاشة (Ctrl+L)"
+                >
+                  <Lock className="h-3.5 w-3.5" strokeWidth={2.8} />
+                  <span>قفل الشاشة</span>
+                </button>
               </div>
             </div>
 

@@ -235,7 +235,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       maximized: native ? true : maximized,
       showRestore: native ? nativeMax : maximized,
       toggleMaximized,
-      minimized,
+      minimized: native ? minimized : false,
       setMinimized,
       setWindowTitle,
       quitApp,
@@ -254,7 +254,6 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       <div className="desktop">
         {children}
 
-        {!native && <Taskbar minimized={minimized} setMinimized={setMinimizedState} pathname={pathname} />}
       </div>
 
       <UpdateBanner />
@@ -274,91 +273,6 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
         ))}
       </div>
     </Ctx.Provider>
-  );
-}
-
-function Taskbar({
-  minimized,
-  setMinimized,
-  pathname,
-}: {
-  minimized: boolean;
-  setMinimized: (v: boolean) => void;
-  pathname: string;
-}) {
-  const [now, setNow] = useState<Date | null>(null);
-  const [isFs, toggleFs] = useFullscreen();
-  const { activeUser } = useDesktop();
-
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const t = setInterval(tick, 15000);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <div className="taskbar" dir="ltr">
-      <div className="flex items-center gap-3">
-        <a href="tel:+201222355769" className="hidden items-center gap-2 rounded-md px-2 py-1 text-[13px] font-bold hover:bg-white/10 md:flex">
-          <Phone className="h-4 w-4 text-green-400" />
-          <span className="num">{SUPPORT_PHONE}</span>
-          <span className="opacity-70">|</span>
-          <span dir="rtl">{APP_NAME}</span>
-        </a>
-
-        {/* عرض المستخدم النشط */}
-        <div className="flex items-center gap-1.5 rounded-md bg-white/10 px-2 py-1 text-[12px] font-bold text-blue-200">
-          <User className="h-3.5 w-3.5 text-amber-300" />
-          <span>{activeUser || "FATORA"}</span>
-        </div>
-      </div>
-
-      {/* قائمة التطبيقات في شريط المهام */}
-      <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1">
-        <Link href="/" title="ابدأ" className="tb-app">
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-gradient-to-b from-[#3d8af0] to-[#0b4cc2] shadow">
-            <CartLogo className="!h-6 !w-6" />
-          </span>
-        </Link>
-        {TASK_APPS.map((a) => {
-          const active = isActive(pathname, a.href);
-          return (
-            <Link
-              key={a.href}
-              href={a.href}
-              title={a.label}
-              className={`tb-app ${active ? "active" : ""}`}
-              onClick={(e) => {
-                if (active) {
-                  e.preventDefault();
-                  setMinimized(!minimized);
-                }
-              }}
-            >
-              <a.Icon />
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          className="tb-app text-amber-300"
-          title={isFs ? "إنهاء ملء الشاشة (Esc)" : "تكبير ملء الشاشة (F11)"}
-          onClick={toggleFs}
-        >
-          {isFs ? <Minimize2 className="!h-5 !w-5" /> : <Maximize2 className="!h-5 !w-5" />}
-        </button>
-      </div>
-
-      <div className="text-right text-[12px] font-bold leading-tight" dir="rtl" suppressHydrationWarning>
-        {now && (
-          <>
-            <div className="num">{now.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</div>
-            <div className="num opacity-80">{now.toLocaleDateString("en-GB")}</div>
-          </>
-        )}
-      </div>
-    </div>
   );
 }
 
