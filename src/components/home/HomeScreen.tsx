@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
-import { ChevronDown, Lock, RefreshCw, Search, Star } from "lucide-react";
+import { ChevronDown, Lock, Printer, RefreshCw, Search, Star } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -68,7 +68,7 @@ interface Card {
   href: string | null;
   label: string;
   Icon: Icon;
-  action?: "export" | "exit";
+  action?: "export" | "exit" | "print-last";
 }
 
 interface Section {
@@ -96,6 +96,8 @@ const SECTIONS: Section[] = [
       { href: "/price-checker", label: "كشك السعر", Icon: IcBarcodeScan },
       // سجل الفواتير باقي كارت زي ما هو (اتفقنا نسيبه على حاله)
       { href: "/sales/list", label: "سجل الفواتير", Icon: IcClipboardCheck },
+      // إعادة طباعة آخر فاتورة بضغطة واحدة (من غير ما تفتح السجل)
+      { href: null, label: "طباعة آخر فاتورة", Icon: Printer as unknown as Icon, action: "print-last" },
     ],
   },
   {
@@ -171,7 +173,7 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
 export function HomeScreen() {
   const router = useRouter();
   const pathname = usePathname();
-  const { confirm, native, quitApp, activeUser } = useDesktop();
+  const { confirm, native, quitApp, activeUser, toast } = useDesktop();
   const { user } = useAuth();
   const [stats, setStats] = useState<HomeSummary | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -255,9 +257,35 @@ export function HomeScreen() {
     else router.push("/exit");
   };
 
+  /**
+   * إعادة طباعة آخر فاتورة مبيعات:
+   * نسأل السيرفر عن آخر فاتورة معتمدة ثم نطبعها في إطار مخفي (نفس آلية شاشة المبيعات).
+   */
+  const printLastInvoice = async () => {
+    try {
+      const r = await api<{ ok: boolean; invoice?: { id: number; number: number; total: number }; printUrl?: string; error?: string }>(
+        "/api/invoices/autosave?type=sale",
+      );
+      if (!r.ok || !r.invoice) {
+        toast(r.error || "لا توجد فواتير محفوظة بعد", "info");
+        return;
+      }
+      document.getElementById("home-print-frame")?.remove();
+      const f = document.createElement("iframe");
+      f.id = "home-print-frame";
+      Object.assign(f.style, { position: "fixed", left: "-10000px", top: "0", width: "820px", height: "1100px", border: "0" });
+      f.src = r.printUrl || `/print/${r.invoice.id}?auto=1`;
+      document.body.appendChild(f);
+      setTimeout(() => toast(`جارٍ طباعة الفاتورة رقم ${r.invoice?.number} (إجمالي ${fmt(r.invoice?.total ?? 0)})`), 200);
+    } catch {
+      toast("تعذّر الوصول لآخر فاتورة", "error");
+    }
+  };
+
   const runCard = (c: Card) => {
     if (c.action === "export") setExportOpen(true);
     else if (c.action === "exit") void exit();
+    else if (c.action === "print-last") void printLastInvoice();
     else if (c.href) router.push(c.href);
   };
 

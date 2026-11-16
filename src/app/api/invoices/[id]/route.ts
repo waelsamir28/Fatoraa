@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { parties } from "@/db/schema";
+import { invoices, parties } from "@/db/schema";
 import { HttpError, handle, parseId, readJson, str } from "@/lib/server/http";
 import {
   commitDraft,
@@ -40,6 +40,20 @@ export function PUT(req: Request, { params }: Ctx) {
     const input = parseInvoiceInput(body);
     // تعديل مسودة محفوظة (بدون تأثير على المخزون)
     if (body.isDraft === true) return updateDraft(id, input);
+
+    /**
+     * مسودة حفظ تلقائي + المستخدم ضغط «حفظ الفاتورة»:
+     * نحدّث بيانات المسودة أولاً ثم نعتمدها ⇒ تصبح فاتورة فعلية بنفس الرقم
+     * (مفيش فاتورة مكررة ولا قفزة في الترقيم).
+     */
+    const [existing] = await db.select({ isDraft: invoices.isDraft }).from(invoices).where(eq(invoices.id, id));
+    if (existing?.isDraft) {
+      await updateDraft(id, input);
+      const { getSession } = await import("@/lib/server/session");
+      const session = await getSession();
+      return commitDraft(id, session?.name || "");
+    }
+
     return updateInvoice(id, input);
   });
 }

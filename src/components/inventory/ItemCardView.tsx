@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Printer, Search } from "lucide-react";
 import { Kpi, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { IconItemCard } from "@/components/icons/MoreIcons";
@@ -62,6 +62,21 @@ export function ItemCardView() {
 
   const p = card?.product;
 
+  /**
+   * طباعة ملصق باركود للصنف المفتوح فوراً (بدون الذهاب لصفحة الباركود).
+   * نطبع 12 ملصقاً افتراضياً بمقاس 58×38 مم — المقاس الأكثر استخداماً.
+   */
+  const printLabel = (count = 12) => {
+    if (!p) return;
+    document.getElementById("label-print-frame")?.remove();
+    const f = document.createElement("iframe");
+    f.id = "label-print-frame";
+    Object.assign(f.style, { position: "fixed", left: "-10000px", top: "0", width: "820px", height: "1100px", border: "0" });
+    f.src = `/print/barcodes?items=${p.id}:${count}&price=1&auto=1&w=58&h=38`;
+    document.body.appendChild(f);
+    toast(`جارٍ طباعة ${count} ملصق باركود لـ «${p.name}»`);
+  };
+
   return (
     <Window title="كارت الصنف - حركة الصنف" icon={<IconItemCard className="h-9 w-9" />} statusBar={<span>{p ? `${p.name} — الرصيد الحالي ${fmtQty(p.stock)} ${p.unit}` : "اختر صنفاً من القائمة لعرض حركته"}</span>}>
       <div className="grid h-full w-full grid-cols-[330px_1fr] gap-3 p-3">
@@ -94,6 +109,17 @@ export function ItemCardView() {
                 {p ? `الباركود: ${p.code} — المجموعة: ${p.category} — العبوة: ${p.unit}` : "سيظهر هنا كل حركات الصنف من فواتير المبيعات والمشتريات والمرتجعات"}
               </div>
             </div>
+            {p && (
+              <button
+                type="button"
+                onClick={() => printLabel(12)}
+                className="btn btn-blue h-9 shrink-0 gap-1.5 px-3 text-[12.5px] font-black"
+                title="طباعة ملصقات باركود للصنف فوراً (12 ملصق 58×38)"
+              >
+                <Printer className="h-4 w-4" />
+                طباعة باركود
+              </button>
+            )}
             {p && (
               <div className="flex gap-4 text-center text-[13px] font-bold">
                 <div>شراء<div className="num text-[17px] font-black text-blue-700">{fmt(p.costPrice)}</div></div>

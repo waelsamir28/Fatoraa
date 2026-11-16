@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, Copy, Loader2, RefreshCw, Smartphone, X } from "lucide-react";
+import { Camera, CheckCircle2, Loader2, RefreshCw, X } from "lucide-react";
 import { Dialog } from "@/components/win/Window";
+import { CameraLinkCard } from "@/components/invoice/CameraLinkCard";
 import { api, errMsg } from "@/lib/client";
 
 /**
@@ -25,9 +26,6 @@ export function PhoneScannerDialog({
   const [hits, setHits] = useState<string[]>([]);
   const [error, setError] = useState("");
   const scanning = useRef(true);
-
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const link = `${origin}/scan`;
 
   const open = async () => {
     setBusy(true);
@@ -78,12 +76,7 @@ export function PhoneScannerDialog({
   return (
     <Dialog onClose={onClose} title="كاميرا الموبايل — ماسح باركود">
       <div className="w-[420px] space-y-2.5 p-1 text-[#0f2942]" dir="rtl">
-        <div className="flex items-center gap-2 rounded-lg bg-[#f2f8ff] px-2.5 py-2">
-          <Smartphone className="h-5 w-5 text-[#1a6fd0]" />
-          <div className="text-[12px] font-bold leading-5 text-slate-600">
-            افتح الرابط ده في متصفح الموبايل (نفس شبكة الواي فاي) واكتب الكود اللي تحت.
-          </div>
-        </div>
+        <CameraLinkCard code={code} onReload={() => void open()} />
 
         <div>
           <div className="mb-1 text-[12px] font-black">كود الربط</div>
@@ -105,38 +98,6 @@ export function PhoneScannerDialog({
             >
               <RefreshCw className="h-4 w-4 text-slate-600" />
             </button>
-          </div>
-        </div>
-
-        <div>
-          <div className="mb-1 text-[12px] font-black">رابط الماسح</div>
-          <div className="flex items-center gap-1.5">
-            <input
-              readOnly
-              value={link}
-              dir="ltr"
-              className="w-full select-all rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-center font-mono text-[12px] font-bold text-slate-700"
-            />
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(link);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                } catch {
-                  /* ignore */
-                }
-              }}
-              className="flex h-8 shrink-0 items-center gap-1 rounded bg-slate-800 px-2 text-[11px] font-black text-white"
-            >
-              {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "تم" : "نسخ"}
-            </button>
-          </div>
-          <div className="mt-1 text-[10.5px] font-bold leading-4 text-slate-500">
-            على نسخة الويندوز: الرابط بيظهر بعنوان الجهاز المحلي تلقائياً. لو الموبايل مش بيفتح الرابط، تأكد إن الجهازين على
-            نفس الشبكة وإن الجدار الناري مسموح للبرنامج.
           </div>
         </div>
 

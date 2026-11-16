@@ -2,7 +2,7 @@ export const APP_NAME = "FATORA | لإدارة المحلات التجارية";
 export const APP_BRAND = "FATORA";
 export const APP_TITLE = "FATORA-POS 2027";
 export const APP_TAGLINE = "مناسب لجميع الأنشطة التجارية";
-export const APP_VERSION = "1.6.0";
+export const APP_VERSION = "1.6.1";
 export const DEFAULT_LOGO = "/images/logo-fatora.png";
 export const SUPPORT_PHONE = "01222355769";
 /** اسم المسؤول — يظهر مع رقم الدعم في كل أنحاء البرنامج */

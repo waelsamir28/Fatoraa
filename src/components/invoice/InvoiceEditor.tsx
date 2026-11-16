@@ -15,6 +15,9 @@ import {
   BarChart3,
   CalendarDays,
   Camera,
+  Cloud,
+  CloudCheck,
+  Loader2,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -48,6 +51,7 @@ import {
 } from "lucide-react";
 import { useSalesLayout } from "@/lib/salesLayout";
 import { PhoneScannerDialog } from "@/components/invoice/PhoneScannerDialog";
+import { useGlobalScanner } from "@/lib/useGlobalScanner";
 import { Dialog, Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { AddUserIcon, PdfIcon, UserAvatar } from "@/components/icons/AppIcons";
@@ -319,12 +323,78 @@ export function InvoiceEditor({
   const [showDrafts, setShowDrafts] = useState(false);
   const [shareInvoice, setShareInvoice] = useState<Invoice | null>(null);
   const [clock, setClock] = useState("");
+  /** الحفظ التلقائي: حالة + رقم المسودة + وقت آخر حفظ */
+  const [autoState, setAutoState] = useState<"idle" | "saving" | "saved" | "off">("idle");
+  const [autoAt, setAutoAt] = useState("");
+  const draftIdRef = useRef(0);
+
+  /**
+   * بناء نفس البيانات اللي تتخزن — مشترك بين الحفظ اليدوي والحفظ التلقائي.
+   * (يُستخدم داخل save و autoSave)
+   */
+  const buildPayload = () => {
+    const keepTime = state.originalDate && isoToDateInput(state.originalDate) === state.date ? state.originalDate : null;
+    return {
+      type,
+      partyId: state.party.id,
+      partyName: state.party.name,
+      date: dateInputToISO(state.date, keepTime),
+      paymentType: state.paymentType,
+      paymentMethod: state.paymentMethod,
+      priceLevel: state.priceLevel,
+      extraDiscount: Math.max(0, toNum(state.extraDiscount)),
+      taxRate: 0,
+      paid: Math.max(0, toNum(state.paid)),
+      notes: state.notes,
+      userName: activeUser || settings?.userName || "FATORA",
+      template: settings?.invoiceTemplate || "template-modern-a5",
+      items: state.rows.map((r) => ({
+        productId: r.productId,
+        productName: r.productName,
+        unit: r.unit,
+        qty: r.qty,
+        price: r.price,
+        discount: r.discount,
+      })),
+    };
+  };
 
   const productRef = useRef<HTMLInputElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const keyHandler = useRef<(e: KeyboardEvent) => void>(() => {});
 
   const dirty = useMemo(() => serialize(state) !== serialize(saved), [state, saved]);
+
+  /**
+   * الحفظ التلقائي كل 20 ثانية:
+   * - يحفظ كمسودة (بدون خصم مخزون أو أرصدة) ⇒ لو الكهربا قطعت الفاتورة ترجع.
+   * - أول مرة ننشئ مسودة، وبعد كده نحدّثها (مفيش تكرار).
+   * - لا يعمل لو مفيش أصناف، أو الفاتورة محفوظة أصلاً، أو الاشتراك منتهي.
+   */
+  useEffect(() => {
+    const id = setInterval(async () => {
+      if (!state.rows.length || state.invoiceId || saving) return;
+      setAutoState("saving");
+      try {
+        const r = await api<{ ok: boolean; id?: number; reason?: string }>("/api/invoices/autosave", {
+          method: "POST",
+          json: { ...buildPayload(), draftId: draftIdRef.current },
+        });
+        if (r?.ok && r.id) {
+          draftIdRef.current = r.id;
+          setAutoState("saved");
+          setAutoAt(fmtTime(new Date()));
+        } else if (r?.reason === "expired") {
+          setAutoState("off");
+        } else {
+          setAutoState("idle");
+        }
+      } catch {
+        setAutoState("idle");
+      }
+    }, 20000);
+    return () => clearInterval(id);
+  }, [state.rows.length, state.invoiceId, saving]);
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   const loadProducts = useCallback(async () => {
@@ -340,6 +410,8 @@ export function InvoiceEditor({
   }, [cfg.partyType]);
 
   const applyState = useCallback((s: EditorState) => {
+    // بداية فاتورة جديدة ⇒ مسودة تلقائية جديدة
+    draftIdRef.current = 0;
     setState(s);
     setSaved(s);
     setSelected(s.rows.length ? 0 : -1);
@@ -449,6 +521,22 @@ export function InvoiceEditor({
       qtyRef.current?.select();
     }, 20);
   };
+
+  /**
+   * قارئ الباركود العام: امسح في أي مكان في الشاشة — الصنف يتضاف للفاتورة
+   * بدون الحاجة للضغط على خانة البحث أولاً.
+   */
+  useGlobalScanner((code) => {
+    const found = products.find((p) => p.code === code) ?? products.find((p) => String(p.id) === code);
+    if (found) {
+      addProduct(found);
+      toast(`تم إضافة «${found.name}» (${code})`);
+    } else {
+      // نعرض الكود في خانة البحث حتى يقدر ينشئ الصنف فوراً لو حب
+      setEntry({ ...EMPTY_ENTRY, text: code });
+      toast(`باركود غير موجود في الأصناف: ${code}`, "error");
+    }
+  });
 
   const pickProduct = (p: Product) => {
     playAddItem();
@@ -642,33 +730,14 @@ export function InvoiceEditor({
     }
     setSaving(true);
     try {
-      const keepTime = state.originalDate && isoToDateInput(state.originalDate) === state.date ? state.originalDate : null;
-      const payload = {
-        type,
-        partyId: state.party.id,
-        partyName: state.party.name,
-        date: dateInputToISO(state.date, keepTime),
-        paymentType: state.paymentType,
-        paymentMethod: state.paymentMethod,
-        priceLevel: state.priceLevel,
-        extraDiscount: Math.max(0, toNum(state.extraDiscount)),
-        taxRate: 0,
-        paid: Math.max(0, toNum(state.paid)),
-        notes: state.notes,
-        userName: activeUser || settings?.userName || "FATORA",
-        template: settings?.invoiceTemplate || "template-modern-a5",
-        items: state.rows.map((r) => ({
-          productId: r.productId,
-          productName: r.productName,
-          unit: r.unit,
-          qty: r.qty,
-          price: r.price,
-          discount: r.discount,
-        })),
-      };
+      const payload = buildPayload();
+      const autoDraftId = draftIdRef.current;
       const inv = state.invoiceId
         ? await api<Invoice>(`/api/invoices/${state.invoiceId}`, { method: "PUT", json: payload })
-        : await api<Invoice>("/api/invoices", { method: "POST", json: payload }).catch((e: unknown) => {
+        : autoDraftId > 0
+          ? // فيه مسودة حفظ تلقائي ⇒ نحدّثها ونحوّلها لفاتورة معتمدة بنفس الرقم
+            await api<Invoice>(`/api/invoices/${autoDraftId}`, { method: "PUT", json: { ...payload, isDraft: false } })
+          : await api<Invoice>("/api/invoices", { method: "POST", json: payload }).catch((e: unknown) => {
             // أوفلاين: نحفظ الفاتورة في طابور المتصفح ونكملها عند عودة الشبكة
             // (نكتشف الانقطاع من نوع الخطأ مش من navigator.onLine فقط — لأن
             //  onLine قد تبقى true مع شبكة ضعيفة أو سيرفر متوقف)
@@ -684,9 +753,13 @@ export function InvoiceEditor({
               return { ...(payload as unknown as Invoice), id: 0, number: 0, offline: true } as Invoice;
             }
             throw e;
-          });
+            });
 
       playSuccess();
+      // الفاتورة اتحفظت رسمياً ⇒ المسودة التلقائية خلصت دورها
+      // (لو استكملنا مسودة تلقائية: التحديث بيحوّلها لفاتورة عادية بنفس الرقم — مفيش تكرار)
+      draftIdRef.current = 0;
+      setAutoState("idle");
       // فاتورة محفوظة محلياً (أوفلاين) — لا نُحمّلها كفاتورة محفوظة لأن رقمها لم يُصدر بعد
       if ((inv as { offline?: boolean }).offline) return inv;
       const [plist] = await Promise.all([loadParties(), loadProducts()]);
@@ -947,6 +1020,35 @@ export function InvoiceEditor({
             <CheckCircle2 className="h-4 w-4 text-green-600 inline" />
             <span>{state.invoiceId ? (dirty ? "● فاتورة معدلة (غير محفوظة)" : "✓ فاتورة محفوظة") : "● فاتورة جديدة"}</span>
           </span>
+          {/* حالة الحفظ التلقائي — تطمن الكاشير إن الشغل محفوظ */}
+          {!state.invoiceId && state.rows.length > 0 && (
+            <>
+              <span className="sep" />
+              <span
+                className={`flex items-center gap-1 font-black ${
+                  autoState === "saving" ? "text-amber-700" : autoState === "saved" ? "text-emerald-700" : "text-slate-500"
+                }`}
+                title="البرنامج بيحفظ نسخة احتياطية من الفاتورة كل 20 ثانية — لو الكهربا قطعت ترجع زي ما هي"
+              >
+                {autoState === "saving" ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : autoState === "saved" ? (
+                  <CloudCheck className="h-4 w-4" />
+                ) : (
+                  <Cloud className="h-4 w-4" />
+                )}
+                <span>
+                  {autoState === "saving"
+                    ? "جارٍ الحفظ التلقائي…"
+                    : autoState === "saved"
+                      ? `محفوظ تلقائياً ${autoAt}`
+                      : autoState === "off"
+                        ? "الحفظ التلقائي متوقف (الاشتراك)"
+                        : "حفظ تلقائي كل 20 ثانية"}
+                </span>
+              </span>
+            </>
+          )}
           <span className={`ms-auto flex items-center gap-2 ${L.hints ? "" : "hidden"}`}>
             <span><span className="kbd">Del</span>حذف سطر</span>
             <span><span className="kbd">F10</span>طباعة</span>

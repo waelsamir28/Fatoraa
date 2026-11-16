@@ -260,7 +260,10 @@ async function startServer() {
       ...process.env,
       NODE_ENV: "production",
       PORT: String(port),
-      HOSTNAME: "127.0.0.1",
+      // نستمع على كل الشبكة المحلية حتى يفتح الموبايل رابط الماسح من الواي فاي
+      HOSTNAME: "0.0.0.0",
+      // عنوان الجهاز على الشبكة المحلية (يُستخدم في رابط كاميرا الموبايل)
+      FATORA_LAN_HOST: lanAddress(),
       // مجلد ثابت لملف الترخيص (بدل /tmp)
       FATORA_DATA_DIR: licenseDir,
       // بصمة الجهاز من نظام التشغيل (نفس البصمة في الوضع المحلي والسحابي)
@@ -466,6 +469,29 @@ async function loadApp() {
 }
 
 /** معلومات التحديث والتشغيل (تظهر في شاشة "معلومات عن البرنامج") */
+/**
+ * عنوان هذا الجهاز على شبكة الواي فاي (IPv4 محلي).
+ * تُستخدم في رابط «ماسح الموبايل» حتى يفتحه الموبايل من نفس الشبكة.
+ */
+function lanAddress() {
+  const nets = os.networkInterfaces();
+  const candidates = [];
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      const fam = typeof net.family === "string" ? net.family : `IPv${net.family}`;
+      if (fam !== "IPv4" || net.internal) continue;
+      candidates.push({ address: net.address, name });
+    }
+  }
+  // نفضّل الشبكات المحلية الحقيقية ونستبعد 169.254 (link-local = مفيش IP من الراوتر)
+  const rank = (a) =>
+    a.address.startsWith("169.254.") ? 9 : a.address.startsWith("192.168.") ? 0 : a.address.startsWith("10.") ? 1 : 2;
+  const usable = candidates.filter((c) => !c.address.startsWith("169.254."));
+  const pool = usable.length ? usable : candidates;
+  pool.sort((a, b) => rank(a) - rank(b));
+  return pool[0]?.address || "";
+}
+
 function runtimeInfo() {
   return {
     appVersion: app.getVersion(),
@@ -477,6 +503,18 @@ function runtimeInfo() {
     mode: currentMode,
     cloudUrl,
     localUrl: baseUrl,
+    /** رابط ماسح الموبايل على الشبكة المحلية */
+    scanUrl: (() => {
+      const ip = lanAddress();
+      if (!ip || !baseUrl) return "";
+      try {
+        const port = new URL(baseUrl).port;
+        return `http://${ip}:${port}/scan`;
+      } catch {
+        return "";
+      }
+    })(),
+    lanIp: lanAddress(),
     database: getDatabaseUrl() ? "cloud" : "embedded",
     databaseHost: (() => {
       const url = getDatabaseUrl();
@@ -592,6 +630,17 @@ async function checkForUpdates(manual) {
 }
 
 ipcMain.handle("app:runtime-info", () => runtimeInfo());
+/** رابط ماسح الموبايل — يُقرأ من شاشة المبيعات لعرضه في نافذة الكاميرا */
+ipcMain.handle("app:scan-url", () => {
+  const ip = lanAddress();
+  if (!ip || !baseUrl) return "";
+  try {
+    const port = new URL(baseUrl).port;
+    return `http://${ip}:${port}/scan`;
+  } catch {
+    return "";
+  }
+});
 ipcMain.handle("update:get-state", () => ({ ...updateState }));
 ipcMain.handle("update:check", (_e, manual) => checkForUpdates(Boolean(manual)));
 ipcMain.handle("update:download", async () => {
