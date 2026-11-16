@@ -10,7 +10,15 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'" />
 <title>FATORA Setup</title>
 <style>
+  /* خط Cairo — مضمّن داخل المثبّت نفسه (بدون حاجة لإنترنت) */
+  @font-face {
+    font-family: "Cairo";
+    src: url("assets/fonts/Cairo.ttf") format("truetype");
+    font-weight: 200 1000;
+    font-display: swap;
+  }
   :root {
+    --font-cairo: "Cairo", "Segoe UI", "Segoe UI Variable", Tahoma, sans-serif;
     --accent: #0f6cbd;
     --accent-hi: #1976d2;
     --bg: #f3f3f3;
@@ -22,7 +30,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
-    font-family: "Segoe UI", "Segoe UI Variable", Tahoma, sans-serif;
+    font-family: var(--font-cairo);
     font-size: 13px;
     color: var(--text);
     background: var(--bg);
@@ -42,13 +50,13 @@
   .winctl { display: flex; -webkit-app-region: no-drag; }
   .winctl button {
     width: 46px; height: 36px; border: 0; background: transparent; color: #333;
-    font-size: 10px; line-height: 1; cursor: pointer; font-family: "Segoe MDL2 Assets", "Segoe UI Symbol", sans-serif;
+    font-size: 10px; line-height: 1; cursor: pointer; font-family: "Segoe MDL2 Assets", "Segoe UI Symbol", var(--font-cairo);
   }
   .winctl button:hover { background: rgba(0,0,0,.06); }
   .winctl button.close:hover { background: #c42b1c; color: #fff; }
 
   /* ---------- المساحة الرئيسية ---------- */
-  .content { flex: 1; display: flex; min-height: 0; padding: 0 12px 12px 12px; gap: 12px; }
+  .content { flex: 1; display: flex; min-height: 0; padding: 0 12px 12px 12px; gap: 12px; position: relative; }
 
   /* اللوحة الجانبية */
   .side {
@@ -174,6 +182,36 @@
   .check-spin.ok::after { content: "✓"; color: #fff; font-size: 9px; position: absolute; inset: 0; display: grid; place-items: center; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ---------- صفحة الترحيب (شاشة الدخول) ---------- */
+  .welcome {
+    position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column;
+    background: #f3f6fb; border-radius: 8px; overflow: hidden;
+    transition: opacity .28s ease, transform .28s ease;
+  }
+  .welcome.off { opacity: 0; transform: scale(.985); pointer-events: none; }
+  .welcome__art {
+    flex: 1; min-height: 0; position: relative; overflow: hidden;
+    background: linear-gradient(120deg, #0a2f5c 0%, #1268b3 55%, #0a2f5c 100%);
+  }
+  .welcome__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .welcome__body {
+    flex: none; padding: 16px 22px 18px; background: #fff;
+    border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 4px;
+  }
+  .welcome__title { font-size: 17px; font-weight: 800; color: #0b2350; }
+  .welcome__sub { font-size: 11.5px; color: #5b6470; line-height: 1.8; }
+  .welcome__actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .welcome__actions .spacer { flex: 1; }
+  .welcome__ver { font-size: 11px; color: #6b7684; }
+  /* لو الصورة مش موجودة تظهر خلفية متدرجة بدل مربع مكسور */
+  .welcome__art .fb {
+    position: absolute; inset: 0; z-index: 2; color: #fff; text-align: center;
+    display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
+  }
+  .welcome__art .fb[hidden] { display: none; }
+  .welcome__art .fb b { font-size: 30px; font-weight: 900; letter-spacing: 3px; }
+  .welcome__art .fb span { font-size: 12px; color: #bfe3ff; }
+
   /* صفحة الانتهاء */
   .done-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .whatsnew {
@@ -198,6 +236,30 @@
   </div>
 
   <div class="content">
+    <!-- 0) شاشة الدخول / الترحيب -->
+    <div class="welcome" id="pgWelcome">
+      <div class="welcome__art" id="welcomeArt">
+        <img id="welcomeImg" src="assets/start.png" alt="FATORA" />
+        <div class="fb" id="welcomeFallback" hidden>
+          <b>FATORA</b>
+          <span>برنامج إدارة المحلات التجارية</span>
+        </div>
+      </div>
+      <div class="welcome__body">
+        <div class="welcome__title">أهلاً بك في مثبّت FATORA</div>
+        <div class="welcome__sub">
+          هيتم تثبيت البرنامج على جهازك في خطوات بسيطة. اضغط «التالي» للبدء،
+          أو «إلغاء» للخروج بدون أي تغيير.
+        </div>
+        <div class="welcome__actions">
+          <span class="welcome__ver">الإصدار __APP_VERSION__</span>
+          <span class="spacer"></span>
+          <button class="btn ghost" id="btnWelcomeCancel">إلغاء</button>
+          <button class="btn primary" id="btnWelcomeNext">التالي</button>
+        </div>
+      </div>
+    </div>
+
     <aside class="side">
       <div class="logo"><img src="assets/logo-fatora.png" alt="FATORA" onerror="this.replaceWith(document.createTextNode('F'))" /></div>
       <div class="brand">FATORA</div>

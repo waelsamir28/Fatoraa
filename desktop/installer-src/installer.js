@@ -47,6 +47,35 @@ const TIPS = [
   "نصيحة: أي مشكلة؟ الدعم الفني م/ وائل الجمال — 01222355769.",
 ];
 
+/** إخفاء شاشة الترحيب والانتقال لصفحة اختيار المجلد */
+function enterInstaller() {
+  const welcome = $("pgWelcome");
+  if (welcome && !welcome.classList.contains("off")) {
+    welcome.classList.add("off");
+    setTimeout(() => {
+      if (welcome) welcome.hidden = true;
+    }, 300);
+  }
+}
+
+/** تجهيز شاشة الترحيب: صورة start.png + بديل لو مش موجودة */
+function initWelcome() {
+  const img = $("welcomeImg");
+  const fb = $("welcomeFallback");
+  if (img && fb) {
+    const showFallback = () => {
+      img.hidden = true;
+      fb.hidden = false;
+    };
+    img.addEventListener("error", showFallback);
+    if (img.complete && img.naturalWidth === 0) showFallback();
+  }
+  const next = $("btnWelcomeNext");
+  const cancel = $("btnWelcomeCancel");
+  if (next) next.addEventListener("click", enterInstaller);
+  if (cancel) cancel.addEventListener("click", () => api.close());
+}
+
 function show(page) {
   ["pgDir", "pgProg", "pgDone", "pgError"].forEach((id) => $(id).classList.remove("on"));
   $(page).classList.add("on");
@@ -270,6 +299,8 @@ api.onProgress((payload) => {
   if (message) setStatus(message);
   if (detail) addDetail(detail);
 });
+
+initWelcome();
 
 init().catch(() => {
   $("spaceMeta").textContent = "المساحة المطلوبة: 420 ميجابايت";

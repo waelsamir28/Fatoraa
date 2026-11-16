@@ -109,9 +109,19 @@ fs.writeFileSync(
         executableName: "FATORA-Setup",
         copyright: "© FATORA - م/ وائل الجمال 01222355769",
         directories: { output: "../setup-dist", buildResources: "assets" },
-        files: ["main.js", "preload.js", "index.html", "installer.js", "release-notes.json", "assets/**"],
+        files: [
+          "main.js",
+          "preload.js",
+          "index.html",
+          "installer.js",
+          "release-notes.json",
+          "assets/**/*",
+        ],
         extraResources: [{ from: `${desktopDir}/node_modules/7zip-bin/win/x64/7za.exe`, to: "7za.exe" }],
-        asar: true,
+        // مهم: نُبقي ملفات الواجهة غير مضغوطة (asar:false) لأن Chromium
+        // لا يستطيع قراءة الخط والصور (assets/) من داخل أرشيف asar،
+        // فكان خط Cairo وصورة شاشة الدخول لن يظهرا أبدًا.
+        asar: false,
         win: {
           icon: "assets/icon.ico",
           target: [{ target: "portable", arch: ["x64"] }],

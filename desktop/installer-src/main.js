@@ -89,16 +89,46 @@ function sevenZipBin() {
     path.join(process.resourcesPath, "7za.exe"),
     path.join(process.resourcesPath, "app.asar.unpacked", "7za.exe"),
     path.join(__dirname, "7za.exe"),
+    path.join(__dirname, "..", "7za.exe"),
+    // أدوات فك الضغط المثبتة على الجهاز (خطة بديلة)
+    "C:\\Program Files\\7-Zip\\7z.exe",
+    "C:\\Program Files (x86)\\7-Zip\\7z.exe",
   ];
   for (const c of candidates) {
-    if (fs.existsSync(c)) return c;
+    try {
+      if (fs.existsSync(c)) return c;
+    } catch {
+      /* تجاهل المسارات غير المسموحة */
+    }
   }
-  throw new Error("أداة فك الضغط غير موجودة داخل المثبّت.");
+  throw new Error(
+    "أداة فك الضغط (7za.exe) غير موجودة داخل المثبّت — الملف ناقص أو تم تحميله بشكل غير مكتمل. أعد تحميل المثبّت من الرابط الرسمي.",
+  );
 }
+
+/** معاني أكواد خروج 7-Zip — تظهر للمستخدم برسالة مفهومة */
+const SEVENZIP_EXIT = {
+  0: "تم بنجاح",
+  1: "تحذير: بعض الملفات لم تُضغط",
+  2: "خطأ فادح",
+  7: "خطأ في سطر أوامر أداة فك الضغط",
+  8: "الذاكرة غير كافية لفك الضغط",
+  9: "الملف المضغوط غير موجود أو تالف",
+  255: "تم إلغاء العملية",
+};
 
 function run7z(args, onLine) {
   return new Promise((resolve, reject) => {
-    const child = spawn(sevenZipBin(), args, { windowsHide: true });
+    if (!Array.isArray(args) || !args.length) {
+      return reject(new Error("أمر فك الضغط غير صحيح (بدون معطيات)."));
+    }
+    let bin;
+    try {
+      bin = sevenZipBin();
+    } catch (e) {
+      return reject(e);
+    }
+    const child = spawn(bin, args, { windowsHide: true });
     let out = "";
     child.stdout.on("data", (d) => {
       const text = String(d);
@@ -108,10 +138,12 @@ function run7z(args, onLine) {
     child.stderr.on("data", (d) => {
       out += String(d);
     });
-    child.on("error", reject);
+    child.on("error", (e) => reject(new Error(`تعذّر تشغيل أداة فك الضغط: ${e.message}`)));
     child.on("exit", (code) => {
-      if (code === 0) resolve(out);
-      else reject(new Error(`فك الضغط انتهى بالكود ${code}`));
+      if (code === 0) return resolve(out);
+      const why = SEVENZIP_EXIT[code] || `كود ${code}`;
+      const tail = out.trim().split(/\r?\n/).slice(-6).join(" | ").slice(-400);
+      reject(new Error(`فشل فك ضغط ملفات البرنامج (${why})${tail ? ` — ${tail}` : ""}`));
     });
   });
 }
@@ -277,8 +309,24 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
     cancelRequested = false;
     send("setup:progress", { percent: 4, message: "جاري فك ضغط ملفات البرنامج…" });
     const archive = extractPayloadTo7z();
+    // تحقق سريع من توقيع ملف 7z (37 7A BC AF 27 1C) قبل فك الضغط
     try {
-      await run7z(["-y", `-o${target}`, archive], (line) => {
+      const sig = Buffer.alloc(6);
+      const fd = fs.openSync(archive, "r");
+      fs.readSync(fd, sig, 0, 6, 0);
+      fs.closeSync(fd);
+      if (sig.toString("hex") !== "377abcaf271c") {
+        throw new Error("ملفات البرنامج داخل المثبّت غير صالحة (توقيع الأرشيف غير صحيح). أعد تحميل المثبّت من الرابط الرسمي.");
+      }
+    } catch (e) {
+      if (String(e.message).includes("توقيع")) throw e;
+      // لو فشل الفتح نفسه نكمل، 7za سيرد برسالة أوضح
+    }
+    try {
+      // مهم: الحرف "x" هو أمر الاستخراج — كان ساقطًا تمامًا،
+      // فكان 7za يرد بـ «command line error» (كود خروج 7) ويفشل التثبيت.
+      const args = ["x", "-y", "-bsp1", "-bso1", "-bsp2", `-o${target}`, archive];
+      await run7z(args, (line) => {
         const m = /(\d{1,3})%/.exec(line);
         if (m) {
           const p = Math.min(88, 4 + Math.round((Number(m[1]) / 100) * 84));
