@@ -260,7 +260,7 @@ export function HomeScreen() {
 
   return (
     <Window
-      title={APP_TITLE}
+      title="FATORA | لإدارة المحلات التجارية"
       onClose={exit}
       showBackBtn={false}
     >
@@ -284,15 +284,17 @@ export function HomeScreen() {
             </div>
             <div className="hs-user__plate">
               <span className="hs-user__sub">{userName}</span>
-              <span className="hs-user__dot" />
+              {settings?.showOnlineDot !== false && <span className="hs-user__dot" />}
             </div>
           </div>
 
-          {/* اللوجو في منتصف البانر */}
-          <div className="hs-top__brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={settings?.customLogoUrl || DEFAULT_LOGO} alt={APP_TITLE} className="hs-top__logo" />
-          </div>
+          {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
+          {settings?.showLogo !== false && (
+            <div className="hs-top__brand">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={settings?.customLogoUrl || DEFAULT_LOGO} alt={APP_TITLE} className="hs-top__logo" />
+            </div>
+          )}
         </div>
 
         {/* ================= المحتوى: الكروت + القائمة اليمنى ================= */}

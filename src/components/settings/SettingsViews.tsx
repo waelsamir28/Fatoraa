@@ -39,8 +39,10 @@ import {
   type UiPrefs,
 } from "@/components/win/UiPrefs";
 
-type SForm = Record<Exclude<keyof Settings, "id" | "showBigTitle">, string> & {
+type SForm = Record<Exclude<keyof Settings, "id" | "showBigTitle" | "showLogo" | "showOnlineDot">, string> & {
   showBigTitle: boolean;
+  showLogo: boolean;
+  showOnlineDot: boolean;
 };
 
 const toForm = (s: Settings): SForm => ({
@@ -62,6 +64,8 @@ const toForm = (s: Settings): SForm => ({
   customLogoUrl: s.customLogoUrl || "",
   phone2: s.phone2 || "",
   showBigTitle: s.showBigTitle ?? true,
+  showLogo: s.showLogo ?? true,
+  showOnlineDot: s.showOnlineDot ?? true,
   customBigTitle: s.customBigTitle || "FATORA",
   customTagline: s.customTagline || "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",
   invoiceTemplate: s.invoiceTemplate || "template-modern-a5",
@@ -703,6 +707,38 @@ export function SettingsForm() {
                           <span className="text-[12px] font-bold text-slate-500">الشعار الافتراضي (FATORA)</span>
                         )}
                       </div>
+                    </div>
+
+                    <div className="col-span-2 flex items-center justify-between rounded-lg border border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+                      <div>
+                        <div className="text-[14px] font-black text-[#0f2942]">إظهار الشعار في الشاشة الرئيسية</div>
+                        <div className="text-[12px] text-slate-600">شعار البرنامج الكبير أعلى الشاشة الرئيسية — يمكنك إخفاؤه</div>
+                      </div>
+                      <label className="flex cursor-pointer items-center gap-2 font-black">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 rounded"
+                          checked={f.showLogo}
+                          onChange={(e) => setF({ ...f, showLogo: e.target.checked })}
+                        />
+                        <span>{f.showLogo ? "ظاهر" : "مخفي"}</span>
+                      </label>
+                    </div>
+
+                    <div className="col-span-2 flex items-center justify-between rounded-lg border border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+                      <div>
+                        <div className="text-[14px] font-black text-[#0f2942]">نقطة «متصل» جنب اسم المستخدم</div>
+                        <div className="text-[12px] text-slate-600">النقطة الخضراء الصغيرة بجوار اسم المستخدم في الرئيسية</div>
+                      </div>
+                      <label className="flex cursor-pointer items-center gap-2 font-black">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 rounded"
+                          checked={f.showOnlineDot}
+                          onChange={(e) => setF({ ...f, showOnlineDot: e.target.checked })}
+                        />
+                        <span>{f.showOnlineDot ? "ظاهرة" : "مخفية"}</span>
+                      </label>
                     </div>
 
                     <div className="col-span-2 flex items-center justify-between rounded-lg border border-[#c9d8ee] bg-[#f4f8fd] p-2.5">

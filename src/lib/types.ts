@@ -23,6 +23,10 @@ export interface Settings {
   customLogoUrl: string;
   phone2: string;
   showBigTitle: boolean;
+  /** إظهار شعار البرنامج في الشاشة الرئيسية */
+  showLogo: boolean;
+  /** إظهار نقطة «متصل» جنب اسم المستخدم */
+  showOnlineDot: boolean;
   customBigTitle: string;
   customTagline: string;
   invoiceTemplate: string; // template-modern-a5 | template-classic-a5 | template-lines-a5 | template-minimal-a5 | template-pos-thermal | template-a4-full

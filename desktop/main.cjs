@@ -9,7 +9,7 @@ const os = require("node:os");
 const net = require("node:net");
 const http = require("node:http");
 
-const APP_TITLE = "FATORA-POS 2027";
+const APP_TITLE = "FATORA | لإدارة المحلات التجارية";
 const DEV = process.argv.includes("--dev");
 const DEV_URL = process.env.ALGAMAL_DEV_URL || "http://localhost:3000";
 

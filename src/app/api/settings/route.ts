@@ -18,6 +18,8 @@ export function PUT(req: Request) {
 
     const showBigTitle =
       b.showBigTitle === undefined ? true : Boolean(b.showBigTitle);
+    const showLogo = b.showLogo === undefined ? true : Boolean(b.showLogo);
+    const showOnlineDot = b.showOnlineDot === undefined ? true : Boolean(b.showOnlineDot);
 
     const [row] = await db
       .update(settings)
@@ -43,6 +45,8 @@ export function PUT(req: Request) {
         customLogoUrl: str(b.customLogoUrl),
         phone2: str(b.phone2),
         showBigTitle,
+        showLogo,
+        showOnlineDot,
         customBigTitle: str(b.customBigTitle) || "FATORA",
         customTagline: str(b.customTagline) || DEFAULT_SETTINGS.customTagline,
         invoiceTemplate: str(b.invoiceTemplate) || "template-modern-a5",
