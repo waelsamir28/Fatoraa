@@ -148,7 +148,9 @@ $("btnNext").addEventListener("click", async () => {
   }
   if (stage === "dir") return startInstall();
   if (stage === "done") {
-    if ($("optRun") && $("optRun").checked) api.launch();
+    // optRun قد تكون غير موجودة في الصفحة ⇒ الافتراضي هو تشغيل البرنامج
+    const runAfterInstall = $("optRun") ? $("optRun").checked : true;
+    if (runAfterInstall) api.launch();
     else api.close();
     return;
   }
@@ -209,6 +211,9 @@ async function startInstall() {
   const target = $("dir").value.trim();
   let res = null;
   try {
+    if (!api || typeof api.install !== "function") {
+      throw new Error("واجهة المثبّت لم تُحمِّل بشكل صحيح — أغلق النافذة وأعد تشغيل الملف.");
+    }
     // التثبيت ممكن ياخد دقايق — بلا مهلة هنا، لكن أي استثناء يُترجم لرسالة واضحة
     res = await api.install({
       dir: target,

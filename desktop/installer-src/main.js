@@ -17,8 +17,27 @@ const HEADER_SIZE = 32;
 
 let win = null;
 let installTarget = "";
+/**
+ * إرسال حدث للواجهة.
+ * ملاحظة مهمة: كل الاستدعاءات القديمة كانت تمرّر كائنًا واحدًا فقط،
+ * فيصل الكائن مكان اسم القناة ⇒ Electron يرمي
+ * «Missing required channel argument» ويتوقف التثبيت من أوله.
+ * لذلك نثبّت القناة هنا ونتجاهل أي استدعاء بشكل خاطئ.
+ */
+const PROGRESS_CHANNEL = "setup:progress";
 const send = (channel, payload) => {
-  if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+  // استدعاء بكائن واحد ⇒ نعتبره تحديث تقدّم على القناة الافتراضية
+  if (payload === undefined && channel && typeof channel === "object") {
+    payload = channel;
+    channel = PROGRESS_CHANNEL;
+  }
+  if (typeof channel !== "string" || !channel) {
+    console.error("[setup] send() بدون قناة صحيحة:", channel);
+    return;
+  }
+  if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+    win.webContents.send(channel, payload);
+  }
 };
 
 /* ---------------- الحمولة الملحقة ---------------- */
@@ -200,6 +219,22 @@ function writeUninstallerScript({ dir, file, appName }) {
 
 let cancelRequested = false;
 
+/** تحويل أخطاء النظام (إنجليزية) إلى رسالة عربية مفهومة للمستخدم */
+function friendlyError(e) {
+  const raw = String((e && e.message) || e || "").trim();
+  if (!raw) return "حدث خطأ غير متوقع أثناء التثبيت. جرّب تشغيل الملف كمسؤول (Run as administrator).";
+  const map = [
+    [/ENOSPC|no space/i, "المساحة غير كافية على القرص المختار. فضّي مساحة أو اختر قرصًا آخر."],
+    [/EPERM|EACCES|access is denied|permission denied/i, "المثبّت مش قادر يكتب في المجلد المختار — جرّبه كمسؤول (Run as administrator) أو اختر مجلدًا آخر."],
+    [/EBUSY|being used by another process/i, "بعض الملفات مستخدمة الآن. اقفل البرنامج القديم (AlGamal) وكرّر المحاولة."],
+    [/ENOENT|not found/i, "ملف مطلوب مش موجود داخل المثبّت — نزّل الملف من جديد من الرابط الرسمي."],
+    [/Missing required channel argument/i, "خطأ داخلي في المثبّت — نزّل النسخة الأخيرة من الرابط الرسمي."],
+  ];
+  for (const [re, msg] of map) if (re.test(raw)) return `${msg} (تفاصيل: ${raw})`;
+  if (/[\u0600-\u06FF]/.test(raw)) return raw;
+  return `تعذّر إكمال التثبيت: ${raw}\nلو المشكلة استمرت، ابعت لنا صورة الشاشة على 01222355769.`;
+}
+
 async function install({ dir, desktopShortcut, startMenuShortcut }) {
   const target = String(dir || "").trim();
   if (!target || !/^[a-zA-Z]:\\/.test(target)) {
@@ -207,6 +242,20 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
   }
 
   try {
+    // فحص المساحة قبل أي كتابة (رسالة واضحة بدل فشل غامض في نصف التثبيت)
+    try {
+      const root = path.parse(target).root;
+      const stats = fs.statfsSync(root);
+      const freeBytes = Number(stats.bavail) * Number(stats.bsize);
+      const needed = 600 * 1024 * 1024; // 600 ميجا هامش أمان
+      if (freeBytes && freeBytes < needed) {
+        const gb = (freeBytes / 1024 ** 3).toFixed(1);
+        return { ok: false, error: `المساحة غير كافية على ${root} — المتاح ${gb} جيجابايت والمطلوب 600 ميجابايت على الأقل.` };
+      }
+    } catch {
+      /* فحص المساحة اختياري — نكمل لو غير مدعوم */
+    }
+
     if (fs.existsSync(path.join(target, APP_EXE))) {
       const answer = dialog.showMessageBoxSync(win, {
         type: "question",
@@ -226,17 +275,17 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
 
     installTarget = target;
     cancelRequested = false;
-    send({ percent: 4, message: "جاري فك ضغط ملفات البرنامج…" });
+    send("setup:progress", { percent: 4, message: "جاري فك ضغط ملفات البرنامج…" });
     const archive = extractPayloadTo7z();
     try {
       await run7z(["-y", `-o${target}`, archive], (line) => {
         const m = /(\d{1,3})%/.exec(line);
         if (m) {
           const p = Math.min(88, 4 + Math.round((Number(m[1]) / 100) * 84));
-          send({ percent: p });
+          send("setup:progress", { percent: p });
         }
         const trimmed = line.trim();
-        if (trimmed && /Extracting/i.test(trimmed)) send({ detail: trimmed.slice(-120) });
+        if (trimmed && /Extracting/i.test(trimmed)) send("setup:progress", { detail: trimmed.slice(-120) });
       });
     } finally {
       try {
@@ -247,28 +296,29 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
     }
 
     if (cancelRequested) {
-      send({ percent: 0, message: "تم إلغاء التثبيت — جاري التنظيف…" });
+      send("setup:progress", { percent: 0, message: "تم إلغاء التثبيت — جاري التنظيف…" });
       removeInstalledFiles(target);
       return { ok: false, cancelled: true, error: "تم إلغاء التثبيت وتنظيف الملفات." };
     }
 
-    send({ percent: 90, message: "تجهيز ملفات التشغيل…" });
+    send("setup:progress", { percent: 90, message: "تجهيز ملفات التشغيل…" });
 
     // ملف إلغاء التثبيت: سكربت صغير (بدون نسخ المثبّت 250 ميجا)
     const uninstaller = path.join(target, UNINSTALL_EXE);
     writeUninstallerScript({ dir: target, file: uninstaller, appName: APP_NAME });
 
-    send({ percent: 94, message: "إنشاء الاختصارات…" });
+    send("setup:progress", { percent: 94, message: "إنشاء الاختصارات…" });
     await createShortcuts({ dir: target, desktopShortcut, startMenuShortcut });
 
-    send({ percent: 97, message: "تسجيل البرنامج في ويندوز…" });
+    send("setup:progress", { percent: 97, message: "تسجيل البرنامج في ويندوز…" });
     const sizeKb = Math.round(dirSizeKb(target));
     await writeUninstallRegistry({ dir: target, sizeKb });
 
-    send({ percent: 100, message: "تم التثبيت بنجاح", detail: "" });
+    send("setup:progress", { percent: 100, message: "تم التثبيت بنجاح", detail: "" });
     return { ok: true, dir: target };
   } catch (e) {
-    return { ok: false, error: String((e && e.message) || e) };
+    console.error("[setup] install failed:", (e && e.stack) || e);
+    return { ok: false, error: friendlyError(e) };
   }
 }
 
@@ -364,10 +414,10 @@ app.whenReady().then(() => {
 
 // أي خطأ غير متوقع: نُبلغ الواجهة بدل تركها معلّقة بلا استجابة
 process.on("unhandledRejection", (e) => {
-  send({ error: String((e && e.message) || e) });
+  send("setup:progress", { error: String((e && e.message) || e) });
 });
 process.on("uncaughtException", (e) => {
-  send({ error: String((e && e.message) || e) });
+  send("setup:progress", { error: String((e && e.message) || e) });
 });
 
 /* ---------------- IPC ---------------- */
@@ -408,10 +458,17 @@ ipcMain.handle("setup:browse", async (_e, current) => {
 
 ipcMain.handle("setup:install", async (_e, opts) => install(opts || {}));
 ipcMain.handle("setup:launch", () => {
-  const dir = path.dirname(process.execPath);
-  const exe = path.join(dir, APP_EXE);
-  if (fs.existsSync(exe)) shell.openPath(exe);
+  // مهم: المثبّت «portable» يعمل من مجلد مؤقت، فالبرنامج المثبَّت
+  // موجود في installTarget وليس بجوار process.execPath (كان زر
+  // «تشغيل البرنامج» لا يفتح شيئًا لهذا السبب).
+  const candidates = [
+    installTarget && path.join(installTarget, APP_EXE),
+    path.join(path.dirname(process.execPath), APP_EXE),
+  ].filter(Boolean);
+  const exe = candidates.find((c) => fs.existsSync(c));
+  if (exe) shell.openPath(exe);
   app.quit();
+  return !!exe;
 });
 ipcMain.handle("setup:openFolder", () => {
   const dir = installTarget || path.dirname(process.execPath);
