@@ -38,6 +38,23 @@ fs.rmSync(payloadFile, { force: true });
 execFileSync(sevenZip, ["a", "-t7z", "-mx=9", "-mmt=on", payloadFile, "."], { cwd: appUnpacked, stdio: "inherit" });
 
 
+/** نسخة Electron المثبّتة عندنا — تُمرَّر لـ electron-builder كرقم فقط (بدون electronDist) */
+function electronVersion() {
+  try {
+    const dist = path.join(desktopDir, "node_modules", "electron", "dist", "version");
+    const raw = fs.readFileSync(dist, "utf8").trim().replace(/^v/i, "");
+    if (raw) return raw;
+  } catch {
+    /* جرّب package.json */
+  }
+  try {
+    const pkgFile = path.join(desktopDir, "node_modules", "electron", "package.json");
+    return String(JSON.parse(fs.readFileSync(pkgFile, "utf8")).version).replace(/^v/i, "");
+  } catch {
+    return "";
+  }
+}
+
 /* ---------- 2) مشروع واجهة المثبّت ---------- */
 console.log("• تجهيز مشروع المثبّت…");
 fs.rmSync(setupAppDir, { recursive: true, force: true });
@@ -59,6 +76,13 @@ try {
 }
 fs.cpSync(path.join(__dirname, "assets"), path.join(setupAppDir, "assets"), { recursive: true });
 
+const setupElectron = electronVersion();
+if (!setupElectron) {
+  console.warn("⚠ لم نتعرف على نسخة Electron — سيعتمد electron-builder على أحدث نسخة.");
+} else {
+  console.log(`• نسخة Electron للمثبّت: ${setupElectron}`);
+}
+
 fs.writeFileSync(
   path.join(setupAppDir, "package.json"),
   JSON.stringify(
@@ -71,11 +95,15 @@ fs.writeFileSync(
       author: "FATORA - م/ وائل الجمال 01222355769",
       license: "UNLICENSED",
       private: true,
+      // electron-builder يحتاج معرفة نسخة Electron: بدون devDependency ولا electronVersion
+      // كان البناء يفشل (كان يعتمد سابقًا على electronDist المحذوف).
+      devDependencies: setupElectron ? { electron: setupElectron } : {},
       build: {
         // ملاحظة مهمة: لا نستخدم electronDist هنا.
         // electron-builder يستخدم dist كـ «قالب» جاهز ولا يعيد تسمية electron.exe إلى
         // FATORA-Setup.exe — فتظهر نوافذ بتسمية electron وتفشل أدوات مساعدة.
-        // لذلك نتركه يحمّل نسخته الخاصة (أو كاش GitHub Actions) ويعيد التسمية صح.
+        // لذلك نعطيه رقم النسخة فقط ويحمّل/يستخدم الكاش بنفسه ويعيد التسمية صح.
+        electronVersion: setupElectron || undefined,
         appId: "com.algamal.setup",
         productName: "FATORA Setup",
         executableName: "FATORA-Setup",
