@@ -109,6 +109,49 @@
       font-weight: 700;
       letter-spacing: 0.3px;
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+      min-height: 18px;
+      text-align: center;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    .loading-text.fade-out {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+
+    /* تلميح متحرك: يلفّ نظرة سريعة على مزايا البرنامج */
+    .loading-tip {
+      color: #9fd4ff;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: center;
+      min-height: 16px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .loading-tip.show {
+      opacity: 1;
+    }
+
+    /* نقاط متحركة بعد الكلام */
+    .dots span {
+      animation: dot-blink 1.2s infinite;
+      opacity: 0.25;
+    }
+
+    .dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes dot-blink {
+      0%, 60%, 100% { opacity: 0.25; }
+      30% { opacity: 1; }
     }
 
     .win11-track {
@@ -161,13 +204,68 @@
   </div>
 
   <div class="win11-loader-box">
-    <div class="loading-text">جاري تشغيل البرنامج...</div>
+    <div class="loading-text" id="loadingText">
+      جاري تشغيل البرنامج<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+    </div>
     <div class="win11-track">
       <div class="win11-bar"></div>
     </div>
+    <div class="loading-tip" id="loadingTip"></div>
   </div>
 
   <script>
+    /**
+     * كلام متحرك أسفل شريط التحميل:
+     *  - جملة الحالة تتغير كل 3.2 ثانية (ونقاط متحركة عشان تبان شغالة)
+     *  - تلميح عن ميزة من مزايا البرنامج يتغير كل 4.5 ثانية
+     * الهدف: من يثبّت/يشغّل البرنامج ما يحسّش إنه معلّق.
+     */
+    (function () {
+      var statuses = [
+        "جاري تشغيل البرنامج",
+        "جاري تحميل بيانات المتجر",
+        "جاري فتح قاعدة البيانات",
+        "جاري تحضير شاشة البيع",
+        "لحظات قليلة من فضلك"
+      ];
+      var tips = [
+        "نصيحة: اربط البرنامج بالسحابة لأخذ نسخة احتياطية تلقائية كل يوم",
+        "نصيحة: اضغط F6 لفتح فاتورة مبيعات جديدة بسرعة",
+        "نصيحة: يمكنك مسح الباركود بكاميرا الموبايل من شاشة البيع",
+        "نصيحة: تقرير Z يقفل الوردية ويحسب الفرق في الخزينة",
+        "نصيحة: الدعم الفني 01222355769 — نسعد بخدمتك",
+        "نصيحة: اضغط Ctrl+K للبحث السريع في كل شاشات البرنامج"
+      ];
+      var textEl = document.getElementById("loadingText");
+      var tipEl = document.getElementById("loadingTip");
+      var si = 0;
+      var ti = 0;
+
+      if (textEl) {
+        setInterval(function () {
+          si = (si + 1) % statuses.length;
+          textEl.classList.add("fade-out");
+          setTimeout(function () {
+            textEl.innerHTML = statuses[si] + '<span class="dots"><span>.</span><span>.</span><span>.</span></span>';
+            textEl.classList.remove("fade-out");
+          }, 220);
+        }, 3200);
+      }
+
+      if (tipEl) {
+        function nextTip() {
+          tipEl.classList.remove("show");
+          setTimeout(function () {
+            tipEl.textContent = tips[ti % tips.length];
+            ti++;
+            tipEl.classList.add("show");
+          }, 320);
+        }
+        nextTip();
+        setInterval(nextTip, 4500);
+      }
+    })();
+
     // نجرّب كل المسارات المحتملة للصورة (داخل الحزمة، أو resources، أو بجوار الملف)
     // لأن ملف واحد ناقص كان بيخلي شاشة البداية فاضية تماماً.
     var CANDIDATES = [
