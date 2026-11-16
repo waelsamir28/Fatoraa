@@ -1,7 +1,7 @@
 {
   "name": "algamal-desktop",
   "productName": "FATORA",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "برنامج FATORA - لإدارة المحلات التجارية",
   "author": "برنامج FATORA - 01222355769",
   "license": "UNLICENSED",
@@ -69,13 +69,22 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
+      "allowElevation": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
       "shortcutName": "FATORA",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false,
-      "artifactName": "AlGamal-Setup-${version}.${ext}"
+      "artifactName": "AlGamal-Setup-${version}.${ext}",
+      "installerHeader": "build/installerHeader.bmp",
+      "installerHeaderIcon": "build/icon.ico",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/installerSidebar.bmp",
+      "license": null,
+      "showInstallLog": false,
+      "startMenuFolder": "FATORA",
+      "include": "build/installer/win11.nsh"
     },
     "portable": {
       "artifactName": "AlGamal-Portable-${version}.${ext}"

@@ -1452,6 +1452,18 @@ html[data-font="cairo-play"] body {
   overflow: hidden;
   background: transparent;
 }
+/* بيانات المستخدم: أول البانر يمين، فوق خالص */
+.hs-user {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+}
 .hs-top__brand {
   position: relative;
   z-index: 2;
@@ -1470,18 +1482,6 @@ html[data-font="cairo-play"] body {
   filter: drop-shadow(0 12px 20px rgba(2, 16, 45, 0.6));
 }
 
-/* بيانات المستخدم المضغوطة (بدون صورة): بادج الدور أبيض + لوحة الاسم كحلية */
-.hs-user {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 7px;
-  height: 100%;
-  padding: 0 12px 0 60px;
-  background: transparent;
-}
 /* المالك/الدور — خلفية بيضاء */
 .hs-user__role {
   display: inline-flex;
@@ -1604,6 +1604,18 @@ html[data-font="cairo-play"] body {
   filter: drop-shadow(0 1px 1px rgba(0, 20, 60, 0.45));
 }
 
+/* ===== جسم الصفحة: القائمة + اللوحة ===== */
+.hs-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* اللوجو مايزقش بيانات المستخدم */
+.hs-top__brand { z-index: 2; }
 /* ===== وسط: اللوحة ===== */
 .hs-main {
   display: flex;
@@ -1892,7 +1904,7 @@ html[data-mode="dark"] .hs-lock {
   .hs-rail__btn { font-size: 11.5px; min-height: 38px; }
   .hs-top { height: 156px; }
   .hs-top__logo { height: 146px; }
-  .hs-user { padding-inline: 10px 40px; }
+  .hs-user { top: 6px; right: 8px; }
   .hs-sec__head { width: 214px; }
   .hs-card__label { font-size: 12.4px; }
   .hs-card__ico { width: 36px; height: 36px; }

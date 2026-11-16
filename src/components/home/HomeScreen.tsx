@@ -280,6 +280,8 @@ export function HomeScreen() {
           </div>
 
           {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
+
+          {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
           {settings?.showLogo !== false && (
             <div className="hs-top__brand">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -289,7 +291,7 @@ export function HomeScreen() {
         </div>
 
         {/* ================= المحتوى: الكروت + القائمة اليمنى ================= */}
-        <div className="hs-body">
+        <div className="hs-body" style={{ flex: 1, minHeight: 0 }}>
           {/* ---- يمين: القائمة الثابتة ---- */}
           <nav className="hs-rail" style={railImg ? { backgroundImage: `url("${railImg}")` } : undefined}>
             <div className="hs-rail__inner">
@@ -320,7 +322,7 @@ export function HomeScreen() {
           {/* ---- وسط: اللوحة ---- */}
           <div className="hs-main">
             {/* شريط الأدوات العلوي */}
-            <div className="hs-toolbar">
+            <div className="hs-toolbar" style={{ flex: "none" }}>
               <div className="hs-tools">
                 <button type="button" className="hs-tool hs-tool--green" title="تحديث البيانات" onClick={() => void api<HomeSummary>("/api/home?fresh=1").then(setStats).catch(() => undefined)}>
                   <RefreshCw className="h-4 w-4" />
@@ -353,7 +355,7 @@ export function HomeScreen() {
             </div>
 
             {/* الأقسام */}
-            <div className="hs-board">
+            <div className="hs-board" style={{ flex: 1, minHeight: 0 }}>
               {SECTIONS.map((sec) => {
                 const collapsed = openSection[sec.id] === false;
                 return (

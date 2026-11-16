@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>مولّد أكواد التفعيل — FATORA</title>
+<style>
+  :root {
+    --navy: #0b2f5c;
+    --navy-2: #123f7a;
+    --blue: #1d6ff2;
+    --gold: #e3ac13;
+    --ok: #14a05c;
+    --line: #c9d8ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+    background: radial-gradient(circle at 50% 0%, #1a4c8c 0%, #0b2447 45%, #06152b 100%);
+    color: #0f2942;
+    padding: 22px 14px 40px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .head {
+    display: flex; align-items: center; gap: 12px;
+    color: #fff; margin-bottom: 14px;
+  }
+  .head .logo {
+    width: 54px; height: 54px; border-radius: 12px;
+    display: grid; place-items: center; flex: none;
+    background: linear-gradient(180deg, #3f8af0, #114fae);
+    border: 2px solid rgba(255,255,255,.5);
+    font-weight: 900; font-size: 15px; letter-spacing: .5px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  }
+  .head h1 { margin: 0; font-size: 20px; font-weight: 900; }
+  .head p { margin: 2px 0 0; font-size: 12.5px; opacity: .85; }
+  .card {
+    background: #fff; border-radius: 14px; padding: 16px;
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 18px 40px rgba(0,8,25,.45);
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    margin: 0 0 10px; font-size: 14.5px; font-weight: 900; color: var(--navy);
+    display: flex; align-items: center; gap: 6px;
+  }
+  label.lbl { display: block; font-size: 12.5px; font-weight: 800; color: #37557a; margin-bottom: 5px; }
+  input[type="text"] {
+    width: 100%; height: 46px; text-align: center; letter-spacing: 2px;
+    font-size: 20px; font-weight: 900; font-family: inherit;
+    color: var(--navy); background: #f6faff;
+    border: 2px solid var(--line); border-radius: 10px; outline: none;
+    direction: ltr;
+  }
+  input[type="text"]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(29,111,242,.15); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button {
+    font-family: inherit; font-weight: 900; font-size: 13.5px; cursor: pointer;
+    border-radius: 10px; border: 1px solid #1450b0; color: #fff; padding: 0 16px; height: 40px;
+    background: linear-gradient(180deg, #6fb2ff, #2f83f4 52%, #1360cf);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 2px 6px rgba(19,96,207,.35);
+  }
+  button:hover { filter: brightness(1.06); }
+  button:active { transform: translateY(1px); }
+  button.ghost {
+    color: var(--navy); background: #fff; border: 1px solid var(--line);
+    box-shadow: 0 1px 3px rgba(11,37,69,.1);
+  }
+  button.warn { background: linear-gradient(180deg, #ff8577, #ec4238 52%, #cf1e14); border-color: #b51b1b; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+
+  table.res { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.res th, table.res td { border: 1px solid #d7e4f3; padding: 8px 9px; text-align: right; font-size: 13px; }
+  table.res th { background: #eef4fb; font-weight: 900; color: var(--navy); font-size: 12.5px; }
+  table.res td.code {
+    font-family: ui-monospace, Consolas, monospace; font-size: 15px; font-weight: 900;
+    color: #0b2f5c; letter-spacing: 1px; direction: ltr; text-align: center;
+  }
+  table.res tr:hover td { background: #f7fbff; }
+  .pill {
+    display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 11px; font-weight: 900;
+  }
+  .pill.y { background: #e6f1ff; color: #1450b0; }
+  .pill.t { background: #f1e9ff; color: #5b21b6; }
+  .pill.l { background: #e7f9ee; color: #0c7a41; }
+  .hint { font-size: 11.5px; font-weight: 700; color: #6b7f96; margin-top: 6px; line-height: 1.7; }
+  .bad { color: #c0201b; font-weight: 900; font-size: 12.5px; margin-top: 8px; }
+  .good { color: #0c7a41; font-weight: 900; font-size: 12.5px; margin-top: 8px; }
+  .warnbox {
+    background: #fff7e6; border: 1px solid #f1c76b; border-radius: 10px; padding: 10px 12px;
+    font-size: 12.5px; font-weight: 800; color: #8a5a00; line-height: 1.75;
+  }
+  textarea {
+    width: 100%; min-height: 90px; font-family: inherit; font-size: 12.5px; font-weight: 700;
+    border: 1px solid var(--line); border-radius: 10px; padding: 9px; background: #f6faff; color: var(--navy);
+  }
+  .copy-ok { color: var(--ok); font-weight: 900; font-size: 12px; margin-inline-start: 8px; }
+  .foot { text-align: center; color: #9fb6d1; font-size: 11.5px; font-weight: 700; margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">FATORA</div>
+    <div>
+      <h1>مولّد أكواد التفعيل</h1>
+      <p>يعمل بدون إنترنت — افتح الملف على جهازك مباشرة. لا تشارك هذا الملف مع أحد.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>١) كود الجهاز</h2>
+    <label class="lbl" for="dev">كود الجهاز كما يظهر في شاشة التفعيل (FAT-XXXX-XXXX)</label>
+    <input id="dev" type="text" placeholder="FAT-0000-0000" maxlength="13" autocomplete="off" spellcheck="false" />
+    <div class="row">
+      <button id="gen">توليد أكواد الخطط الثلاث</button>
+      <button id="clear" class="ghost">تفريغ</button>
+      <button id="copyAll" class="ghost">نسخ النتيجة</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="card" id="resCard" style="display:none">
+    <h2>٢) الأكواد</h2>
+    <table class="res">
+      <thead>
+        <tr>
+          <th style="width:34%">الخطة</th>
+          <th style="width:20%">المدة</th>
+          <th>كود التفعيل</th>
+          <th style="width:70px">نسخ</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="hint">
+      اكتب الكود في شاشة «ترخيص البرنامج» كما هو بالحروف الكبيرة والشرطات، ثم اضغط تفعيل.
+      الحرف الأخير يحدد الخطة: <b>Y</b> سنة · <b>T</b> سنتين · <b>L</b> مدى الحياة.
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>التحقق من كود</h2>
+      <label class="lbl" for="chkCode">كود التفعيل</label>
+      <input id="chkCode" type="text" placeholder="XXXX-XXXX-XXXX-XXXL" maxlength="19" autocomplete="off" spellcheck="false" style="font-size:15px;height:42px" />
+      <div class="row"><button id="verify" class="ghost">تحقق من صحة الكود</button></div>
+      <div id="vmsg"></div>
+      <div class="hint">يستخدم كود الجهاز المكتوب فوق. مناسب لو العميل أرسل لك كوداً وتريد التأكد أنه يخص جهازه.</div>
+    </div>
+
+    <div class="card">
+      <h2>توليد كود جهاز (اختياري)</h2>
+      <label class="lbl" for="seed">أي نص لتحويله إلى كود جهاز</label>
+      <input id="seed" type="text" placeholder="مثال: اسم العميل أو رقم هاتفه" style="font-size:14px;height:42px;letter-spacing:0" />
+      <div class="row"><button id="mach" class="ghost">تحويل</button></div>
+      <div id="mmsg"></div>
+      <div class="hint">هذا <b>ليس</b> كود الجهاز الحقيقي (البرنامج يحسبه من بصمة الويندوز). استخدمه فقط لو أردت أكواداً مرتبطة باسم العميل في نظامك الخاص.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="warnbox">
+      🔒 <b>تنبيه أمني:</b> هذا الملف يحتوي على المفتاح السري لتوليد الأكواد. احتفظ به على جهازك أو على صفحة محمية بكلمة سر،
+      ولا ترفعه على GitHub ولا ترسله لأي شخص — من يحصل عليه يستطيع توليد أكواد تفعيل لأي جهاز.
+    </div>
+  </div>
+
+  <div class="foot">برنامج FATORA | لإدارة المحلات التجارية — الدعم الفني 01222355769</div>
+</div>
+
+<script>
+/* ================== الخوارزمية (نفس خوارزمية البرنامج) ==================
+   code = HMAC_SHA256(SALT, "FAT-XXXX-XXXX|LETTER") → 15 حرف HEX + حرف الخطة
+          XXXX-XXXX-XXXX-XXXL  (Y سنة · T سنتان · L مدى الحياة)
+   الكود القديم (XXXX-XXXX-XXXX) = HMAC(SALT, id) أول 12 حرفاً → تفعيل مدى الحياة
+   ======================================================================= */
+var SALT = "WAEL_ALGAMMAL_FATORA_2026_PRO";
+var PLANS = [
+  { key: "year",     letter: "Y", label: "اشتراك سنة",      months: 12, price: 1000, cls: "y" },
+  { key: "tier2",    letter: "T", label: "اشتراك سنتين",    months: 24, price: 1700, cls: "t" },
+  { key: "lifetime", letter: "L", label: "مدى الحياة",      months: 0,  price: 3000, cls: "l" }
+];
+
+/* ---------- HMAC-SHA256 على المتصفح (WebCrypto) ---------- */
+function hex(buf) {
+  var b = new Uint8Array(buf), s = "";
+  for (var i = 0; i < b.length; i++) s += b[i].toString(16).padStart(2, "0");
+  return s.toUpperCase();
+}
+async function hmacHex(key, msg) {
+  var enc = new TextEncoder();
+  var cryptoKey = await crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  var sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(msg));
+  return hex(sig);
+}
+
+function normalizeId(v) { return String(v || "").trim().toUpperCase(); }
+function isValidId(v) { return /^FAT-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(normalizeId(v)); }
+
+async function planCode(deviceId, letter) {
+  var h = await hmacHex(SALT, normalizeId(deviceId) + "|" + letter);
+  return h.slice(0, 4) + "-" + h.slice(4, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 15) + letter;
+}
+async function legacyCode(deviceId) {
+  var h = await hmacHex(SALT, normalizeId(deviceId));
+  return h.slice(0, 4) + "-" + h.slice(4, 8) + "-" + h.slice(8, 12);
+}
+/* كود جهاز من أي نص (sha256 أول 8 حروف) */
+async function machineFromSeed(text) {
+  var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text || "").trim()));
+  var h = hex(buf);
+  return "FAT-" + h.slice(0, 4) + "-" + h.slice(4, 8);
+}
+
+var $ = function (id) { return document.getElementById(id); };
+var lastResult = "";
+
+function clearMsgs() { $("msg").innerHTML = ""; $("vmsg").innerHTML = ""; $("mmsg").innerHTML = ""; }
+
+$("dev").addEventListener("input", function (e) {
+  var v = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+  if (!v.startsWith("FAT-") && v.length > 0) {
+    v = "FAT-" + v.replace(/^FAT-?/, "");
+  }
+  e.target.value = v.slice(0, 13);
+});
+
+async function generate() {
+  clearMsgs();
+  var id = normalizeId($("dev").value);
+  if (!isValidId(id)) {
+    $("msg").innerHTML = '<div class="bad">كود الجهاز غير صحيح — الصيغة المطلوبة FAT-XXXX-XXXX (حروف إنجليزية وأرقام)</div>';
+    $("resCard").style.display = "none";
+    return;
+  }
+  $("dev").value = id;
+  var out = [];
+  for (var i = 0; i < PLANS.length; i++) {
+    var p = PLANS[i];
+    var code = await planCode(id, p.letter);
+    out.push({ plan: p, code: code });
+  }
+  var legacy = await legacyCode(id);
+
+  var html = "";
+  out.forEach(function (o) {
+    html += '<tr><td><b>' + o.plan.label + '</b><br><span style="font-size:11px;color:#6b7f96">' + o.plan.price + ' ج.م</span></td>' +
+            '<td>' + (o.plan.months ? o.plan.months + ' شهراً' : 'بدون انتهاء') + '</td>' +
+            '<td class="code">' + o.code + '</td>' +
+            '<td style="text-align:center"><button class="ghost" style="height:28px;padding:0 9px;font-size:11.5px" data-copy="' + o.code + '">نسخ</button></td></tr>';
+  });
+  $("rows").innerHTML = html;
+  $("resCard").style.display = "";
+
+  lastResult = "كود الجهاز: " + id + "\n" +
+    out.map(function (o) { return o.plan.label + ": " + o.code; }).join("\n") +
+    "\n(الكود القديم مدى الحياة: " + legacy + ")";
+
+  $("msg").innerHTML = '<div class="good">تم توليد الأكواد لكود الجهاز ' + id + '</div>';
+}
+
+function attachCopy(scope) {
+  scope.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-copy]");
+    if (!t) return;
+    var text = t.getAttribute("data-copy");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { flash(t); });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); document.body.removeChild(ta); flash(t);
+    }
+  });
+}
+function flash(el) {
+  var old = el.textContent;
+  el.textContent = "✓";
+  setTimeout(function () { el.textContent = old; }, 1000);
+}
+
+$("gen").addEventListener("click", generate);
+$("clear").addEventListener("click", function () { $("dev").value = ""; $("resCard").style.display = "none"; clearMsgs(); $("dev").focus(); });
+attachCopy(document);
+
+$("copyAll").addEventListener("click", function () {
+  if (!lastResult) { $("msg").innerHTML = '<div class="bad">ولّد الأكواد أولاً</div>'; return; }
+  var btn = $("copyAll");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(lastResult).then(function () { flash(btn); });
+  } else {
+    var ta = document.createElement("textarea");
+    ta.value = lastResult; document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); document.body.removeChild(ta); flash(btn);
+  }
+});
+
+$("verify").addEventListener("click", async function () {
+  clearMsgs();
+  var id = normalizeId($("dev").value);
+  var code = String($("chkCode").value || "").trim().toUpperCase();
+  if (!isValidId(id)) { $("vmsg").innerHTML = '<div class="bad">اكتب كود الجهاز أولاً في الأعلى</div>'; return; }
+  if (!code) { $("vmsg").innerHTML = '<div class="bad">اكتب كود التفعيل</div>'; return; }
+  if (code === await legacyCode(id)) {
+    $("vmsg").innerHTML = '<div class="good">✓ كود صحيح — تفعيل مدى الحياة (كود قديم)</div>'; return;
+  }
+  for (var i = 0; i < PLANS.length; i++) {
+    if (code === await planCode(id, PLANS[i].letter)) {
+      $("vmsg").innerHTML = '<div class="good">✓ كود صحيح — ' + PLANS[i].label + '</div>';
+      return;
+    }
+  }
+  $("vmsg").innerHTML = '<div class="bad">✗ الكود غير صحيح لهذا الجهاز</div>';
+});
+
+$("mach").addEventListener("click", async function () {
+  clearMsgs();
+  var seed = $("seed").value.trim();
+  if (!seed) { $("mmsg").innerHTML = '<div class="bad">اكتب نصاً أولاً</div>'; return; }
+  var id = await machineFromSeed(seed);
+  $("mmsg").innerHTML = '<div class="good">كود الجهاز: <b style="font-family:monospace;letter-spacing:1px">' + id + '</b></div>';
+  $("dev").value = id;
+});
+
+$("dev").addEventListener("keydown", function (e) { if (e.key === "Enter") generate(); });
+$("chkCode").addEventListener("keydown", function (e) { if (e.key === "Enter") $("verify").click(); });
+</script>
+</body>
+</html>
