@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld("aljamalDesktop", {
 
   // معلومات التشغيل (الإصدار، وضع التشغيل، قاعدة البيانات)
   getRuntimeInfo: () => ipcRenderer.invoke("app:runtime-info"),
+  /** رابط ماسح الموبايل (http://192.168.x.x:PORT/scan) أو "" لو مفيش شبكة */
+  getScanUrl: () => ipcRenderer.invoke("app:scan-url"),
 
   // التحديث التلقائي
   checkForUpdates: (manual = true) => ipcRenderer.invoke("update:check", manual),
