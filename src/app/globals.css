@@ -1764,8 +1764,9 @@ html[data-font="cairo-play"] body {
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
-  padding: 4px 9px;
+  gap: 6px;
+  padding: 4px 5px;
+  overflow: hidden;
   border-radius: 9px;
   border: 1px solid #c3d8ee;
   background: linear-gradient(180deg, #ffffff 0%, #f6fbff 55%, #e8f2fd 100%);
@@ -1787,26 +1788,32 @@ html[data-font="cairo-play"] body {
   place-items: center;
   flex: none;
   order: 2;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
 }
+/* أيقونة كبيرة دايماً، ولو الكارت قصير تفضل أكبر من الخط */
 .hs-card__ico svg {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 .hs-card__label {
-  display: block;
+  display: -webkit-box;
   flex: 1;
   min-width: 0;
   order: 1;
   font-size: 13.5px;
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.12;
   text-align: center;
   color: #16324f;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* ===== شريط الحالة السفلي ===== */
@@ -1887,7 +1894,8 @@ html[data-font="cairo-play"] body {
   .hs-user__ring { width: 68px; height: 68px; }
   .hs-user__name { font-size: 12.5px; margin-top: 4px; }
   .hs-user__sub { font-size: 12px; }
-  .hs-card__label { font-size: 12px; }
+  .hs-card__label { font-size: 11.4px; }
+  .hs-card { gap: 4px; padding-inline: 3px; }
   .hs-card__ico { width: 32px; height: 32px; }
   .hs-rail__btn { min-height: 34px; font-size: 11px; }
   .hs-board { gap: 4px; padding: 4px 6px 2px; }
