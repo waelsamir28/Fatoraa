@@ -1,27 +1,51 @@
-/**
+﻿/**
  * تخصيص مثبّت الويندوز (NSIS) — نمط Windows 11
- * مرفوع من desktop/package.json → build.nsis.include
+ * يُحمَّل من desktop/package.json → build.nsis.include
  *
- * المزايا:
- *  - ارتفاع الترويسة/الشريط الجانبي مثل معالج ويندوز 11
- *  - نصوص عربية واضحة وأزرار بحواف مستديرة (عن طريق تعريف الخط والألوان)
- *  - صفحة إضافية اختيارية برسالة «جاري التحضير» كي لا يظن المستخدم أن التثبيت توقّف
+ * ملاحظة مهمة: هذا الملف يُدرَج في أعلى سكربت NSIS (قبل MUI2 وقبل تعريف الصفحات)،
+ * لذلك الـ !define التي في أعلى الملف هي التي تؤثر على شكل الصفحات.
+ * أما الـ macros (customHeader / customInstall / customUnInstall) فيتم استدعاؤها لاحقًا.
  */
 
-!macro customHeader
-  !define MUI_ABORTWARNING
-  ; خط عربي مقروء في كل صفحات المثبّت
-  !define MUI_FONT "Segoe UI"
-  !define MUI_FONTSIZE 9
-  ; ألوان قريبة من ويندوز 11 (أزرق هادئ + خلفية بيضاء)
+; ---------- حماية من التعريف المزدوج ----------
+!ifndef MUI_ABORTWARNING
+  !define MUI_ABORTWARNING            ; تأكيد قبل الإلغاء (نمط ويندوز 11)
+!endif
+
+!ifndef MUI_HEADERIMAGE_RIGHT
+  !define MUI_HEADERIMAGE_RIGHT       ; صورة الترويسة على اليمين
+!endif
+
+; ألوان صفحة التثبيت: كحلي FATORA + نص أبيض
+!ifndef MUI_INSTFILESPAGE_COLORS
   !define MUI_INSTFILESPAGE_COLORS "0b2f5c FFFFFF"
-  !define MUI_HEADERIMAGE_RIGHT
+!endif
+
+; خط النظام الحديث (بدون كسر إذا لم يكن معرّفًا في MUI2)
+!ifndef MUI_FONT
+  !define MUI_FONT "Segoe UI"
+!endif
+
+; عناوين من 3 أسطر (نمط ويندوز 11)
+!ifndef MUI_WELCOMEPAGE_TITLE_3LINES
+  !define MUI_WELCOMEPAGE_TITLE_3LINES
+!endif
+!ifndef MUI_FINISHPAGE_TITLE_3LINES
+  !define MUI_FINISHPAGE_TITLE_3LINES
+!endif
+
+; ---------- الهوية ----------
+!macro customHeader
+  ; لا شيء مطلوب هنا: كل تعريفات الشكل موجودة أعلى الملف
+  ; لأن هذا الملف يُدرَج قبل MUI2 مباشرةً.
+  ; (لا أوامر إضافية هنا)
 !macroend
 
+; ---------- أثناء التثبيت: رسائل تُطمئن المستخدم ----------
 !macro customInstall
-  ; ملاحظة للمستخدم أثناء نسخ الملفات (المثبّت يظهر هذه المرحلة طويلاً)
   DetailPrint "جاري تحضير برنامج FATORA..."
-  DetailPrint "نسخ ملفات البرنامج — قد يستغرق دقيقة، من فضلك لا تغلق النافذة"
+  DetailPrint "تجهيز ملفات البرنامج — قد يستغرق دقيقة، من فضلك لا تغلق النافذة."
+  DetailPrint "الدعم الفني: 01222355769"
 !macroend
 
 !macro customUnInstall
