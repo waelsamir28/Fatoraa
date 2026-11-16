@@ -28,12 +28,18 @@ console.log("• تجهيز هيكل المثبّت…");
 fs.rmSync(stubDir, { recursive: true, force: true });
 fs.mkdirSync(stubDir, { recursive: true });
 
-// نستبعد فقط resources (ملفات التطبيق الأصلي) — لازم نKeep locales وكل DLL
-const SKIP_FROM_APP = new Set(["resources"]);
+// نستبعد ملفات التطبيق نفسه (resources) وملفات غير لازمة للمثبّت
+const SKIP_FROM_APP = new Set(["resources", "LICENSE", "LICENSES.chromium.html"]);
 for (const entry of fs.readdirSync(appUnpacked, { withFileTypes: true })) {
   if (SKIP_FROM_APP.has(entry.name)) continue; // runtime فقط — بدون ملفات التطبيق
   const from = path.join(appUnpacked, entry.name);
   const to = path.join(stubDir, entry.name);
+  if (entry.name === "locales" && entry.isDirectory()) {
+    // نحتاج لغة واحدة فقط (النصوص عربية/إنجليزية داخل الواجهة)
+    fs.mkdirSync(to, { recursive: true });
+    fs.copyFileSync(path.join(from, "en-US.pak"), path.join(to, "en-US.pak"));
+    continue;
+  }
   fs.cpSync(from, to, { recursive: true });
 }
 
@@ -72,7 +78,7 @@ fs.renameSync(path.join(stubDir, mainExe), setupExe);
 /* ---------- 2) الحمولة: ملفات resources الخاصة بالتطبيق ---------- */
 console.log("• ضغط ملفات البرنامج (حمولة المثبّت)…");
 fs.rmSync(payloadFile, { force: true });
-execFileSync(sevenZip, ["a", "-t7z", "-mx=5", "-mmt=on", payloadFile, "."], {
+execFileSync(sevenZip, ["a", "-t7z", "-mx=9", "-mmt=on", payloadFile, "."], {
   cwd: appUnpacked,
   stdio: "inherit",
 });
