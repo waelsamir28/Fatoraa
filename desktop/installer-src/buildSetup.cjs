@@ -37,6 +37,21 @@ fs.mkdirSync(setupDir, { recursive: true });
 fs.rmSync(payloadFile, { force: true });
 execFileSync(sevenZip, ["a", "-t7z", "-mx=9", "-mmt=on", payloadFile, "."], { cwd: appUnpacked, stdio: "inherit" });
 
+
+/** نسخة Electron الموجودة فعليًا (من node_modules) */
+function electronVersion() {
+  try {
+    const dist = path.join(desktopDir, "node_modules", "electron", "dist", "version");
+    const raw = fs.readFileSync(dist, "utf8").trim().replace(/^v/i, "");
+    if (raw) return raw;
+  } catch {
+    /* ignore */
+  }
+  const pkgFile = path.join(desktopDir, "node_modules", "electron", "package.json");
+  const v = JSON.parse(fs.readFileSync(pkgFile, "utf8")).version;
+  return String(v).replace(/^v/i, "");
+}
+
 /* ---------- 2) مشروع واجهة المثبّت ---------- */
 console.log("• تجهيز مشروع المثبّت…");
 fs.rmSync(setupAppDir, { recursive: true, force: true });
@@ -90,12 +105,16 @@ fs.writeFileSync(
 
 /* ---------- 3) بناء المثبّت (ملف واحد) ---------- */
 console.log("• بناء المثبّت النهائي…");
-const builderBin = path.join(desktopDir, "node_modules", "electron-builder", "out", "cli", "cli.js");
-const electronBuilderCli = fs.existsSync(builderBin)
-  ? builderBin
-  : path.join(desktopDir, "node_modules", ".bin", process.platform === "win32" ? "electron-builder.cmd" : "electron-builder");
 
-execFileSync(process.execPath, [electronBuilderCli, "--win", "portable", "--x64", "--publish", "never"], {
+const builderCli = path.join(desktopDir, "node_modules", "electron-builder", "cli.js");
+if (!fs.existsSync(builderCli)) fail(`أداة electron-builder غير موجودة: ${builderCli}`);
+
+// نستخدم نفس نسخة Electron المثبتة (بدون تحميل من الشبكة أثناء البناء)
+const pkg = JSON.parse(fs.readFileSync(path.join(setupAppDir, "package.json"), "utf8"));
+pkg.build.electronVersion = electronVersion();
+fs.writeFileSync(path.join(setupAppDir, "package.json"), JSON.stringify(pkg, null, 2), "utf8");
+
+execFileSync(process.execPath, [builderCli, "--win", "portable", "--x64", "--publish", "never"], {
   cwd: setupAppDir,
   stdio: "inherit",
 });
