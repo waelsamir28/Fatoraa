@@ -38,27 +38,24 @@ fs.rmSync(payloadFile, { force: true });
 execFileSync(sevenZip, ["a", "-t7z", "-mx=9", "-mmt=on", payloadFile, "."], { cwd: appUnpacked, stdio: "inherit" });
 
 
-/** نسخة Electron الموجودة فعليًا (من node_modules) */
-function electronVersion() {
-  try {
-    const dist = path.join(desktopDir, "node_modules", "electron", "dist", "version");
-    const raw = fs.readFileSync(dist, "utf8").trim().replace(/^v/i, "");
-    if (raw) return raw;
-  } catch {
-    /* ignore */
-  }
-  const pkgFile = path.join(desktopDir, "node_modules", "electron", "package.json");
-  const v = JSON.parse(fs.readFileSync(pkgFile, "utf8")).version;
-  return String(v).replace(/^v/i, "");
-}
-
 /* ---------- 2) مشروع واجهة المثبّت ---------- */
 console.log("• تجهيز مشروع المثبّت…");
 fs.rmSync(setupAppDir, { recursive: true, force: true });
 fs.mkdirSync(setupAppDir, { recursive: true });
 
-for (const file of ["main.js", "preload.js", "index.html", "installer.js", "release-notes.json"]) {
-  fs.copyFileSync(path.join(__dirname, file), path.join(setupAppDir, file));
+for (const file of ["main.js", "preload.js", "index.html", "installer.js"]) {
+  // نطبع رقم الإصدار الحقيقي داخل الملفات حتى يظهر في الواجهة من أول لحظة
+  const text = fs.readFileSync(path.join(__dirname, file), "utf8").split("__APP_VERSION__").join(version);
+  fs.writeFileSync(path.join(setupAppDir, file), text, "utf8");
+}
+// ملاحظات الإصدار: نكتب فيها رقم الإصدار الحقيقي من package.json دائمًا
+try {
+  const notesFile = path.join(__dirname, "release-notes.json");
+  const notes = JSON.parse(fs.readFileSync(notesFile, "utf8"));
+  notes.version = version;
+  fs.writeFileSync(path.join(setupAppDir, "release-notes.json"), JSON.stringify(notes, null, 2), "utf8");
+} catch {
+  fs.copyFileSync(path.join(__dirname, "release-notes.json"), path.join(setupAppDir, "release-notes.json"));
 }
 fs.cpSync(path.join(__dirname, "assets"), path.join(setupAppDir, "assets"), { recursive: true });
 
@@ -75,8 +72,10 @@ fs.writeFileSync(
       license: "UNLICENSED",
       private: true,
       build: {
-        // إعادة استخدام نفس نسخة Electron الموجودة عندنا (بدون تحميل من الشبكة)
-        electronDist: path.join(desktopDir, "node_modules", "electron", "dist"),
+        // ملاحظة مهمة: لا نستخدم electronDist هنا.
+        // electron-builder يستخدم dist كـ «قالب» جاهز ولا يعيد تسمية electron.exe إلى
+        // FATORA-Setup.exe — فتظهر نوافذ بتسمية electron وتفشل أدوات مساعدة.
+        // لذلك نتركه يحمّل نسخته الخاصة (أو كاش GitHub Actions) ويعيد التسمية صح.
         appId: "com.algamal.setup",
         productName: "FATORA Setup",
         executableName: "FATORA-Setup",
@@ -108,11 +107,6 @@ console.log("• بناء المثبّت النهائي…");
 
 const builderCli = path.join(desktopDir, "node_modules", "electron-builder", "cli.js");
 if (!fs.existsSync(builderCli)) fail(`أداة electron-builder غير موجودة: ${builderCli}`);
-
-// نستخدم نفس نسخة Electron المثبتة (بدون تحميل من الشبكة أثناء البناء)
-const pkg = JSON.parse(fs.readFileSync(path.join(setupAppDir, "package.json"), "utf8"));
-pkg.build.electronVersion = electronVersion();
-fs.writeFileSync(path.join(setupAppDir, "package.json"), JSON.stringify(pkg, null, 2), "utf8");
 
 execFileSync(process.execPath, [builderCli, "--win", "portable", "--x64", "--publish", "never"], {
   cwd: setupAppDir,

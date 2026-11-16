@@ -4,7 +4,7 @@ const DEMO = !window.installer;
 const api =
   window.installer ||
   {
-    getInfo: async () => ({ version: "1.2.0", defaultDir: "C:\\Program Files\\FATORA", requiredBytes: 420 * 1024 ** 2, freeBytes: 15 * 1024 ** 3 }),
+    getInfo: async () => ({ version: "__APP_VERSION__", defaultDir: "C:\\Program Files\\FATORA", requiredBytes: 420 * 1024 ** 2, freeBytes: 15 * 1024 ** 3 }),
     browse: async () => null,
     install: async () => ({ ok: true }),
     launch: async () => {},
@@ -59,12 +59,34 @@ function fmtBytes(n) {
   return `${Math.max(1, Math.round(n / 1024 ** 2))} ميجابايت`;
 }
 
+/** مهلة زمنية لأي استدعاء IPC — عشان الواجهة ما تفضلش معلّقة للأبد */
+function withTimeout(promise, ms = 7000) {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((resolve) => setTimeout(() => resolve(null), ms)),
+  ]);
+}
+
 async function init() {
-  const info = await api.getInfo();
-  $("sideVer").textContent = `الإصدار ${info.version}`;
-  $("footHint").textContent = `الإصدار ${info.version}`;
-  $("dir").value = info.defaultDir;
-  $("spaceMeta").textContent = `المساحة المطلوبة: ${fmtBytes(info.requiredBytes)} · المتاحة: ${fmtBytes(info.freeBytes)}`;
+  // القيم الافتراضية أولاً حتى تبقى الواجهة صالحة للاستخدام حتى لو فشل IPC
+  let info = null;
+  try {
+    info = await withTimeout(api.getInfo(), 6000);
+  } catch {
+    info = null;
+  }
+  // الإصدار مطبوع مسبقًا في الصفحة (وقت البناء) — نحدّثه فقط لو وصلنا رقم أدق
+  const version = info && info.version && info.version !== "__APP_VERSION__" ? info.version : null;
+  if (version) {
+    $("sideVer").textContent = `الإصدار ${version}`;
+    $("footHint").textContent = `الإصدار ${version}`;
+  }
+  if (info && info.defaultDir) $("dir").value = info.defaultDir;
+  if (info) {
+    $("spaceMeta").textContent = `المساحة المطلوبة: ${fmtBytes(info.requiredBytes)} · المتاحة: ${fmtBytes(info.freeBytes)}`;
+  } else {
+    $("spaceMeta").textContent = "المساحة المطلوبة: 420 ميجابايت";
+  }
   void loadReleaseInfo();
 }
 
@@ -73,7 +95,8 @@ async function loadReleaseInfo() {
   const spin = $("checkSpin");
   const text = $("checkText");
   try {
-    const notes = await api.whatsNew();
+    const notes = await withTimeout(api.whatsNew(), 5000);
+    if (!notes || !notes.items) throw new Error("no-notes");
     spin.classList.add("ok");
     text.textContent = "الإصدار جاهز للتثبيت — لا حاجة لاتصال بالإنترنت";
     $("wnVer").textContent = `(${notes.version})`;
@@ -103,6 +126,7 @@ $("btnBrowse").addEventListener("click", async () => {
 $("btnMin").addEventListener("click", () => api.minimize());
 $("btnClose").addEventListener("click", () => api.close());
 $("btnCancel").addEventListener("click", () => {
+  if (stage === "error") return api.close();
   if (!busy) return api.close();
   if (!confirm("التثبيت جارٍ الآن — هل تريد إلغاءه؟ سيتم تنظيف الملفات المؤقتة.")) return;
   api.cancel();
@@ -110,6 +134,18 @@ $("btnCancel").addEventListener("click", () => {
 
 $("btnNext").addEventListener("click", async () => {
   if (busy) return;
+  if (stage === "error") {
+    // إعادة المحاولة من الصفر بحالة نظيفة (بدون reload)
+    stage = "dir";
+    show("pgDir");
+    $("btnBack").hidden = true;
+    $("btnCancel").hidden = false;
+    $("btnCancel").textContent = "إلغاء";
+    $("btnNext").textContent = "تثبيت";
+    $("btnNext").disabled = false;
+    $("bar").classList.add("indet");
+    return;
+  }
   if (stage === "dir") return startInstall();
   if (stage === "done") {
     if ($("optRun") && $("optRun").checked) api.launch();
@@ -171,18 +207,29 @@ async function startInstall() {
   startTipRotation();
 
   const target = $("dir").value.trim();
-  const res = await api.install({
-    dir: target,
-    desktopShortcut: $("optDesktop").checked,
-    startMenuShortcut: $("optStart").checked,
-  });
+  let res = null;
+  try {
+    // التثبيت ممكن ياخد دقايق — بلا مهلة هنا، لكن أي استثناء يُترجم لرسالة واضحة
+    res = await api.install({
+      dir: target,
+      desktopShortcut: $("optDesktop").checked,
+      startMenuShortcut: $("optStart").checked,
+    });
+  } catch (e) {
+    res = { ok: false, error: String((e && e.message) || e) };
+  }
 
   if (!res || !res.ok) {
+    busy = false;
+    stage = "error";
     show("pgError");
     $("errText").textContent = (res && res.error) || "حدث خطأ غير متوقع أثناء التثبيت.";
-    $("btnNext").textContent = "إغلاق";
+    // أزرار الطوارئ: إعادة المحاولة أو الإغلاق — لا شاشة ميتة
+    $("btnBack").hidden = true;
+    $("btnCancel").hidden = false;
+    $("btnCancel").textContent = "إغلاق";
+    $("btnNext").textContent = "إعادة المحاولة";
     $("btnNext").disabled = false;
-    $("btnNext").onclick = () => api.close();
     return;
   }
 
@@ -198,7 +245,17 @@ async function startInstall() {
   $("btnNext").disabled = false;
 }
 
-api.onProgress(({ percent, message, detail }) => {
+api.onProgress((payload) => {
+  if (payload && payload.error) {
+    busy = false;
+    show("pgError");
+    $("errText").textContent = payload.error;
+    $("btnNext").textContent = "إغلاق";
+    $("btnNext").disabled = false;
+    $("btnNext").onclick = () => api.close();
+    return;
+  }
+  const { percent, message, detail } = payload || {};
   if (typeof percent === "number" && percent > 0) {
     $("bar").classList.remove("indet");
     $("barFill").style.right = "auto";
@@ -210,5 +267,12 @@ api.onProgress(({ percent, message, detail }) => {
 });
 
 init().catch(() => {
-  $("spaceMeta").textContent = "";
+  $("spaceMeta").textContent = "المساحة المطلوبة: 420 ميجابايت";
+  // رقم الإصدار مطبوع داخل الصفحة نفسها وقت البناء ⇒ لا نمسحه أبدًا
+});
+
+// شبكة أمان: لو أي زر لم يستجب لأي سبب، نُظهر رسالة بدل الصمت
+window.addEventListener("error", (e) => {
+  const box = document.getElementById("spaceMeta");
+  if (box) box.textContent = `تعذّر تحضير بعض بيانات المثبّت (${e.message || "خطأ"}) — يمكنك المتابعة بالضغط على «تثبيت».`;
 });
