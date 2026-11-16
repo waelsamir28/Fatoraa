@@ -6,6 +6,7 @@ import { CartLogo } from "@/components/icons/AppIcons";
 import { APP_BRAND, APP_NAME } from "@/lib/constants";
 import { api, errMsg } from "@/lib/client";
 import { resolveLogo } from "@/lib/logo";
+import { useScreenBg } from "@/lib/useScreenBg";
 import { useAuth, type SessionUser } from "./AuthProvider";
 import { SetupWizard } from "./SetupWizard";
 
@@ -28,6 +29,8 @@ export function LoginGate() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [logo, setLogo] = useState(resolveLogo());
+  // خلفية شاشة الدخول (تُضبط من الإعدادات ← الشعار والخلفية)
+  const loginBg = useScreenBg("login");
 
   // قبل وجود أي مستخدم لا بد من شاشة «إنشاء حساب المالك» — لا شاشة دخول بلا حساب
   useEffect(() => {
@@ -96,7 +99,15 @@ export function LoginGate() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#0f2942] to-[#081a2b] p-3" dir="rtl">
+    <div
+      className={`grid min-h-screen place-items-center p-3 ${loginBg ? "bg-cover bg-center" : "bg-gradient-to-b from-[#0f2942] to-[#081a2b]"}`}
+      style={
+        loginBg
+          ? { backgroundImage: `linear-gradient(rgba(6,20,36,.55), rgba(6,20,36,.72)), url(${loginBg})` }
+          : undefined
+      }
+      dir="rtl"
+    >
       <div className="w-full max-w-[430px] overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="bg-gradient-to-l from-[#164066] to-[#0f2942] px-5 py-4 text-center text-white">
           {/* eslint-disable-next-line @next/next/no-img-element */}

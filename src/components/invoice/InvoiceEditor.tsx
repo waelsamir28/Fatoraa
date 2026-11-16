@@ -46,6 +46,8 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { useSalesLayout } from "@/lib/salesLayout";
+import { PhoneScannerDialog } from "@/components/invoice/PhoneScannerDialog";
 import { Dialog, Field, Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { AddUserIcon, PdfIcon, UserAvatar } from "@/components/icons/AppIcons";
@@ -275,6 +277,7 @@ export function InvoiceEditor({
   autoScan?: boolean;
 }) {
   const cfg = CONFIG[type];
+  const L = useSalesLayout();
   const router = useRouter();
   const { msg, confirm, toast, activeUser } = useDesktop();
   const { playAddItem, playSuccess, playError } = usePosSound();
@@ -294,6 +297,8 @@ export function InvoiceEditor({
   const [barcodeMode, setBarcodeMode] = useState(true);
   /** مسح فاتورة أصلية لتحميل أصنافها (مرتجعات) */
   const [scanOpen, setScanOpen] = useState(Boolean(autoScan));
+  /** ماسح الموبايل (كاميرا الموبايل عبر الواي فاي) */
+  const [phoneScanOpen, setPhoneScanOpen] = useState(false);
   const [mergeSame, setMergeSame] = useState(true);
   const [searchMode, setSearchMode] = useState<"name" | "code">("name");
   const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
@@ -942,7 +947,7 @@ export function InvoiceEditor({
             <CheckCircle2 className="h-4 w-4 text-green-600 inline" />
             <span>{state.invoiceId ? (dirty ? "● فاتورة معدلة (غير محفوظة)" : "✓ فاتورة محفوظة") : "● فاتورة جديدة"}</span>
           </span>
-          <span className="ms-auto flex items-center gap-2">
+          <span className={`ms-auto flex items-center gap-2 ${L.hints ? "" : "hidden"}`}>
             <span><span className="kbd">Del</span>حذف سطر</span>
             <span><span className="kbd">F10</span>طباعة</span>
             <span><span className="kbd">F9</span>حفظ</span>
@@ -958,13 +963,13 @@ export function InvoiceEditor({
     >
       <div className="flex h-full w-full flex-col gap-1.5 p-2 bg-[#edf2f8]">
         {/* ===== إطار شريط الأدوات العلوي ===== */}
-        <div className="shrink-0 rounded-lg border-2 border-[#a9c3e2] bg-gradient-to-b from-white to-[#eaf2fc] p-1.5 shadow-sm">
+        <div className={`shrink-0 rounded-lg border-2 border-[#a9c3e2] bg-gradient-to-b from-white to-[#eaf2fc] p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
           <div className="flex h-[40px] items-center gap-2">
             {/* مجموعة اليمين: تراجع ← رقم الفاتورة ← حذف */}
             <div className="flex items-center gap-1.5 rounded-md border border-[#c3d6ec] bg-white/70 p-1">
               <button
                 type="button"
-                className="btn h-[32px] min-w-[86px] px-2.5 text-[14px] font-black"
+                className={`btn h-[32px] min-w-[86px] px-2.5 text-[14px] font-black ${L.undo ? "" : "hidden"}`}
                 onClick={undo}
                 title="تراجع عن التعديل"
               >
@@ -972,7 +977,7 @@ export function InvoiceEditor({
                 <span>تراجع</span>
               </button>
 
-              <div className="flex items-center gap-1 rounded border border-[#9fb4d2] bg-white px-1">
+              <div className={`flex items-center gap-1 rounded border border-[#9fb4d2] bg-white px-1 ${L.numberBox ? "" : "hidden"}`}>
                 <button
                   type="button"
                   className="btn h-[26px] w-[28px] shrink-0 p-0"
@@ -996,7 +1001,7 @@ export function InvoiceEditor({
               {(type === "sale_return" || type === "purchase_return") && (
                 <button
                   type="button"
-                  className="btn h-[32px] min-w-[104px] px-2 text-[13.5px] font-black"
+                  className={`btn h-[32px] min-w-[104px] px-2 text-[13.5px] font-black ${L.scanOriginal ? "" : "hidden"}`}
                   onClick={() => setScanOpen(true)}
                   title="امسح باركود الفاتورة الأصلية لتحميل أصنافها تلقائياً في المرتجع"
                 >
@@ -1007,7 +1012,7 @@ export function InvoiceEditor({
 
               <button
                 type="button"
-                className="btn btn-red h-[32px] min-w-[80px] px-2.5 text-[14px] font-black"
+                className={`btn btn-red h-[32px] min-w-[80px] px-2.5 text-[14px] font-black ${L.delete ? "" : "hidden"}`}
                 onClick={() => void remove()}
                 title="حذف الفاتورة"
               >
@@ -1016,7 +1021,7 @@ export function InvoiceEditor({
               </button>
 
               {/* التاريخ والوقت — انتقلا هنا بجوار زر الحذف */}
-              <div className="flex items-center gap-1 rounded-md border border-[#c3d6ec] bg-white px-1">
+              <div className={`flex items-center gap-1 rounded-md border border-[#c3d6ec] bg-white px-1 ${L.dateTime ? "" : "hidden"}`}>
                 <input
                   type="date"
                   className="num h-[26px] w-[112px] border-0 bg-transparent text-center text-[12.5px] font-black text-[#0f2e5a] outline-none"
@@ -1035,6 +1040,18 @@ export function InvoiceEditor({
               </div>
             </div>
 
+            {/* كاميرا الموبايل — ماسح باركود بالواي فاي */}
+            {L.cameraIcon && (
+              <button
+                type="button"
+                className="btn h-[32px] w-[38px] shrink-0 p-0"
+                title="كاميرا الموبايل — استخدم موبايلك كماسح باركود (واي فاي)"
+                onClick={() => setPhoneScanOpen(true)}
+              >
+                <Camera className="h-4 w-4 text-emerald-700" />
+              </button>
+            )}
+
             {/* الشريط الأزرق الفاتح الذي يفصل بين المجموعتين */}
             <span className="h-[26px] flex-1 rounded-full bg-gradient-to-l from-[#cfe4ff] via-[#eaf4ff] to-[#cfe4ff]" />
 
@@ -1042,7 +1059,7 @@ export function InvoiceEditor({
             <div className="flex items-center gap-1.5 rounded-md border border-[#c3d6ec] bg-white/70 p-1">
               <button
                 type="button"
-                className="btn btn-blue h-[32px] px-3 text-[13.5px] font-black shadow-sm"
+                className={`btn btn-blue h-[32px] px-3 text-[13.5px] font-black shadow-sm ${L.print ? "" : "hidden"}`}
                 onClick={() => void print()}
                 title="طباعة الفاتورة A5 فوراً (F10)"
               >
@@ -1051,7 +1068,7 @@ export function InvoiceEditor({
               </button>
               <button
                 type="button"
-                className="btn h-[32px] w-[42px] p-0"
+                className={`btn h-[32px] w-[42px] p-0 ${L.pdf ? "" : "hidden"}`}
                 title="تصدير / حفظ كـ PDF"
                 onClick={() => void pdf()}
               >
@@ -1100,7 +1117,7 @@ export function InvoiceEditor({
         {/* ===== بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
         <div className="flex h-[178px] shrink-0 gap-2">
           {/* بيانات العميل — بدون إطار، جزء أوسع */}
-          <div className="flex w-[36%] min-w-[360px] max-w-[430px] shrink-0 flex-col justify-between gap-1 rounded-lg bg-white/70 p-1.5 shadow-sm">
+          <div className={`flex w-[36%] min-w-[360px] max-w-[430px] shrink-0 flex-col justify-between gap-1 rounded-lg bg-white/70 p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
               <FRow label={`رقم ${cfg.partyLabel}`}>
                 <input
                   className="win-input num h-full flex-1 text-center text-[16px] font-black text-[#d0190f]"
@@ -1300,7 +1317,7 @@ export function InvoiceEditor({
           </div>
 
           {/* كارت صورة الصنف على اليسار كما في الصورة */}
-          <div className="panel flex w-[11%] min-w-[130px] max-w-[158px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden bg-gradient-to-b from-[#ffffff] to-[#e4ecf7] p-2 text-center shadow-sm">
+          <div className={`panel flex w-[11%] min-w-[130px] max-w-[158px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden bg-gradient-to-b from-[#ffffff] to-[#e4ecf7] p-2 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
             {selProduct?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[82px] max-w-full object-contain" />
@@ -1315,10 +1332,10 @@ export function InvoiceEditor({
         </div>
 
         {/* ===== سطر الإدخال السريع للأصناف مع زر إضافة مجموعة جديدة ➕ المضاف بجانب المجموعات ===== */}
-        <div className="flex h-[50px] shrink-0 items-end gap-1.5">
+        <div className={`flex h-[50px] shrink-0 items-end gap-1.5 ${L.quickAdd ? "" : "hidden"}`}>
           <div className="flex h-[38px] items-center gap-1.5">
             {/* القائمة المنسدلة الاحترافية للمجموعات */}
-            <div className="relative shrink-0">
+            <div className={`relative shrink-0 ${L.categories ? "" : "hidden"}`}>
               <span className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 text-[13px]">🗂️</span>
               <select
                 className="win-input h-full w-[240px] appearance-none rounded-md border-2 border-[#8fb3e0] bg-gradient-to-b from-white to-[#e8f1fc] pr-7 pl-6 text-[13px] font-black text-[#0f2e5a] shadow-sm"
@@ -1339,7 +1356,7 @@ export function InvoiceEditor({
             {/* الأيقونة الخضراء لإضافة مجموعة جديدة بجانب المجموعات مباشرة */}
             <button
               type="button"
-              className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-b from-[#22c55e] to-[#15803d] text-white shadow-sm hover:brightness-110 shrink-0"
+              className={`grid h-8 w-8 place-items-center rounded-full bg-gradient-to-b from-[#22c55e] to-[#15803d] text-white shadow-sm hover:brightness-110 shrink-0 ${L.addCategory ? "" : "hidden"}`}
               title="إضافة مجموعة جديدة"
               onClick={() => setShowAddCategoryModal(true)}
             >
@@ -1469,7 +1486,7 @@ export function InvoiceEditor({
         {/* ===== هيكل جدول الفاتورة (مطابق تماماً لهيكل جدول الأصناف) + قائمة الأصناف الكروت ===== */}
         <div className="flex min-h-0 flex-1 gap-2">
           {/* جدول الفاتورة - هيكل كحلي داكن عالي التباين وواضح تماماً مثل جدول الأصناف */}
-          <div className="panel min-w-0 flex-1 overflow-auto p-0 shadow-md border-2 border-[#15459b] bg-[#ffffff]">
+          <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-md border-2 border-[#15459b] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
             <table className="dgrid-invoice text-center">
               <thead>
                 <tr>
@@ -1529,7 +1546,7 @@ export function InvoiceEditor({
           </div>
 
           {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className="w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#8ba3c4] bg-[#f0f4f9] shadow-sm">
+          <div className={`w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#8ba3c4] bg-[#f0f4f9] shadow-sm ${L.productCards ? "" : "hidden"}`}>
             <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
               <span>الأصناف ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
@@ -1613,7 +1630,7 @@ export function InvoiceEditor({
         {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
         <div className="flex h-[196px] shrink-0 gap-2">
           {/* أزرار العمليات */}
-          <div className="grid w-[26%] min-w-[260px] max-w-[340px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5">
+          <div className={`grid w-[26%] min-w-[260px] max-w-[340px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5 ${L.actions ? "" : "hidden"}`}>
             <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
               <FilePlus2 />
               <span>فاتورة جديدة</span>
@@ -1660,7 +1677,7 @@ export function InvoiceEditor({
           </div>
 
           {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className="panel flex min-w-[220px] flex-1 flex-col overflow-hidden shadow-sm">
+          <div className={`panel flex min-w-[220px] flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
             <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
               <PencilLine className="h-3.5 w-3.5 text-blue-600" />
               ملاحظات الفاتورة والبيان
@@ -1734,7 +1751,7 @@ export function InvoiceEditor({
           </div>
 
           {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
-          <div className="panel flex w-[28%] min-w-[290px] max-w-[390px] shrink-0 flex-col overflow-hidden shadow-sm">
+          <div className={`panel flex w-[28%] min-w-[290px] max-w-[390px] shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
             <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
             <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
               {ALLOWED_PAYMENT_METHODS.map((m) => {
@@ -1763,7 +1780,7 @@ export function InvoiceEditor({
               <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
               <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
             </div>
-            <div className="due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5">
+            <div className={`due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
               <span className="text-[19px] font-black text-white">المطلوب دفعه</span>
               <span className="due-value num text-[36px] leading-none">{fmt(totals.total)}</span>
             </div>
@@ -1817,6 +1834,21 @@ export function InvoiceEditor({
           onClose={() => setShowProductSearchModal(false)}
           onSelectProduct={(p, q) => {
             addProduct(p, q);
+          }}
+        />
+      )}
+
+      {phoneScanOpen && (
+        <PhoneScannerDialog
+          onClose={() => setPhoneScanOpen(false)}
+          onDetect={(code) => {
+            const found = products.find((p) => p.code === code || String(p.id) === code);
+            if (found) {
+              addProduct(found);
+              toast(`تم إضافة «${found.name}» من كاميرا الموبايل`);
+            } else {
+              toast(`باركود غير موجود في الأصناف: ${code}`, "error");
+            }
           }}
         />
       )}

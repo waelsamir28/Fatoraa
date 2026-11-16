@@ -80,10 +80,20 @@ async function issueSession(user: {
   role: string;
   branchId: number | null;
   permissions: string;
+  allowedPages?: string;
 }) {
   await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
 
   const perms = safePerms(user.permissions);
+  // الصفحات المسموح بها لهذا الحساب (فاضي = كل صفحات دوره)
+  const pages = (() => {
+    try {
+      const arr = JSON.parse(user.allowedPages || "[]");
+      return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  })();
   const token = createToken({
     uid: user.id,
     username: user.username,
@@ -91,6 +101,7 @@ async function issueSession(user: {
     role: user.role as "owner" | "manager" | "cashier",
     branchId: user.branchId ?? null,
     perms,
+    pages,
   });
 
   const res = NextResponse.json({
@@ -104,6 +115,7 @@ async function issueSession(user: {
       roleLabel: ROLE_LABELS[user.role] || user.role,
       branchId: user.branchId ?? null,
       permissions: perms,
+      pages,
     },
   });
 

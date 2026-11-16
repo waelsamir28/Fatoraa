@@ -333,9 +333,15 @@ function createMainWindow() {
     center: true,
     minWidth: 960,
     minHeight: 600,
-    maximizable: true,
+    // لا يوجد زر تصغير/تكبير للنافذة: البرنامج يفتح على كامل الشاشة دائماً
+    maximizable: false,
+    fullscreenable: false,
+    resizable: false,
     show: false,
     frame: false,
+    fullscreen: true,
+    skipTaskbar: false,
+    autoHideMenuBar: true,
     backgroundColor: "#0b3a8c",
     title: APP_TITLE,
     icon: iconPath(),
@@ -358,6 +364,10 @@ function createMainWindow() {
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;
+    // ملء الشاشة الكامل — يغطي شريط مهام ويندوز ولا يوجد استعادة للأسفل
+    mainWindow.setFullScreen(true);
+    mainWindow.setResizable(false);
+    mainWindow.setMaximizable(false);
     mainWindow.maximize();
     // حجم الخط الافتراضي 110% في نسخة سطح المكتب
     mainWindow.webContents.setZoomFactor(1.1);
@@ -375,6 +385,22 @@ function createMainWindow() {
   });
   mainWindow.on("maximize", () => mainWindow.webContents.send("win:maximized", true));
   mainWindow.on("unmaximize", () => mainWindow.webContents.send("win:maximized", false));
+
+  /**
+   * منع «تصغير لأسفل» نهائياً:
+   * لو خرج البرنامج من ملء الشاشة بأي طريقة (F11 / سحب النافذة) يرجّعه فوراً.
+   */
+  mainWindow.on("leave-full-screen", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    setTimeout(() => {
+      try {
+        mainWindow.setFullScreen(true);
+        mainWindow.setResizable(false);
+      } catch {
+        /* ignore */
+      }
+    }, 120);
+  });
 
   // تأكيد الخروج عند الضغط على Alt+F4 أو إغلاق من شريط المهام
   mainWindow.on("close", (e) => {
@@ -688,9 +714,23 @@ ipcMain.handle("settings:clear-database", () => {
   return { ok: true, restartNeeded: true };
 });
 
-ipcMain.on("win:minimize", () => mainWindow?.minimize());
+// البرنامج ملء الشاشة دائماً — التصغير يرجّع النافذة فوراً (بدون شريط مهام)
+ipcMain.on("win:minimize", () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    mainWindow.setFullScreen(true);
+    mainWindow.focus();
+  } catch {
+    /* ignore */
+  }
+});
 ipcMain.on("win:toggle-maximize", () => {
+  // البرنامج دائم ملء الشاشة — لا يوجد تصغير/استعادة
   if (!mainWindow) return;
+  if (mainWindow.isFullScreen()) {
+    mainWindow.webContents.send("win:maximized", true);
+    return;
+  }
   if (mainWindow.isMaximized()) mainWindow.unmaximize();
   else mainWindow.maximize();
 });

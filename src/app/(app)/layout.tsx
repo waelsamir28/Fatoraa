@@ -3,6 +3,7 @@ import { DesktopProvider } from "@/components/win/DesktopProvider";
 import { UiPrefsProvider } from "@/components/win/UiPrefs";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { PageGuard } from "@/components/auth/PageGuard";
 import { ErrorBoundary } from "@/components/win/ErrorBoundary";
 import { BackgroundTasks } from "@/components/win/BackgroundTasks";
 import { LockScreen } from "@/components/win/LockScreen";
@@ -15,10 +16,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <DesktopProvider>
           <ErrorBoundary>
             <AuthGate>
-              <BackgroundTasks />
-              {children}
-              <GlobalShortcuts />
-              <LockScreen />
+              <PageGuard>
+                <BackgroundTasks />
+                {children}
+                <GlobalShortcuts />
+                <LockScreen />
+              </PageGuard>
             </AuthGate>
           </ErrorBoundary>
         </DesktopProvider>

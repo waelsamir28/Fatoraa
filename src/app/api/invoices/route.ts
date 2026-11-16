@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { and, desc, eq, getTableColumns, gte, ilike, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { invoiceItems, invoices } from "@/db/schema";
@@ -84,7 +85,16 @@ export function POST(req: Request) {
     // التحقق من حالة النسخة التجريبية وحدود الفواتير
     if (!license.isActivated) {
       if (license.isExpired) {
-        throw new Error("انتهت الفترة التجريبية (15 يوماً). يرجى تفعيل البرنامج للمتابعة.");
+        // اشتراك منتهي (أو تجربة منتهية) ⇒ رسالة واضحة للواجهة + كود 402
+        return NextResponse.json(
+          {
+            error: license.plan
+              ? "انتهى اشتراك البرنامج. فعّل بكود جديد لمتابعة العمل — بياناتك سليمة تماماً."
+              : "انتهت الفترة التجريبية (15 يوماً). فعّل البرنامج للمتابعة — بياناتك سليمة تماماً.",
+            code: "SUBSCRIPTION_EXPIRED",
+          },
+          { status: 402 },
+        );
       }
       const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })

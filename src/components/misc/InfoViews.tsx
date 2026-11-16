@@ -28,58 +28,118 @@ const FAQ: Array<[string, string]> = [
   ["كيف أحفظ الفاتورة PDF؟", "اضغط زر PDF ثم اختر (حفظ كـ PDF) من نافذة الطباعة."],
 ];
 
+/**
+ * صفحة الدعم الفني — مقسومة لقسمين واضحين:
+ * 1) شرح (إيه اللي نعمله وامتى) 2) التواصل الفعلي (أرقام وأزرار).
+ */
 export function SupportView() {
   return (
-    <Window title="الدعم الفني" icon={<IconSupport className="h-9 w-9" />} statusBar={<span>الدعم الفني: {SUPPORT_PERSON} — {SUPPORT_PHONE}</span>} fit={false}>
-      <div className="mx-auto h-full max-w-[1200px] space-y-4 overflow-auto p-5" data-scroll-root="1">
-        <div className="panel flex flex-wrap items-center gap-6 p-6">
-          <IconSupport className="h-32 w-32 shrink-0" />
-          <div className="min-w-[300px] flex-1">
-            <h2 className="text-[28px] font-black text-[#0b2350]">الدعم الفني لـ {APP_NAME}</h2>
-            <div className="mt-1 text-[17px] font-black text-[#1a5fc0]">{SUPPORT_PERSON}</div>
-            <p className="mt-1 text-[16px] font-bold text-slate-600">
-              فريق الدعم جاهز لمساعدتك في التثبيت والتدريب وحل أي مشكلة تواجهك أثناء استخدام البرنامج.
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <a href={SUPPORT_TEL} className="phone-pill">
-                <span className="phone-num num text-[34px]">{SUPPORT_PHONE}</span>
-                <span className="phone-ico h-[52px] w-[52px]">
-                  <Phone className="h-6 w-6 fill-white text-white" />
+    <Window
+      title="الدعم الفني"
+      icon={<IconSupport className="h-9 w-9" />}
+      statusBar={<span>الدعم الفني: {SUPPORT_PERSON} — {SUPPORT_PHONE}</span>}
+      fit={false}
+    >
+      <div className="mx-auto h-full max-w-[1020px] space-y-4 overflow-auto p-4" data-scroll-root="1">
+        {/* ===== قسم 1: الشرح ===== */}
+        <div className="overflow-hidden rounded-2xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+          <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2.5 text-white">
+            <IconSupport className="h-6 w-6" />
+            <div>
+              <div className="text-[16px] font-black">الدعم الفني لـ {APP_NAME}</div>
+              <div className="text-[11.5px] font-bold text-blue-200">إيه اللي بنقدمه — وامتى تحتاج تتواصل معانا</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-3">
+            {[
+              {
+                icon: <Clock className="h-6 w-6 text-blue-600" />,
+                title: "مواعيد الدعم",
+                text: "يومياً من 10 صباحاً حتى 10 مساءً — عدا الجمعة بعد الظهر.",
+              },
+              {
+                icon: <Gift className="h-6 w-6 text-red-600" />,
+                title: "تدريب مجاني",
+                text: "شرح كامل للكاشير والمالك، وملفات تدريب مرفقة مع التثبيت.",
+              },
+              {
+                icon: <ShieldCheck className="h-6 w-6 text-green-600" />,
+                title: "تحديثات مستمرة",
+                text: "تحديثات دورية وإضافة مميزات جديدة بدون أي رسوم إضافية.",
+              },
+            ].map((c) => (
+              <div key={c.title} className="flex items-start gap-2 rounded-xl border border-[#dce8f6] bg-[#f7fbff] p-2.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white shadow-sm">{c.icon}</span>
+                <div>
+                  <div className="text-[13.5px] font-black text-[#0b2350]">{c.title}</div>
+                  <div className="text-[11.5px] font-bold leading-5 text-slate-600">{c.text}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-[#e3ecf7] p-3">
+            <div className="mb-1.5 text-[13px] font-black text-[#0f2942]">امتى تحتاج تتواصل معانا؟</div>
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
+              {[
+                "البرنامج مش بيفتح أو بيقفل لوحده",
+                "مشكلة في الطباعة أو مقاس الفاتورة",
+                "عايز تنقل البيانات لجهاز جديد",
+                "عايز تفعّل نسخة إضافية أو تجدد الاشتراك",
+                "مشكلة في الباركود أو قارئ الباركود",
+                "عايز تدرّب موظف جديد على البرنامج",
+              ].map((t) => (
+                <div key={t} className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1.5 text-[11.5px] font-bold text-slate-700">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#1a6fd0]" />
+                  {t}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ===== قسم 2: التواصل ===== */}
+        <div className="overflow-hidden rounded-2xl border-2 border-[#2fb3a6] bg-white shadow-sm">
+          <div className="bg-gradient-to-l from-[#0f8f82] to-[#0f6f66] px-4 py-2.5 text-white">
+            <div className="flex items-center gap-2 text-[16px] font-black">
+              <Phone className="h-5 w-5" />
+              التواصل المباشر
+            </div>
+            <div className="text-[11.5px] font-bold text-emerald-100">اتصل أو راسلنا واتساب — بنرد في نفس اليوم</div>
+          </div>
+          <div className="flex flex-col items-center gap-3 p-4 sm:flex-row sm:justify-center">
+            <div className="text-center">
+              <div className="text-[13px] font-black text-[#0b2350]">{SUPPORT_PERSON}</div>
+              <a href={SUPPORT_TEL} className="phone-pill mt-1.5">
+                <span className="phone-num num text-[26px]">{SUPPORT_PHONE}</span>
+                <span className="phone-ico h-[42px] w-[42px]">
+                  <Phone className="h-5 w-5 fill-white text-white" />
                 </span>
               </a>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn btn-green h-[56px] px-6 text-[18px]">
-                <MessageCircle className="h-6 w-6" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn btn-green h-[46px] px-6 text-[15px]">
+                <MessageCircle className="h-5 w-5" />
                 تواصل واتساب
+              </a>
+              <a href={SUPPORT_TEL} className="btn btn-blue h-[46px] px-6 text-[15px]">
+                <Phone className="h-5 w-5" />
+                اتصال مباشر
               </a>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { icon: <Clock className="h-8 w-8 text-blue-600" />, title: "مواعيد الدعم", text: "يومياً من 10 صباحاً حتى 10 مساءً" },
-            { icon: <Gift className="h-8 w-8 text-red-600" />, title: "دعم فني مجاني", text: "دعم وتدريب مجاني لجميع العملاء" },
-            { icon: <ShieldCheck className="h-8 w-8 text-green-600" />, title: "تحديثات مستمرة", text: "تحديثات دورية وإضافة مميزات جديدة" },
-          ].map((c) => (
-            <div key={c.title} className="panel flex items-center gap-4 p-4">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-[#eef4ff]">{c.icon}</div>
-              <div>
-                <div className="text-[17px] font-black text-[#0b2350]">{c.title}</div>
-                <div className="text-[14px] font-bold text-slate-600">{c.text}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div id="help" className="grid grid-cols-2 gap-4">
-          <div className="panel overflow-hidden">
-            <div className="navy-head px-4 py-2 text-[16px]">اختصارات لوحة المفاتيح</div>
-            <table className="dgrid text-[14.5px]">
+        {/* ===== مساعدة سريعة ===== */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="overflow-hidden rounded-xl border border-[#dce8f6] bg-white">
+            <div className="navy-head px-3 py-1.5 text-[13px]">اختصارات لوحة المفاتيح</div>
+            <table className="dgrid text-[12.5px]">
               <tbody>
                 {SHORTCUTS.map(([k, v]) => (
                   <tr key={k}>
-                    <td className="w-[110px] text-center">
-                      <span className="kbd text-[13px]">{k}</span>
+                    <td className="w-[100px] text-center">
+                      <span className="kbd text-[11.5px]">{k}</span>
                     </td>
                     <td>{v}</td>
                   </tr>
@@ -87,13 +147,13 @@ export function SupportView() {
               </tbody>
             </table>
           </div>
-          <div className="panel overflow-hidden">
-            <div className="navy-head px-4 py-2 text-[16px]">أسئلة شائعة</div>
+          <div className="overflow-hidden rounded-xl border border-[#dce8f6] bg-white">
+            <div className="navy-head px-3 py-1.5 text-[13px]">أسئلة شائعة</div>
             <div className="divide-y divide-[#dde4ef]">
               {FAQ.map(([q, a]) => (
-                <details key={q} className="group px-4 py-2.5">
-                  <summary className="cursor-pointer text-[15px] font-black text-[#0b2350]">{q}</summary>
-                  <p className="mt-1 text-[14px] font-bold text-slate-600">{a}</p>
+                <details key={q} className="group px-3 py-2">
+                  <summary className="cursor-pointer text-[12.5px] font-black text-[#0b2350]">{q}</summary>
+                  <p className="mt-1 text-[11.5px] font-bold leading-5 text-slate-600">{a}</p>
                 </details>
               ))}
             </div>

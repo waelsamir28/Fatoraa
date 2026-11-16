@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check, Layers, Tag } from "lucide-react";
 import { ActivationPlans } from "@/components/win/ActivationPlans";
 import { RenewalReminder } from "@/components/license/RenewalReminder";
+import { SubscriptionLock } from "@/components/license/SubscriptionLock";
+import { useDeviceRevocationCheck } from "@/lib/revocation";
 import { SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { resolveLogo } from "@/lib/logo";
 
@@ -30,6 +32,11 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
   // صفحة أنظمة التفعيل (الأسعار) — تُعرض قبل إدخال الكود
   const [showPlans, setShowPlans] = useState(false);
+  /** تم إيقاف تفعيل هذا الجهاز من لوحة التحكم السحابية */
+  const [revoked, setRevoked] = useState(false);
+
+  // فحص دوري: هل أوقف المالك تفعيل هذا الجهاز من لوحة السحابة؟
+  useDeviceRevocationCheck();
 
   const fetchLicense = async () => {
     try {
@@ -37,7 +44,6 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data: LicenseInfo = await res.json();
         setInfo(data);
-        if (data.isExpired) setModalOpen(true);
       }
     } catch {
       /* ignore */
@@ -48,8 +54,13 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
     fetchLicense();
     // الاستماع لحدث طلب التفعيل من أي صفحة (عند الوصول للحد الأقصى للأصناف أو الفواتير)
     const onOpen = () => setModalOpen(true);
+    const onRevoked = () => setRevoked(true);
     window.addEventListener("fatora:open-license", onOpen);
-    return () => window.removeEventListener("fatora:open-license", onOpen);
+    window.addEventListener("fatora:device-revoked", onRevoked);
+    return () => {
+      window.removeEventListener("fatora:open-license", onOpen);
+      window.removeEventListener("fatora:device-revoked", onRevoked);
+    };
   }, []);
 
   const copyId = () => {
@@ -92,6 +103,33 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   };
+
+  // ===== قفل كامل عند إيقاف الجهاز من لوحة التحكم السحابية =====
+  if (revoked && info) {
+    return (
+      <SubscriptionLock
+        info={{ ...info, isExpired: true, plan: info.plan ?? "revoked", planLabel: info.planLabel || "موقوف من لوحة التحكم" }}
+        onActivated={(next) => {
+          setInfo({ ...next, isClockTampered: Boolean(next.isClockTampered), daysLeft: next.daysLeft ?? 0, limits: next.limits ?? { maxProducts: 0, maxInvoices: 0 } });
+          if (next.isActivated) setRevoked(false);
+        }}
+      />
+    );
+  }
+
+  // ===== قفل كامل عند انتهاء الاشتراك أو الفترة التجريبية =====
+  if (info && (info.isExpired || info.isClockTampered) && !activated) {
+    return (
+      <SubscriptionLock
+        info={info}
+        onActivated={(next) => {
+          setInfo({ ...next, isClockTampered: Boolean(next.isClockTampered), daysLeft: next.daysLeft ?? 0, limits: next.limits ?? { maxProducts: 0, maxInvoices: 0 } });
+          if (next.isActivated) setActivated(false);
+          void fetchLicense();
+        }}
+      />
+    );
+  }
 
   return (
     <>

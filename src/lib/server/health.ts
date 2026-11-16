@@ -20,6 +20,10 @@ import { getCurrentLicense } from "@/lib/license-store";
 export type HealthLevel = "ok" | "warn" | "fail";
 
 export interface HealthCheck {
+  /** مسار التخزين الفعلي (لسياسة المساحة) */
+  path?: string;
+  /** هل الفحص على سيرفر سحابي؟ */
+  cloud?: boolean;
   key: string;
   label: string;
   level: HealthLevel;
@@ -85,9 +89,10 @@ export async function runHealthChecks(): Promise<HealthReport> {
     checks.push({ key: "backup", label: "النسخ الاحتياطي", level: "warn", value: "غير متاح" });
   }
 
-  // 3) مساحة التخزين
+  // 3) مساحة التخزين — المكان اللي قاعدة البيانات محفوظة فيه فعلاً
   try {
-    const dir = process.env.PGLITE_DATA_DIR || os.tmpdir();
+    const isCloud = Boolean(process.env.DATABASE_URL);
+    const dir = process.env.PGLITE_DATA_DIR || (isCloud ? os.tmpdir() : process.cwd());
     const st = fs.statfsSync(dir);
     const freeGb = (st.bavail * st.bsize) / 1024 ** 3;
     const totalGb = (st.blocks * st.bsize) / 1024 ** 3;
@@ -98,11 +103,22 @@ export async function runHealthChecks(): Promise<HealthReport> {
       label: "مساحة التخزين",
       level,
       value: `${freeGb.toFixed(1)} جيجا حرة من ${totalGb.toFixed(0)} جيجا (${pct.toFixed(0)}%)`,
-      hint: level === "fail" ? "المساحة شبه ممتلئة — امسح ملفات قديمة" : undefined,
+      hint: isCloud
+        ? `هذه مساحة السيرفر السحابي المؤقتة (${dir}) وليست مساحة جهازك — البرنامج على Vercel وقاعدة البيانات على الاستضافة.`
+        : `هذه مساحة القرص اللي بتحفظ فيه قاعدة البيانات: ${dir}`,
+      path: dir,
+      cloud: isCloud,
     });
     if (level === "fail") alerts.push(`مساحة التخزين منخفضة: ${freeGb.toFixed(1)} جيجا فقط`);
-  } catch {
-    checks.push({ key: "disk", label: "مساحة التخزين", level: "ok", value: "غير متاح للفحص" });
+  } catch (e) {
+    checks.push({
+      key: "disk",
+      label: "مساحة التخزين",
+      level: "warn",
+      value: "غير متاح للفحص من هنا",
+      hint: `تعذّر قراءة مساحة القرص (${e instanceof Error ? e.message : "خطأ غير معروف"}) — لا يؤثر على عمل البرنامج.`,
+      cloud: Boolean(process.env.DATABASE_URL),
+    });
   }
 
   // 4) الترخيص
