@@ -34,9 +34,12 @@ import {
   IcShieldCheck,
   IcUserGear,
   IcWarehouse,
+  IcItemCard,
+  IcTrendUp,
+  IcContract,
+  IcCards,
   IcCartPlus,
   RailBackup,
-  RailCard,
   RailDatabase,
   RailHome,
   RailInfo,
@@ -74,18 +77,25 @@ interface Section {
   items: Card[];
 }
 
-/** كل شاشات البرنامج موزّعة على 5 أقسام (بلا سكرول) */
+/**
+ * كل الشاشات موزّعة على 5 أقسام — ترتيب المستخدم (14/11):
+ * 1) العمليات الرئيسية 2) المخزون والأصناف 3) الحسابات والخزينة
+ * 4) التقارير والتحليلات 5) إعدادات النظام
+ * الشاشات اللي اتشالت من الكروت باقية عادية في القائمة الجانبية والبحث السريع.
+ */
 const SECTIONS: Section[] = [
   {
     id: "main",
     title: "العمليات الرئيسية",
     items: [
+      { href: "/customers", label: "العملاء", Icon: IcCustomers },
+      { href: "/suppliers", label: "الموردين", Icon: IcBuilding },
       { href: "/sales", label: "فاتورة مبيعات", Icon: IcCartPlus },
       { href: "/purchases", label: "فاتورة مشتريات", Icon: IcReportDoc },
-      { href: "/returns/sales", label: "مرتجع مبيعات", Icon: IcReturnBox },
-      { href: "/returns/purchases", label: "مرتجع مشتريات", Icon: IcReturnBox },
+      { href: "/smart-orders", label: "الشراء الذكى", Icon: IcBoxStack },
+      { href: "/price-checker", label: "كشك السعر", Icon: IcBarcodeScan },
+      // سجل الفواتير باقي كارت زي ما هو (اتفقنا نسيبه على حاله)
       { href: "/sales/list", label: "سجل الفواتير", Icon: IcClipboardCheck },
-      { href: "/customers", label: "العملاء", Icon: IcCustomers },
     ],
   },
   {
@@ -94,24 +104,24 @@ const SECTIONS: Section[] = [
     items: [
       { href: "/products-manager", label: "المخازن", Icon: IcWarehouse },
       { href: "/products-manager?new=1", label: "إضافة صنف", Icon: IcAddBox },
-      { href: "/products-manager", label: "تعديل صنف", Icon: IcEditBox },
-      { href: "/products-manager", label: "حذف صنف", Icon: IcDeleteBox },
+      // بدل «تعديل صنف»
+      { href: "/item-card", label: "كارت الصنف", Icon: IcItemCard },
+      // بدل «حذف صنف»
+      { href: "/returns/sales", label: "مرتجع مبيعات", Icon: IcReturnBox },
       { href: "/inventory", label: "جرد المخزون", Icon: IcBarcodeScan },
-      { href: "/inventory", label: "تقرير المخزون", Icon: IcChartBars },
-      { href: "/barcode", label: "طباعة الباركود", Icon: IcBarcodeScan },
-      { href: "/low-stock", label: "النواقص", Icon: IcBoxStack },
+      // بدل «تقرير المخزون»
+      { href: "/returns/purchases", label: "مرتجع مشتريات", Icon: IcReturnBox },
     ],
   },
   {
     id: "accounts",
     title: "الحسابات والخزينة",
     items: [
-      { href: "/suppliers", label: "الموردون", Icon: IcBuilding },
       { href: "/installments", label: "الأقساط", Icon: IcClipboardCheck },
       { href: "/treasury", label: "الخزينة واليومية", Icon: IcChartBars },
       { href: "/expenses", label: "المصروفات", Icon: IcDeleteBox },
-      { href: "/shifts", label: "الورديات", Icon: IcClockUsers },
-      { href: "/profit", label: "تقرير الأرباح", Icon: IcReportDoc },
+      { href: "/barcode", label: "طباعة الباركود", Icon: IcBarcodeScan },
+      { href: "/low-stock", label: "النواقص", Icon: IcBoxStack },
     ],
   },
   {
@@ -120,26 +130,20 @@ const SECTIONS: Section[] = [
     items: [
       { href: "/reports", label: "تقرير المبيعات", Icon: IcChartBars },
       { href: "/dashboard", label: "لوحة المالك", Icon: IcChartBars },
-      { href: "/item-card", label: "كارت الصنف", Icon: IcInfo },
       { href: "/stock-movements", label: "حركات المخزون", Icon: IcClipboardCheck },
-      { href: "/smart-orders", label: "الشراء الذكي", Icon: IcBoxStack },
-      { href: "/price-checker", label: "كشك السعر", Icon: IcBarcodeScan },
+      { href: "/profit", label: "تقرير الأرباح", Icon: IcTrendUp },
     ],
   },
   {
     id: "system",
     title: "إعدادات النظام",
     items: [
-      { href: "/settings", label: "إعدادات البرنامج", Icon: IcGear },
-      { href: "/users", label: "المستخدمين", Icon: IcUserGear },
-      { href: "/users", label: "الصلاحيات", Icon: IcShieldCheck },
-      { href: "/connection", label: "قاعدة البيانات", Icon: IcDatabase },
-      { href: "/backup", label: "النسخ الاحتياطي", Icon: IcBackup },
+      { href: "/users", label: "الصلاحيات", Icon: IcUserGear },
       { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IcBackup },
-      { href: "/branches", label: "الفروع", Icon: IcBuilding },
-      { href: "/health", label: "صحة البرنامج", Icon: IcShieldCheck },
-      { href: "/audit", label: "سجل النشاط", Icon: IcClipboardCheck },
-      { href: "/about", label: "حول البرنامج", Icon: IcInfo },
+      // بدل «الفروع» — الفروع باقية زر في القائمة الجانبية
+      { href: "/subscription", label: "حالة الاشتراك", Icon: IcContract },
+      // لوحة التراخيص بقت كارت فقط (اتشال زرها من القائمة)
+      { href: "/licenses", label: "لوحة التراخيص", Icon: IcCards },
     ],
   },
 ];
@@ -148,12 +152,12 @@ const SECTIONS: Section[] = [
 const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: boolean; action?: "exit" }> = [
   { href: "/", label: "الرئيسية", Icon: RailHome },
   { href: "/users", label: "المستخدمين", Icon: RailUsers },
+  { href: "/branches", label: "الفروع", Icon: IcBuilding as unknown as RawIcon },
   { href: "/shifts", label: "الورديات", Icon: RailShifts },
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
   { href: "/connection", label: "ربط قاعدة البيانات", Icon: RailDatabase },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: RailBackup },
   { href: "/subscription", label: "حالة الاشتراك", Icon: RailShield },
-  { href: "/licenses", label: "لوحة التراخيص", Icon: RailCard },
   { href: "/health", label: "صحة البرنامج", Icon: IcShieldCheck as unknown as RawIcon },
   { href: "/audit", label: "سجل النشاط", Icon: IcClipboardCheck as unknown as RawIcon },
   { href: "/support", label: "الدعم الفني", Icon: RailSupport },
@@ -376,7 +380,10 @@ export function HomeScreen() {
                     </button>
 
                     {!collapsed && (
-                      <div className="hs-cards">
+                      <div
+                        className="hs-cards"
+                        style={{ gridTemplateColumns: `repeat(${sec.items.length}, minmax(0, 1fr))` }}
+                      >
                         {sec.items.map((it) => (
                           <button key={it.label} type="button" className="hs-card" onClick={() => runCard(it)} title={it.label}>
                             <span className="hs-card__ico">

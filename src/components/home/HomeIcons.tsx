@@ -397,6 +397,75 @@ export function IcPower({ className }: P) {
   );
 }
 
+export function IcItemCard({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <defs>
+        <G id="it1" from="#7ec3f7" to="#1f6cc4" />
+        <G id="it2" from="#ffd166" to="#dd8f00" />
+      </defs>
+      <rect x="8" y="9" width="32" height="30" rx="4" fill="url(#it1)" />
+      <rect x="12" y="14" width="9" height="9" rx="1.6" fill="#fff" opacity="0.9" />
+      <g fill="#fff" opacity="0.92">
+        <rect x="24" y="14.5" width="12" height="2.6" rx="1.3" />
+        <rect x="24" y="19.5" width="9" height="2.6" rx="1.3" />
+        <rect x="12" y="27" width="24" height="2.6" rx="1.3" />
+        <rect x="12" y="32" width="17" height="2.6" rx="1.3" />
+      </g>
+      <circle cx="35" cy="34" r="7.5" fill="url(#it2)" stroke="#fff" strokeWidth="2" />
+      <path d="M35 30.5v7M31.5 34h7" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IcTrendUp({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <defs>
+        <G id="tr1" from="#7ee6a6" to="#13a04f" />
+      </defs>
+      <rect x="7" y="7" width="34" height="34" rx="6" fill="url(#tr1)" />
+      <g fill="#fff" opacity="0.9">
+        <rect x="13" y="26" width="5" height="9" rx="1.4" />
+        <rect x="21.5" y="21" width="5" height="14" rx="1.4" />
+        <rect x="30" y="15" width="5" height="20" rx="1.4" />
+      </g>
+      <path d="M12 18l7-5 6 4 9-8" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M30 8.5h6v6" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+export function IcContract({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <defs>
+        <G id="ct1" from="#9d8df5" to="#5335c9" />
+      </defs>
+      <path d="M24 6.5l13 4.2v11.6c0 8.2-5.4 14.2-13 17.2-7.6-3-13-9-13-17.2V10.7z" fill="url(#ct1)" stroke="#3f2499" strokeWidth="1.5" />
+      <path d="M17.5 23.5l4.6 4.6 9-9.4" stroke="#fff" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+export function IcCards({ className }: P) {
+  return (
+    <svg {...base(className)}>
+      <defs>
+        <G id="cd1" from="#ffd08a" to="#e08a00" />
+      </defs>
+      <rect x="5" y="13" width="30" height="21" rx="4" fill="url(#cd1)" stroke="#b06d00" strokeWidth="1.4" />
+      <rect x="5" y="18.5" width="30" height="4.4" fill="#fff" opacity="0.85" />
+      <rect x="9" y="27" width="9" height="3.2" rx="1.4" fill="#fff" opacity="0.9" />
+      <rect x="21" y="6" width="22" height="15" rx="3.4" fill="#ffffff" stroke="#e08a00" strokeWidth="1.6" />
+      <g fill="#e08a00" opacity="0.75">
+        <rect x="24.5" y="10" width="15" height="2.4" rx="1.2" />
+        <rect x="24.5" y="14.6" width="10" height="2.4" rx="1.2" />
+      </g>
+    </svg>
+  );
+}
+
 /* ============ أيقونات القائمة الجانبية (بيضاء) ============ */
 
 export function RailHome({ className }: P) {
