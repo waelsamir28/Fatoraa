@@ -2,7 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:" />
+<!--
+  سبب المشكلة السابقة: script-src كانت 'unsafe-inline' فقط بدون 'self'
+  ⇒ المتصفح كان **يحجب** ملف installer.js بالكامل
+  ⇒ فلا أزرار تعمل ولا إصدار يظهر (الشاشة تبقى واقفة للأبد).
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'" />
 <title>FATORA Setup</title>
 <style>
   :root {
@@ -196,7 +201,7 @@
     <aside class="side">
       <div class="logo"><img src="assets/logo-fatora.png" alt="FATORA" onerror="this.replaceWith(document.createTextNode('F'))" /></div>
       <div class="brand">FATORA</div>
-      <div class="ver" id="sideVer">الإصدار —</div>
+      <div class="ver" id="sideVer">الإصدار __APP_VERSION__</div>
       <div class="sep"></div>
       <div class="feat">إدارة المحلات التجارية<br />نقاط بيع · مخازن · تقارير</div>
       <div class="sup">الدعم الفني<br /><b>م/ وائل الجمال — 01222355769</b></div>
@@ -273,7 +278,7 @@
   </div>
 
   <div class="foot">
-    <div class="hint" id="footHint">الإصدار —</div>
+    <div class="hint" id="footHint">الإصدار __APP_VERSION__</div>
     <button class="btn ghost" id="btnBack" hidden>رجوع</button>
     <button class="btn ghost" id="btnCancel">إلغاء</button>
     <button class="btn primary" id="btnNext">تثبيت</button>

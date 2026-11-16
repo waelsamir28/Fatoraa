@@ -320,7 +320,39 @@ function createWindow() {
     },
   });
   win.loadFile(path.join(__dirname, "index.html"));
-  win.once("ready-to-show", () => win.show());
+  // نُظهر النافذة عند أي إشارة تحميل — وليس فقط ready-to-show
+  // (لو الواجهة تعثّرت قبل الجاهزية كانت النافذة تفضل مخفية للأبد)
+  const showOnce = () => {
+    if (!win || win.isDestroyed() || win.isVisible()) return;
+    win.show();
+  };
+  win.once("ready-to-show", showOnce);
+  win.webContents.once("dom-ready", showOnce);
+  win.webContents.once("did-finish-load", showOnce);
+  // لو ما حصلش تحميل خلال 6 ثوانٍ: تظهر النافذة بأي حال + صفحة إرشاد
+  setTimeout(() => {
+    if (!win || win.isDestroyed()) return;
+    showOnce();
+    if (win.webContents.isLoading()) return;
+  }, 6000);
+  // أي رسالة خطأ من صفحة الواجهة تظهر في الكونسول (للتشخيص)
+  win.webContents.on("console-message", (_e, level, message) => {
+    if (level >= 2) console.error("[setup-ui]", message);
+  });
+  win.webContents.on("render-process-gone", (_e, details) => {
+    console.error("[setup-ui] renderer gone:", details && details.reason);
+    showOnce();
+  });
+  win.webContents.on("did-fail-load", (_e, code, desc) => {
+    showOnce();
+    const html =
+      "<html dir='rtl'><body style='font-family:Segoe UI,Tahoma;padding:28px'>" +
+      "<h2 style='color:#c42b1c'>تعذّر تحميل واجهة المثبّت</h2>" +
+      `<p style='color:#444;line-height:2'>رمز الخطأ: ${code} — ${desc}</p>` +
+      "<p style='color:#444;line-height:2'>نزّل الملف من جديد من الرابط الرسمي، وبعدها شغّله كمسؤول (Run as administrator).</p>" +
+      "<p style='color:#444'>الدعم: م/ وائل الجمال — 01222355769</p></body></html>";
+    win.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+  });
   win.on("closed", () => {
     win = null;
   });
@@ -330,7 +362,18 @@ app.whenReady().then(() => {
   createWindow();
 });
 
+// أي خطأ غير متوقع: نُبلغ الواجهة بدل تركها معلّقة بلا استجابة
+process.on("unhandledRejection", (e) => {
+  send({ error: String((e && e.message) || e) });
+});
+process.on("uncaughtException", (e) => {
+  send({ error: String((e && e.message) || e) });
+});
+
 /* ---------------- IPC ---------------- */
+
+// نسخة احتياطية: بعض الحالات تظهر فيها الواجهة قبل اكتمال app.getVersion()
+ipcMain.handle("setup:version", () => app.getVersion());
 
 ipcMain.handle("setup:info", () => {
   // التثبيت في حساب المستخدم حتى لا يحتاج صلاحيات مدير
@@ -375,6 +418,38 @@ ipcMain.handle("setup:openFolder", () => {
   if (fs.existsSync(dir)) return shell.openPath(dir);
   return null;
 });
+/**
+ * ملاحظات الإصدار — تُقرأ من ملف مرفق مع المثبّت.
+ * (كانت الدالة غير معرّفة أصلًا ⇒ استدعاؤها كان يرمي ReferenceError
+ *  فيفشل تحميل الواجهة كاملة وتبقى الأزرار بلا استجابة.)
+ * لو الملف غير موجود نرجّع رقم الإصدار الحقيقي مع قائمة افتراضية.
+ */
+function releaseNotes() {
+  const fallback = {
+    version: app.getVersion(),
+    items: [
+      "تثبيت بدون صلاحيات مدير — داخل حساب المستخدم",
+      "خلفيات لشاشة الدخول وشاشة القفل + مقاسات موثقة",
+      "6 ثيمات جديدة وتخصيص كامل للأزرار والخطوط",
+      "صلاحيات الشاشات: كل حساب يرى ما تسمح له به فقط",
+      "كاميرا الموبايل كماسح باركود + قارئ باركود عام",
+      "حفظ تلقائي للفواتير كل 20 ثانية",
+      "قفل كامل عند انتهاء الاشتراك مع تفعيل فوري",
+    ],
+  };
+  for (const file of [path.join(__dirname, "release-notes.json"), path.join(process.resourcesPath, "release-notes.json")]) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const data = JSON.parse(fs.readFileSync(file, "utf8"));
+      const items = Array.isArray(data.items) ? data.items.filter((x) => typeof x === "string") : [];
+      if (items.length) return { version: data.version || app.getVersion(), items };
+    } catch {
+      /* جرّب المسار التالي */
+    }
+  }
+  return fallback;
+}
+
 ipcMain.handle("setup:whatsNew", () => releaseNotes());
 ipcMain.on("setup:cancel", () => {
   cancelRequested = true;
