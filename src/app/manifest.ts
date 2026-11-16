@@ -4,8 +4,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "برنامج FATORA - لإدارة المحلات التجارية",
-    short_name: "برنامج FATORA",
+    name: "FATORA | لإدارة المحلات التجارية",
+    short_name: "FATORA",
     description: "برنامج مبيعات ومشتريات ومخازن وحسابات للمحلات التجارية - الدعم الفني 01222355769",
     start_url: "/",
     // شاشات الكاشير والموبايل

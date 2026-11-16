@@ -231,6 +231,8 @@ CREATE TABLE IF NOT EXISTS "settings" (
 	"custom_logo_url" text DEFAULT '' NOT NULL,
 	"phone2" text DEFAULT '' NOT NULL,
 	"show_big_title" boolean DEFAULT true NOT NULL,
+	"show_logo" boolean DEFAULT true NOT NULL,
+	"show_online_dot" boolean DEFAULT true NOT NULL,
 	"custom_big_title" text DEFAULT 'FATORA' NOT NULL,
 	"custom_tagline" text DEFAULT 'إدارة احترافية .. لمحل تجاري أكثر نجاحاً' NOT NULL,
 	"invoice_template" text DEFAULT 'template-modern-a5' NOT NULL,
@@ -294,6 +296,8 @@ ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_bg_url" text DEFAULT '' 
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_logo_url" text DEFAULT '' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "phone2" text DEFAULT '' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_big_title" boolean DEFAULT true NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_logo" boolean DEFAULT true NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_online_dot" boolean DEFAULT true NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_big_title" text DEFAULT 'FATORA' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_tagline" text DEFAULT 'إدارة احترافية .. لمحل تجاري أكثر نجاحاً' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "invoice_template" text DEFAULT 'template-modern-a5' NOT NULL;

@@ -38,6 +38,10 @@ export const settings = pgTable("settings", {
   /** رقم هاتف إضافي يظهر في الشاشة الرئيسية */
   phone2: text("phone2").notNull().default(""),
   showBigTitle: boolean("show_big_title").notNull().default(true),
+  /** إظهار شعار البرنامج في الشاشة الرئيسية */
+  showLogo: boolean("show_logo").notNull().default(true),
+  /** إظهار نقطة «متصل» جنب اسم المستخدم */
+  showOnlineDot: boolean("show_online_dot").notNull().default(true),
   customBigTitle: text("custom_big_title").notNull().default("FATORA"),
   customTagline: text("custom_tagline").notNull().default("إدارة احترافية .. لمحل تجاري أكثر نجاحاً"),
   invoiceTemplate: text("invoice_template").notNull().default("template-modern-a5"),

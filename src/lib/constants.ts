@@ -1,4 +1,4 @@
-export const APP_NAME = "FATORA - 2027";
+export const APP_NAME = "FATORA | لإدارة المحلات التجارية";
 export const APP_BRAND = "FATORA";
 export const APP_TITLE = "FATORA-POS 2027";
 export const APP_TAGLINE = "مناسب لجميع الأنشطة التجارية";

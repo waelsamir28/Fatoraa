@@ -36,6 +36,8 @@ export const DEFAULT_SETTINGS = {
   customLogoUrl: "",
   phone2: "",
   showBigTitle: true,
+  showLogo: true,
+  showOnlineDot: true,
   customBigTitle: "FATORA",
   customTagline: "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",
   invoiceTemplate: "template-modern-a5",
