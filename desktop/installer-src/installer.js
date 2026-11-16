@@ -8,6 +8,7 @@ const api =
     browse: async () => null,
     install: async () => ({ ok: true }),
     launch: async () => {},
+    confirmUninstall: async () => true,
     minimize: async () => {},
     close: async () => {},
     onProgress: (cb) => {

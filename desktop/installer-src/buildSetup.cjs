@@ -28,7 +28,8 @@ console.log("• تجهيز هيكل المثبّت…");
 fs.rmSync(stubDir, { recursive: true, force: true });
 fs.mkdirSync(stubDir, { recursive: true });
 
-const SKIP_FROM_APP = new Set(["resources", "locales"]);
+// نستبعد فقط resources (ملفات التطبيق الأصلي) — لازم نKeep locales وكل DLL
+const SKIP_FROM_APP = new Set(["resources"]);
 for (const entry of fs.readdirSync(appUnpacked, { withFileTypes: true })) {
   if (SKIP_FROM_APP.has(entry.name)) continue; // runtime فقط — بدون ملفات التطبيق
   const from = path.join(appUnpacked, entry.name);

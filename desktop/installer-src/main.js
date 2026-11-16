@@ -15,6 +15,8 @@ const SIZE_OFFSET = 8;
 const LOGO_SIZE_OFFSET = 16;
 const HEADER_SIZE = 32;
 
+const isUninstall = process.argv.includes("--uninstall");
+
 let win = null;
 const send = (channel, payload) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
@@ -150,7 +152,7 @@ function writeUninstallRegistry({ dir, sizeKb }) {
     `Publisher=FATORA`,
     `DisplayIcon=${path.join(dir, APP_EXE)}`,
     `InstallLocation=${dir}`,
-    `UninstallString="${uninstaller}"`,
+    `UninstallString="${uninstaller}" --uninstall`,
     `NoModify=1`,
     `NoRepair=1`,
     `EstimatedSize=${sizeKb}`,
@@ -280,18 +282,6 @@ async function closeRunningApp() {
 
 async function uninstall() {
   const dir = path.dirname(process.execPath);
-  const answer = dialog.showMessageBoxSync(win, {
-    type: "warning",
-    buttons: ["إلغاء التثبيت", "تراجع"],
-    defaultId: 1,
-    cancelId: 1,
-    noLink: true,
-    title: APP_NAME,
-    message: "هل تريد إزالة برنامج FATORA من هذا الجهاز؟",
-    detail: "لن يتم حذف بيانات المتجر (الفواتير والمخزون) الموجودة في مجلد بيانات المستخدم.",
-  });
-  if (answer === 1) return false;
-
   await closeRunningApp();
   send({ percent: 20, message: "جاري إزالة الملفات…" });
 
@@ -339,23 +329,60 @@ function createWindow() {
     },
   });
   win.loadFile(path.join(__dirname, "index.html"));
-  win.once("ready-to-show", () => win.show());
+  win.once("ready-to-show", () => {
+    if (!isUninstall) win.show();
+  });
   win.on("closed", () => {
     win = null;
   });
 }
 
-const isUninstall = process.argv.includes("--uninstall");
-
 app.whenReady().then(async () => {
   createWindow();
   if (isUninstall) {
+    // إزالة البرنامج: نستخدم نفس الواجهة (أزرار «إلغاء التثبيت / تراجع»)
     win.webContents.once("did-finish-load", async () => {
+      win.show();
+      try {
+        $ui_uninstallMode();
+      } catch {
+        /* ignore */
+      }
+    });
+    ipcMain.handle("setup:confirmUninstall", async () => {
       const done = await uninstall();
       if (done) app.quit();
+      return done;
     });
   }
 });
+
+// وضع الإزالة: نبدّل واجهة الصفحة الأولى إلى تأكيد الحذف
+function $ui_uninstallMode() {
+  win.webContents.executeJavaScript(`
+    (function () {
+      var dir = document.getElementById('pgDir');
+      var prog = document.getElementById('pgProg');
+      if (!dir) return;
+      dir.querySelector('h1').textContent = 'إزالة برنامج FATORA';
+      dir.querySelector('.lead').textContent = 'سيتم حذف ملفات البرنامج والاختصارات. لن تُحذف بيانات المتجر (الفواتير والمخزون).';
+      var field = dir.querySelector('.field');
+      if (field) field.style.display = 'none';
+      var opts = dir.querySelector('.opts');
+      if (opts) opts.style.display = 'none';
+      var next = document.getElementById('btnNext');
+      var cancel = document.getElementById('btnCancel');
+      next.textContent = 'إلغاء التثبيت';
+      if (cancel) cancel.style.display = 'none';
+      next.onclick = function () {
+        next.disabled = true;
+        next.textContent = 'جاري الإزالة…';
+        if (prog) { document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');}); prog.classList.add('on'); }
+        window.installer.confirmUninstall();
+      };
+    })();
+  `);
+}
 
 app.on("window-all-closed", () => app.quit());
 
