@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarClock, Phone, RefreshCw, X } from "lucide-react";
-import { SUPPORT_PHONE } from "@/lib/constants";
+import { SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { ActivationPlans } from "@/components/win/ActivationPlans";
 import type { PlanKey } from "@/lib/license-plans";
 
@@ -100,9 +100,10 @@ export function RenewalReminder() {
           <a
             href={`tel:${SUPPORT_PHONE}`}
             className="flex shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-[11.5px] font-black text-white"
-            title="اتصل بالدعم"
+            title={`اتصل بالدعم: ${SUPPORT_PERSON} — ${SUPPORT_PHONE}`}
           >
             <Phone className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{SUPPORT_PERSON}</span>
           </a>
           <button
             type="button"

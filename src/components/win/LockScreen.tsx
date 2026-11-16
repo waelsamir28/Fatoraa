@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2, KeyRound, Lock, LogOut, ShieldCheck, Unlock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, errMsg } from "@/lib/client";
-import { APP_NAME, DEFAULT_LOGO, SUPPORT_PHONE } from "@/lib/constants";
+import { APP_NAME, DEFAULT_LOGO, SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 /** مدة الخمول قبل القفل التلقائي (5 دقائق) */
@@ -215,7 +215,7 @@ export function LockScreen() {
         </button>
 
         <div className="lock-foot">
-          الدعم الفني: <b className="num">{SUPPORT_PHONE}</b>
+          الدعم الفني: <b>{SUPPORT_PERSON}</b> — <b className="num">{SUPPORT_PHONE}</b>
           <span className="lock-foot__dot">•</span>
           اضغط <kbd>Ctrl</kbd> + <kbd>L</kbd> لقفل الشاشة في أي وقت
         </div>

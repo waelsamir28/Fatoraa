@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, Copy, Crown, Gift, Phone, ShieldCheck, Sparkles, Timer, X, ArrowUpRight } from "lucide-react";
-import { SUPPORT_PHONE } from "@/lib/constants";
+import { SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import {
   PLAN_DEFS,
   canUpgrade,
@@ -176,6 +176,7 @@ export function ActivationPlans({
               className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-[#34c46a] to-[#167f3b] px-5 text-[14.5px] font-black text-white shadow hover:brightness-105"
             >
               <Phone className="h-4.5 w-4.5" />
+              <span>{SUPPORT_PERSON}</span>
               <span className="num" dir="ltr">
                 {SUPPORT_PHONE}
               </span>

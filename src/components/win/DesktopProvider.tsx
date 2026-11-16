@@ -44,7 +44,7 @@ import {
   IconSmartOrders,
   IconTreasury,
 } from "@/components/icons/MoreIcons";
-import { APP_NAME, SUPPORT_PHONE } from "@/lib/constants";
+import { APP_NAME, SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { useFullscreen } from "./fullscreen";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { UpdateBanner } from "./UpdateCenter";
@@ -267,6 +267,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
             {t.kind === "info" && <Info className="h-6 w-6 shrink-0 text-blue-600" />}
             <div>
               <div className="text-[12px] font-extrabold text-slate-500">{APP_NAME}</div>
+              <div className="text-[11px] font-bold text-slate-400">الدعم الفني: {SUPPORT_PERSON} — {SUPPORT_PHONE}</div>
               <div className="text-[14.5px] leading-snug">{t.text}</div>
             </div>
           </div>

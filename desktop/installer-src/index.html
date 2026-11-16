@@ -155,6 +155,31 @@
   .btn.ghost { background: #fbfbfb; border-color: var(--stroke); color: #15181c; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
   .btn.ghost:hover { background: #f1f2f4; }
   .btn[hidden] { display: none; }
+  /* سطر التحقق من التحديث */
+  .check-line {
+    margin-top: 16px; display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #2d5f8b; min-height: 18px;
+  }
+  .check-spin {
+    width: 13px; height: 13px; border-radius: 99px; flex: none;
+    border: 2px solid #bfd7ee; border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  .check-spin.ok { border: 0; background: #107c41; animation: none; position: relative; }
+  .check-spin.ok::after { content: "✓"; color: #fff; font-size: 9px; position: absolute; inset: 0; display: grid; place-items: center; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* صفحة الانتهاء */
+  .done-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .whatsnew {
+    margin-top: 12px; border: 1px solid var(--stroke); border-radius: 8px;
+    background: #fff; padding: 10px 12px; max-height: 118px; overflow: auto;
+  }
+  .whatsnew__head { font-size: 12px; font-weight: 700; color: #14508f; margin-bottom: 6px; }
+  .whatsnew ul { padding-inline-start: 16px; }
+  .whatsnew li { font-size: 11.6px; color: #4a545f; line-height: 1.9; }
+  .whatsnew[hidden] { display: none; }
+
 </style>
 </head>
 <body>
@@ -174,7 +199,7 @@
       <div class="ver" id="sideVer">الإصدار —</div>
       <div class="sep"></div>
       <div class="feat">إدارة المحلات التجارية<br />نقاط بيع · مخازن · تقارير</div>
-      <div class="sup">الدعم الفني<br /><b>01222355769</b></div>
+      <div class="sup">الدعم الفني<br /><b>م/ وائل الجمال — 01222355769</b></div>
     </aside>
 
     <section class="main">
@@ -190,6 +215,11 @@
             <button class="btn2" id="btnBrowse">استعراض…</button>
           </div>
           <div class="meta" id="spaceMeta">جاري حساب المساحة…</div>
+        </div>
+
+        <div class="check-line" id="checkLine">
+          <span class="check-spin" id="checkSpin"></span>
+          <span id="checkText">جاري التحقق من التحديثات…</span>
         </div>
 
         <div class="opts">
@@ -214,10 +244,22 @@
 
       <!-- 3) الانتهاء -->
       <div class="page" id="pgDone">
-        <div class="done-mark">✓</div>
-        <h1>تم تثبيت FATORA بنجاح</h1>
-        <p class="lead" id="doneLead">البرنامج جاهز للاستخدام. شكرًا لثقتك في FATORA.</p>
-        <p class="meta">الدعم الفني: <b>01222355769</b></p>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="done-mark">✓</div>
+          <div>
+            <h1>تم تثبيت FATORA بنجاح</h1>
+            <p class="lead" id="doneLead">البرنامج جاهز للاستخدام. شكرًا لثقتك في FATORA.</p>
+          </div>
+        </div>
+        <div class="done-actions">
+          <button class="btn2" id="btnOpenFolder">فتح مجلد التثبيت</button>
+          <button class="btn2" id="btnWhatsNew">ما الجديد في هذا الإصدار</button>
+        </div>
+        <div class="whatsnew" id="whatsNew" hidden>
+          <div class="whatsnew__head">ملاحظات الإصدار <span id="wnVer"></span></div>
+          <ul id="wnList"></ul>
+        </div>
+        <p class="meta">الدعم الفني: <b>م/ وائل الجمال — 01222355769</b></p>
       </div>
 
       <!-- 4) خطأ -->
@@ -225,7 +267,7 @@
         <div class="done-mark" style="background:#fdeceb;color:#c42b1c">!</div>
         <h1>تعذّر إكمال التثبيت</h1>
         <p class="lead" id="errText">حدث خطأ غير متوقع.</p>
-        <p class="meta">رقم الدعم الفني: <b>01222355769</b></p>
+        <p class="meta">رقم الدعم الفني: <b>م/ وائل الجمال — 01222355769</b></p>
       </div>
     </section>
   </div>

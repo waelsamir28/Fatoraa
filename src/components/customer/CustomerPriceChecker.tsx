@@ -36,7 +36,7 @@ export function CustomerPriceChecker({ products }: { products: Product[] }) {
           <span>اكتب اسم الصنف أو امسح الباركود</span>
           <span className="sep" />
           <span>عدد الأصناف: {products.length}</span>
-          <span className="ms-auto">دعم فني 01222355769</span>
+          <span className="ms-auto">دعم فني: م/ وائل الجمال — 01222355769</span>
         </>
       }
     >

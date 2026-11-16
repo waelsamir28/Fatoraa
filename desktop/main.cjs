@@ -327,11 +327,13 @@ function createMainWindow() {
   Menu.setApplicationMenu(null);
   const area = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    width: Math.min(1180, area.width),
-    height: Math.min(820, area.height),
+    // تفتح دائمًا ممتلئة الشاشة (Maximized) كما طُلب
+    width: Math.min(1400, area.width),
+    height: Math.min(900, area.height),
     center: true,
     minWidth: 960,
     minHeight: 600,
+    maximizable: true,
     show: false,
     frame: false,
     backgroundColor: "#0b3a8c",
@@ -355,8 +357,21 @@ function createMainWindow() {
   mainWindow.webContents.session.setDevicePermissionHandler(() => true);
 
   mainWindow.once("ready-to-show", () => {
+    if (!mainWindow) return;
+    mainWindow.maximize();
+    // حجم الخط الافتراضي 110% في نسخة سطح المكتب
+    mainWindow.webContents.setZoomFactor(1.1);
     mainWindow.show();
     if (splash && !splash.isDestroyed()) splash.destroy();
+  });
+
+  // ثبات نسبة التكبير 110% بعد كل تنقل (Next.js client-side navigation)
+  mainWindow.webContents.on("did-finish-load", () => {
+    try {
+      mainWindow.webContents.setZoomFactor(1.1);
+    } catch {
+      /* ignore */
+    }
   });
   mainWindow.on("maximize", () => mainWindow.webContents.send("win:maximized", true));
   mainWindow.on("unmaximize", () => mainWindow.webContents.send("win:maximized", false));

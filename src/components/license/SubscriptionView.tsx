@@ -16,7 +16,7 @@ import {
   Timer,
 } from "lucide-react";
 import { api, errMsg } from "@/lib/client";
-import { SUPPORT_PHONE } from "@/lib/constants";
+import { SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { PLAN_BY_KEY, type PlanKey } from "@/lib/license-plans";
 
 interface StatusResp {
@@ -193,6 +193,7 @@ export function SubscriptionView() {
               className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#c9d8ee] bg-white px-4 text-[13.5px] font-black text-[#0f2942]"
             >
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>{SUPPORT_PERSON}</span>
               <span className="num" dir="ltr">
                 {SUPPORT_PHONE}
               </span>

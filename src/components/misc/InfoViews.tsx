@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { BadgeCheck, CheckCircle2, Clock, Gift, Layers, Loader2, MessageCircle, Phone, Power, RefreshCw, ShieldCheck } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { CartLogo, IconInfo, IconSupport } from "@/components/icons/AppIcons";
-import { APP_BRAND, APP_NAME, APP_TAGLINE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PHONE, SUPPORT_TEL, WHATSAPP_URL } from "@/lib/constants";
+import { APP_BRAND, APP_NAME, APP_TAGLINE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PERSON, SUPPORT_PHONE, SUPPORT_TEL, WHATSAPP_URL } from "@/lib/constants";
 import { UpdatePanel } from "@/components/win/UpdateCenter";
 
 const SHORTCUTS: Array<[string, string]> = [
@@ -30,12 +30,13 @@ const FAQ: Array<[string, string]> = [
 
 export function SupportView() {
   return (
-    <Window title="الدعم الفني" icon={<IconSupport className="h-9 w-9" />} statusBar={<span>الدعم الفني: {SUPPORT_PHONE}</span>}>
-      <div className="mx-auto h-full max-w-[1200px] space-y-4 overflow-auto p-5">
+    <Window title="الدعم الفني" icon={<IconSupport className="h-9 w-9" />} statusBar={<span>الدعم الفني: {SUPPORT_PERSON} — {SUPPORT_PHONE}</span>} fit={false}>
+      <div className="mx-auto h-full max-w-[1200px] space-y-4 overflow-auto p-5" data-scroll-root="1">
         <div className="panel flex flex-wrap items-center gap-6 p-6">
           <IconSupport className="h-32 w-32 shrink-0" />
           <div className="min-w-[300px] flex-1">
             <h2 className="text-[28px] font-black text-[#0b2350]">الدعم الفني لـ {APP_NAME}</h2>
+            <div className="mt-1 text-[17px] font-black text-[#1a5fc0]">{SUPPORT_PERSON}</div>
             <p className="mt-1 text-[16px] font-bold text-slate-600">
               فريق الدعم جاهز لمساعدتك في التثبيت والتدريب وحل أي مشكلة تواجهك أثناء استخدام البرنامج.
             </p>
@@ -104,35 +105,81 @@ export function SupportView() {
 }
 
 export function AboutView() {
+  const facts: Array<[string, string]> = [
+    ["اسم البرنامج", APP_NAME],
+    ["رقم الإصدار", APP_VERSION],
+    ["مناسب لـ", "السوبر ماركت، البقالة، المكتبات، الأدوات المنزلية، وجميع الأنشطة التجارية"],
+    ["الدعم الفني", `${SUPPORT_PERSON} — ${SUPPORT_PHONE}`],
+  ];
+  const features = [
+    "فواتير مبيعات ومشتريات احترافية",
+    "إدارة المخازن والأصناف والباركود",
+    "حسابات العملاء والموردين والآجل",
+    "تقارير الأرباح والمبيعات اليومية",
+    "طباعة الفواتير وحفظها PDF",
+    "نسخ احتياطي واستعادة البيانات",
+    "مرتجعات المبيعات والمشتريات",
+    "الخزينة والمصروفات وكارت الصنف",
+    "طباعة ملصقات الباركود",
+  ];
+
   return (
-    <Window title="معلومات عن البرنامج" icon={<IconInfo className="h-9 w-9" />} statusBar={<span>الإصدار {APP_VERSION}</span>}>
-      <div className="grid h-full place-items-center overflow-auto p-6">
-        <div className="panel w-full max-w-[760px] overflow-hidden">
-          <div className="relative overflow-hidden bg-gradient-to-b from-[#eaf3ff] to-white px-6 pb-4 pt-5 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={DEFAULT_LOGO} alt={APP_BRAND} className="mx-auto h-[150px] w-auto object-contain drop-shadow-lg" />
-            <div className="mt-1 text-[24px] font-black text-[#0b2350]">برنامج {APP_BRAND}</div>
-            <div className="brand-pill mx-auto mt-1 inline-block text-[15px]">{APP_TAGLINE}</div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 p-6">
-            <div className="space-y-2 text-[15px] font-bold text-slate-700">
-              <div>📌 اسم البرنامج: <b className="text-[#0b2350]">{APP_NAME}</b></div>
-              <div>🔢 رقم الإصدار: <b className="num text-[#0b2350]">{APP_VERSION}</b></div>
-              <div>🏪 مناسب لـ: السوبر ماركت، البقالة، المكتبات، الأدوات المنزلية، وجميع الأنشطة التجارية</div>
-              <div>
-                ☎ الدعم الفني: <a href={SUPPORT_TEL} className="num font-black text-red-600">{SUPPORT_PHONE}</a>
+    <Window
+      title="معلومات عن البرنامج"
+      icon={<IconInfo className="h-9 w-9" />}
+      statusBar={<span>الإصدار {APP_VERSION}</span>}
+      fit={false}
+    >
+      <div className="h-full overflow-y-auto bg-[#f7f9fc] px-4 py-4" dir="rtl">
+        <div className="mx-auto w-full max-w-[1000px] space-y-4 pb-6">
+          {/* الترويسة */}
+          <div className="panel overflow-hidden">
+            <div className="flex flex-wrap items-center justify-center gap-5 bg-gradient-to-b from-[#eaf3ff] to-white px-5 py-5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={DEFAULT_LOGO} alt={APP_BRAND} className="h-[110px] w-auto object-contain drop-shadow-lg" />
+              <div className="text-center">
+                <div className="text-[26px] font-black text-[#0b2350]">برنامج {APP_BRAND}</div>
+                <div className="brand-pill mx-auto mt-1 inline-block text-[14px]">{APP_TAGLINE}</div>
+                <div className="num mt-2 text-[13px] font-black text-slate-500">الإصدار {APP_VERSION}</div>
               </div>
             </div>
-            <ul className="space-y-1.5 text-[14.5px] font-extrabold text-[#0b2350]">
-              {["فواتير مبيعات ومشتريات احترافية", "إدارة المخازن والأصناف والباركود", "حسابات العملاء والموردين والآجل", "تقارير الأرباح والمبيعات اليومية", "طباعة الفواتير وحفظها PDF", "نسخ احتياطي واستعادة البيانات", "مرتجعات المبيعات والمشتريات", "الخزينة والمصروفات وكارت الصنف", "طباعة ملصقات الباركود"].map((x) => (
-                <li key={x} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 fill-green-600 text-white" />
-                  {x}
-                </li>
-              ))}
-            </ul>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 px-6 pb-3">
+
+          {/* البيانات + المميزات */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="panel p-4">
+              <div className="mb-3 flex items-center gap-2 border-b border-[#dbe4f0] pb-2 text-[15px] font-black text-[#0b2350]">
+                <span className="inline-block h-4 w-1.5 rounded bg-[#1a6fd0]" />
+                بيانات البرنامج
+              </div>
+              <dl className="space-y-2.5">
+                {facts.map(([k, v]) => (
+                  <div key={k} className="flex flex-wrap items-start gap-x-2 border-b border-dashed border-[#e2e8f2] pb-2 last:border-0">
+                    <dt className="w-[110px] shrink-0 text-[13.5px] font-black text-slate-500">{k}</dt>
+                    <dd className="min-w-0 flex-1 text-[14px] font-extrabold text-[#0b2350]">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="panel p-4">
+              <div className="mb-3 flex items-center gap-2 border-b border-[#dbe4f0] pb-2 text-[15px] font-black text-[#0b2350]">
+                <span className="inline-block h-4 w-1.5 rounded bg-[#1a6fd0]" />
+                مميزات البرنامج
+              </div>
+              <ul className="grid grid-cols-1 gap-1.5 text-[13.5px] font-extrabold text-[#0b2350] sm:grid-cols-1">
+                {features.map((x) => (
+                  <li key={x} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0 fill-green-600 text-white" />
+                    <span className="min-w-0">{x}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* أزرار الاشتراك */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Link
               href="/subscription"
               className="flex h-10 items-center gap-1.5 rounded-xl bg-gradient-to-b from-[#2f86e8] to-[#1a5fc0] px-4 text-[13.5px] font-black text-white shadow"
@@ -147,12 +194,22 @@ export function AboutView() {
               <Layers className="h-4 w-4 text-[#1a6fd0]" />
               أنظمة التفعيل والأسعار
             </Link>
+            <a href={SUPPORT_TEL} className="flex h-10 items-center gap-1.5 rounded-xl border-2 border-emerald-300 bg-emerald-50 px-4 text-[13.5px] font-black text-emerald-800">
+              <Phone className="h-4 w-4" />
+              <span className="num">{SUPPORT_PHONE}</span>
+            </a>
           </div>
-          <div className="px-6 pb-4">
-            <UpdatePanel />
+
+          {/* التحديثات */}
+          <div className="panel overflow-hidden">
+            <div className="navy-head px-4 py-2 text-[15px]">تحديثات البرنامج</div>
+            <div className="p-3">
+              <UpdatePanel />
+            </div>
           </div>
-          <div className="border-t border-[#d5deea] bg-[#f3f6fb] px-6 py-3 text-center text-[13px] font-bold text-slate-500">
-            جميع الحقوق محفوظة © {new Date().getFullYear()} — {APP_NAME}
+
+          <div className="rounded-lg border border-[#d5deea] bg-white px-4 py-3 text-center text-[12.5px] font-bold text-slate-500">
+            جميع الحقوق محفوظة © {new Date().getFullYear()} — {APP_NAME} · {SUPPORT_PERSON}
           </div>
         </div>
       </div>

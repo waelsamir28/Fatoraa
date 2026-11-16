@@ -371,16 +371,7 @@ export function InvoiceEditor({
           if (inv.type !== type) throw new Error("الفاتورة المطلوبة ليست من هذا النوع");
           if (alive) loadInvoice(inv, plist);
         } else {
-          try {
-            const findExact = await api<{ invoice: Invoice | null }>(`/api/invoices/find?type=${type}&dir=exact&number=1036`);
-            if (findExact?.invoice && alive) {
-              loadInvoice(findExact.invoice, plist);
-              setCategory("كروت أفراح");
-              return;
-            }
-          } catch {
-            // fallback
-          }
+          // فاتورة جديدة فارغة دائمًا (بدون تحميل أي فاتورة سابقة)
           await startNew(0);
         }
       } catch (e) {

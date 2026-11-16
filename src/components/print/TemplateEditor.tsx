@@ -474,7 +474,7 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
                       />
                       <EditorToggle
                         label="سطر البرنامج والدعم"
-                        hint="نظام نقاط البيع — FATORA — 01222355769"
+                        hint="نظام نقاط البيع — FATORA — م/ وائل الجمال — 01222355769"
                         checked={layout.showSupportLine}
                         onChange={(v) => patch({ showSupportLine: v })}
                       />
@@ -611,7 +611,7 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
         <span>الحجم: {layout.scale}%</span>
         <span className="text-blue-400">|</span>
         <span>آخر معاينة: {fmtDate(new Date().toISOString())}</span>
-        <span className="ms-auto">دعم فني 01222355769</span>
+        <span className="ms-auto">دعم فني: م/ وائل الجمال — 01222355769</span>
       </div>
     </div>
   );

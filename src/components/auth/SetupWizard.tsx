@@ -311,7 +311,7 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
 
           <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-400">
             <Building2 className="h-3.5 w-3.5" />
-            الإصدار {APP_BRAND} — دعم فني 01222355769
+            الإصدار {APP_BRAND} — دعم فني: م/ وائل الجمال 01222355769
           </div>
         </div>
       </div>

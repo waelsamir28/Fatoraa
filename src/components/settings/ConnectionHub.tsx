@@ -21,7 +21,7 @@ export function ConnectionHub() {
       statusBar={
         <>
           <span>اختر التبويب المناسب لطريقة التشغيل</span>
-          <span className="ms-auto">دعم فني 01222355769</span>
+          <span className="ms-auto">دعم فني: م/ وائل الجمال — 01222355769</span>
         </>
       }
     >
