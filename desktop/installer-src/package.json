@@ -1,0 +1,49 @@
+{
+  "name": "fatora-setup",
+  "productName": "FATORA Setup",
+  "version": "1.3.0",
+  "description": "مثبّت FATORA — نمط Windows 11",
+  "main": "main.js",
+  "author": "FATORA - 01222355769",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.algamal.setup",
+    "productName": "FATORA Setup",
+    "executableName": "FATORA-Setup",
+    "copyright": "© FATORA - 01222355769",
+    "directories": {
+      "output": "../dist-setup",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "installer.js",
+      "assets/**"
+    ],
+    "extraResources": [
+      {
+        "from": "${root}/node_modules/7zip-bin/win/x64/7za.exe",
+        "to": "7za.exe"
+      }
+    ],
+    "asarUnpack": [],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

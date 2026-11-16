@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>معاينة مثبّت FATORA بنمط Windows 11</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: "Segoe UI", "Tahoma", sans-serif;
+    display: grid; place-items: center;
+    background:
+      radial-gradient(1200px 600px at 20% 10%, #1f6fd0 0%, #0b3f86 45%, #07254f 100%);
+    padding: 28px;
+  }
+  /* إطار نافذة ويندوز 11 */
+  .win11 {
+    width: 720px; max-width: 96vw; border-radius: 12px; overflow: hidden;
+    background: rgba(243, 243, 243, 0.86);
+    backdrop-filter: blur(40px) saturate(160%);
+    box-shadow: 0 32px 70px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.28) inset;
+  }
+  .titlebar {
+    height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 14px;
+    background: rgba(255,255,255,.55);
+  }
+  .titlebar .ico { width: 17px; height: 17px; border-radius: 3px; background: linear-gradient(135deg,#1a6fd4,#0a3f86); }
+  .titlebar .t { font-size: 12.5px; color: #1b1b1b; flex: 1; }
+  .cr { display: flex; }
+  .cr div { width: 44px; height: 32px; display: grid; place-items: center; font-size: 12px; color: #333; border-radius: 4px; }
+  .cr div:hover { background: rgba(0,0,0,.07); }
+  .cr .x:hover { background: #c42b1c; color: #fff; }
+  /* المحتوى */
+  .body { display: flex; min-height: 330px; }
+  .side {
+    width: 190px; padding: 22px 16px; color: #fff;
+    background: linear-gradient(160deg, #1767c6 0%, #0b3f86 60%, #082c5f 100%);
+    display: flex; flex-direction: column; align-items: center; gap: 9px;
+  }
+  .side .logo {
+    width: 92px; height: 92px; border-radius: 22px; margin-top: 8px;
+    background: linear-gradient(150deg,#ffffff,#dbe9ff); color: #0b3f86;
+    display: grid; place-items: center; font: 800 34px/1 "Segoe UI"; letter-spacing: -1px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
+  }
+  .side .n { font-weight: 700; font-size: 15px; letter-spacing: .5px; }
+  .side .v { font-size: 11.5px; color: #b9d7ff; }
+  .side .sep { width: 60px; height: 1px; background: rgba(255,255,255,.35); margin: 6px 0; }
+  .side .sup { font-size: 11px; color: #cfe3ff; text-align: center; line-height: 1.7; margin-top: auto; }
+  .main { flex: 1; padding: 24px 26px; display: flex; flex-direction: column; }
+  .h { font-size: 21px; font-weight: 600; color: #101418; margin-bottom: 6px; }
+  .sub { font-size: 12.8px; color: #5a636e; line-height: 1.8; }
+  .field { margin-top: 22px; }
+  .field label { font-size: 12px; color: #444c57; display: block; margin-bottom: 7px; }
+  .path {
+    display: flex; gap: 8px;
+  }
+  .path .inp {
+    flex: 1; height: 34px; border-radius: 6px; background: #fff; border: 1px solid #c9ced6;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 0 #0f6cbd;
+    display: flex; align-items: center; padding: 0 10px; font-size: 12.5px; color: #20262e;
+  }
+  .path .inp:focus-within { border-color: #0f6cbd; box-shadow: 0 0 0 2px rgba(15,108,189,.25); }
+  .btn2 {
+    height: 34px; padding: 0 16px; border-radius: 6px; font-size: 12.5px; color: #15181c;
+    background: #fbfbfb; border: 1px solid #c9ced6; box-shadow: 0 1px 2px rgba(0,0,0,.07);
+    display: grid; place-items: center; cursor: pointer;
+  }
+  .btn2:hover { background: #f2f3f5; }
+  .progwrap { margin-top: 20px; display: none; }
+  .bar { height: 6px; border-radius: 99px; background: #d7dbe0; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 42%; border-radius: 99px; background: linear-gradient(90deg,#0f6cbd,#4aa3f0); animation: mv 2.4s cubic-bezier(.45,0,.25,1) infinite; }
+  @keyframes mv { 0% { width: 12%; margin-right: -10%; } 50% { width: 55%; } 100% { width: 14%; margin-right: 105%; } }
+  .pmsg { margin-top: 10px; font-size: 12.5px; color: #0f4c81; min-height: 18px; }
+  .pmsg span { opacity: .75; }
+  .foot { margin-top: auto; display: flex; justify-content: flex-end; gap: 9px; padding-top: 26px; }
+  .btn {
+    min-width: 104px; height: 34px; border-radius: 6px; font-size: 12.8px; cursor: pointer;
+    display: grid; place-items: center; border: 1px solid transparent;
+  }
+  .btn.primary {
+    background: #0f6cbd; color: #fff; box-shadow: 0 2px 6px rgba(15,108,189,.35);
+  }
+  .btn.primary:hover { background: #1668b3; }
+  .btn.ghost { background: #fbfbfb; border-color: #c9ced6; color: #15181c; }
+  .hint { text-align: center; color: #cfe3ff; font-size: 12px; margin-top: 16px; max-width: 720px; line-height: 1.9; }
+  .switchbar { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+  .switchbar button {
+    background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 99px; padding: 7px 16px; font-size: 12.5px; cursor: pointer; font-family: inherit;
+  }
+  .switchbar button.on { background: #fff; color: #0b3f86; font-weight: 700; }
+</style>
+</head>
+<body>
+<div>
+  <div class="switchbar">
+    <button id="b1" class="on" onclick="view(1)">1) صفحة المسار</button>
+    <button id="b2" onclick="view(2)">2) أثناء التثبيت</button>
+    <button id="b3" onclick="view(3)">3) الانتهاء</button>
+  </div>
+
+  <div class="win11" dir="ltr">
+    <div class="titlebar">
+      <div class="ico"></div>
+      <div class="t">FATORA Setup</div>
+      <div class="cr"><div>—</div><div>▢</div><div class="x">✕</div></div>
+    </div>
+    <div class="body" dir="rtl">
+      <div class="side">
+        <div class="logo">F</div>
+        <div class="n">FATORA</div>
+        <div class="v">الإصدار 1.2.0</div>
+        <div class="sep"></div>
+        <div class="sup">الدعم الفني<br><b>01222355769</b></div>
+      </div>
+      <div class="main">
+        <div class="h" id="hTitle">اختر مكان التثبيت</div>
+        <div class="sub" id="hSub">سيتم تثبيت برنامج FATORA في المجلد التالي. يمكنك تغييره بالضغط على «استعراض».</div>
+
+        <div class="field" id="fieldWrap">
+          <label>مجلد التثبيت</label>
+          <div class="path">
+            <div class="inp">C:\Program Files\FATORA</div>
+            <div class="btn2">استعراض…</div>
+          </div>
+          <div class="sub" style="margin-top:9px">المساحة المطلوبة: 328 ميجابايت · المتاحة: 15 جيجابايت</div>
+        </div>
+
+        <div class="progwrap" id="progWrap">
+          <div class="bar"><i></i></div>
+          <div class="pmsg" id="pmsg">جاري تحضير الملفات…</div>
+        </div>
+
+        <div class="foot">
+          <div class="btn ghost">إلغاء</div>
+          <div class="btn ghost" id="back">رجوع</div>
+          <div class="btn primary" id="go">تثبيت</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hint">معاينة تصميم فقط — دي النافذة اللي هتتبني بتقنية Electron (مش NSIS)، فالحواف مستديرة والأزرار والخط زي ويندوز 11 بالظبط.</div>
+</div>
+
+<script>
+  var msgs = ["جاري تحضير الملفات…","نسخ برنامج FATORA…","تركيب قاعدة البيانات…","إنشاء الاختصارات…","لحظات قليلة، لا تغلق النافذة"];
+  var i = 0, timer = null;
+  function view(n) {
+    document.getElementById("b1").className = n === 1 ? "on" : "";
+    document.getElementById("b2").className = n === 2 ? "on" : "";
+    document.getElementById("b3").className = n === 3 ? "on" : "";
+    var h = document.getElementById("hTitle"), s = document.getElementById("hSub");
+    var fw = document.getElementById("fieldWrap"), pw = document.getElementById("progWrap");
+    var go = document.getElementById("go"), back = document.getElementById("back");
+    if (timer) { clearInterval(timer); timer = null; }
+    if (n === 1) {
+      h.textContent = "اختر مكان التثبيت";
+      s.textContent = "سيتم تثبيت برنامج FATORA في المجلد التالي. يمكنك تغييره بالضغط على «استعراض».";
+      fw.style.display = "block"; pw.style.display = "none";
+      go.textContent = "تثبيت"; back.style.display = "grid";
+    } else if (n === 2) {
+      h.textContent = "جاري التثبيت";
+      s.textContent = "لحظات قليلة… يتم نسخ ملفات البرنامج وإعداد قاعدة البيانات.";
+      fw.style.display = "none"; pw.style.display = "block";
+      go.textContent = "تثبيت"; back.style.display = "grid";
+      var el = document.getElementById("pmsg"); i = 0;
+      el.innerHTML = '<span>' + msgs[0] + '</span>';
+      timer = setInterval(function () {
+        i = (i + 1) % msgs.length;
+        el.innerHTML = '<span>' + msgs[i] + '</span>';
+      }, 1800);
+    } else {
+      h.textContent = "تم تثبيت FATORA بنجاح";
+      s.textContent = "اضغط «إنهاء» لتشغيل البرنامج الآن. الدعم الفني: 01222355769";
+      fw.style.display = "none"; pw.style.display = "none";
+      go.textContent = "إنهاء"; back.style.display = "none";
+    }
+  }
+  document.getElementById("go").onclick = function () { view(2); };
+  document.getElementById("b2").click = null;
+</script>
+</body>
+</html>
