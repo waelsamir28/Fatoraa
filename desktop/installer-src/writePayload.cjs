@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const desktopDir = path.resolve(__dirname, "..");
+// لاحقة الحمولة: نسخة من مثبّت الواجهة (portable) التي بناها buildSetup.cjs
 const setupExe = path.join(desktopDir, "dist-setup", "stub", "FATORA-Setup.exe");
 const payload = path.join(desktopDir, "dist-setup", "resources-payload.7z");
 const version = require(path.join(desktopDir, "package.json")).version;

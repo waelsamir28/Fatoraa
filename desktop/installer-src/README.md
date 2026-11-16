@@ -1,29 +1,30 @@
-# مثبّت FATORA (Electron — نمط Windows 11)
+# مثبّت FATORA (ملف واحد — نمط Windows 11)
 
-بديل كامل لمعالج NSIS الكلاسيكي: نافذة 720×480 بحواف مستديرة وأزرار ويندوز 11،
-نص تقدّم متحرك، ونصوص عربية من اليمين لليسار.
+## لماذا ملف واحد؟
+تشغيل واجهة المثبّت مباشرةً على `electron.exe` (حتى بعد إعادة تسميته) **لا يعمل**:
+خطأ `ffmpeg.dll was not found` لأن ملف الـ exe لا يحتوي ملفات DLL الخاصة بـ Electron.
+الحل: `electron-builder` يبني المثبّت بصيغة **portable** = ملف exe واحد يستخرج نفسه
+في `%TEMP%\FATORA-Setup` ثم يشغّل واجهة المثبّت.
 
-## الملفات
-| الملف | الوظيفة |
-| --- | --- |
-| `index.html` | واجهة المثبّت (3 صفحات: مكان التثبيت / التقدم / الانتهاء) |
-| `installer.js` | منطق الواجهة + دوران الرسائل والنصائح |
-| `main.js` | العملية الرئيسية: فك الحمولة، الاختصارات، السجل، الإزالة |
-| `preload.js` | جسر آمن (contextBridge) |
-| `buildSetup.cjs` | يبني هيكل المثبّت من `dist/win-unpacked` + يضغط الحمولة 7z |
-| `writePayload.cjs` | يلحق الحمولة بملف الـ exe ويخرج `FATORA-Setup-<version>.exe` |
+## خطوات البناء
+1. `electron-builder` ينتج التطبيق في `desktop/dist/win-unpacked`.
+2. `buildSetup.cjs`:
+   - يضغط التطبيق كله في `dist-setup/resources-payload.7z`.
+   - يبني مشروع `dist-setup/setup-app` ويشغّل `electron-builder --win portable`
+     (مع `electronDist` لإعادة استخدام Electron الموجود محليًا بدون تحميل).
+   - ينسخ الناتج إلى `dist-setup/stub/FATORA-Setup.exe`.
+3. `writePayload.cjs` يكتب حجم الحمولة في ترويسة الـ exe ويلحقها،
+   وينتج `desktop/dist/FATORA-Setup-<version>.exe`.
 
-## كيف يعمل
-1. `electron-builder` يبني التطبيق في `desktop/dist/win-unpacked`.
-2. `buildSetup.cjs` ينسخ ملفات Electron فقط إلى `dist-setup/stub`، ويضع واجهة المثبّت في `resources/app`،
-   ثم يضغط ملفات التطبيق في `dist-setup/resources-payload.7z` بأداة `7za` من `7zip-bin`.
-3. `writePayload.cjs` يكتب حجم الحمولة في أول 32 بايت من الـ exe ثم يلحق الحمولة به
-   (`payloadStart = fileSize - payloadSize`).
-4. عند التشغيل: المثبّت يقرأ الحجم، يستخرج الحمولة إلى 7z مؤقت، يفكّها في مجلد التثبيت،
-   ينشئ الاختصارات ويسجّل البرنامج في «إضافة/إزالة البرامج»، وينشئ ملف إزالة بدون الحمولة.
+## أثناء التشغيل
+- `process.env.PORTABLE_EXECUTABLE_FILE` يشير إلى الملف الأصلي الذي يحتوي الحمولة.
+- يُلحق الحمولة بملف مؤقت 7z ثم يفكّها بأداة `7za.exe` (مرفقة في `resources`).
+- التثبيت الافتراضي: `%LOCALAPPDATA%\Programs\FATORA` (بدون صلاحيات مدير).
+- الإزالة: `Uninstall FATORA.bat` داخل مجلد التثبيت + تسجيل في «إضافة/إزالة البرامج».
 
 ## أوامر
 ```bash
 cd desktop
-npm run dist:local   # أو dist على وسم الإصدار (ينشر تلقائيًا)
+npm run dist:local    # بناء محلي بدون نشر
+npm run dist          # نشر على GitHub Releases (على وسم الإصدار)
 ```
