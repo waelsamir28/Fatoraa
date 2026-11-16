@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { KeyRound, Lock, Phone, ShieldCheck, Copy, Check, Layers, Tag } from "lucide-react";
 import { ActivationPlans } from "@/components/win/ActivationPlans";
 import { RenewalReminder } from "@/components/license/RenewalReminder";
-import { SUPPORT_PHONE } from "@/lib/constants";
+import { SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { resolveLogo } from "@/lib/logo";
 
 interface LicenseInfo {
@@ -76,6 +76,9 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (res.ok && data.ok) {
         setInfo(data.status);
+        // إعادة قراءة الحالة النهائية (تختفي شارة «نسخة تجريبية» فورًا)
+        void fetchLicense();
+        window.dispatchEvent(new Event("fatora:license-changed"));
         setModalOpen(false);
         setCode("");
         // رسالة تهانينا بتصميم البرنامج نفسه (مش alert المتصفح)
@@ -139,7 +142,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* شريط عائم صغير للنسخة التجريبية */}
+      {/* شريط عائم صغير للنسخة التجريبية — يختفي نهائيًا بعد التفعيل */}
       {info && !info.isActivated && !info.isExpired && (
         <div className="fixed bottom-8 left-3 z-40 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-1.5 text-[12px] font-bold text-amber-950 shadow-lg">
           <KeyRound className="h-4 w-4 text-amber-600" />
@@ -158,7 +161,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       )}
 
       {/* شريط حالة الاشتراك (سنة / سنتين) للنسخة المفعّلة */}
-      {info?.isActivated && info.plan && info.plan !== "lifetime" && info.planDaysLeft !== null && (
+      {info?.isActivated && !info.isExpired && info.plan && info.plan !== "lifetime" && info.planDaysLeft !== null && (
         <div className="fixed bottom-8 left-3 z-40 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50/95 px-3 py-1.5 text-[12px] font-bold text-emerald-900 shadow-lg">
           <ShieldCheck className="h-4 w-4 text-emerald-600" />
           <span>
@@ -228,7 +231,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
                   <span className="text-sm font-bold">الدعم الفني والمبيعات:</span>
                 </div>
                 <b className="num text-lg font-black text-green-700" dir="ltr">
-                  {SUPPORT_PHONE}
+                  {SUPPORT_PERSON} — {SUPPORT_PHONE}
                 </b>
               </div>
 

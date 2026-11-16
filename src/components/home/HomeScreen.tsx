@@ -8,7 +8,7 @@ import { ChevronDown, Lock, RefreshCw, Search, Star } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { APP_TITLE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PHONE } from "@/lib/constants";
+import { APP_TITLE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { api } from "@/lib/client";
 import { fmt } from "@/lib/format";
 import type { Settings } from "@/lib/types";
@@ -173,9 +173,11 @@ export function HomeScreen() {
   const [exportOpen, setExportOpen] = useState(false);
   const [bannerImg, setBannerImg] = useState("");
   const [lic, setLic] = useState<{
+    isActivated: boolean;
     plan: string | null;
     planLabel: string;
     planDaysLeft: number | null;
+    daysLeft: number;
   } | null>(null);
   const [railImg, setRailImg] = useState("");
   const [openSection, setOpenSection] = useState<Record<string, boolean>>({});
@@ -195,9 +197,14 @@ export function HomeScreen() {
     } catch {
       /* ignore */
     }
-    api<{ plan: string | null; planLabel: string; planDaysLeft: number | null }>("/api/license")
-      .then((r) => alive && setLic(r))
-      .catch(() => undefined);
+    const loadLicense = () => {
+      api<{ isActivated: boolean; plan: string | null; planLabel: string; planDaysLeft: number | null; daysLeft: number }>("/api/license")
+        .then((r) => alive && setLic(r))
+        .catch(() => undefined);
+    };
+    loadLicense();
+    window.addEventListener("fatora:license-changed", loadLicense);
+    window.addEventListener("focus", loadLicense);
     // صور البانر وخلفية الأزرار (يتم رفعها من الإعدادات)
     (["banner", "rail"] as const).forEach((kind) => {
       api<{ url: string }>(`/api/home/images?kind=${kind}`)
@@ -221,6 +228,8 @@ export function HomeScreen() {
       .catch(() => undefined);
     return () => {
       alive = false;
+      window.removeEventListener("fatora:license-changed", loadLicense);
+      window.removeEventListener("focus", loadLicense);
     };
   }, []);
 
@@ -341,7 +350,16 @@ export function HomeScreen() {
               </div>
               <div className="hs-hello">
                 <span className="hs-hello__text">أهلا بك في برنامج فاتورة لإدارة المبيعات والمخزون</span>
-                <span className="hs-pill">النسخة مفتوحة</span>
+                <span className={`hs-pill${lic && !lic.isActivated ? " hs-pill--trial" : ""}`}>
+                  {lic?.isActivated
+                    ? "النسخة مفتوحة"
+                    : `نسخة تجريبية (متبقي ${lic?.daysLeft ?? 15} يوم)`}
+                </span>
+                {lic?.isActivated && lic.plan && lic.plan !== "lifetime" && lic.planDaysLeft !== null && (
+                  <span className="hs-pill hs-pill--plan">
+                    {lic.planLabel} — متبقي {lic.planDaysLeft} يوم
+                  </span>
+                )}
                 <button
                   type="button"
                   className="hs-lock"
@@ -420,7 +438,7 @@ export function HomeScreen() {
                   </>
                 )}
                 <span className="hs-footer__sep">|</span>
-                <span>الدعم: <b className="num">{SUPPORT_PHONE}</b></span>
+                <span>الدعم: <b>{SUPPORT_PERSON}</b> — <b className="num">{SUPPORT_PHONE}</b></span>
               </span>
             </div>
           </div>

@@ -9,5 +9,8 @@ contextBridge.exposeInMainWorld("installer", {
   minimize: () => ipcRenderer.send("setup:minimize"),
   close: () => ipcRenderer.send("setup:close"),
   confirmUninstall: () => ipcRenderer.invoke("setup:confirmUninstall"),
+  openFolder: () => ipcRenderer.invoke("setup:openFolder"),
+  whatsNew: () => ipcRenderer.invoke("setup:whatsNew"),
+  cancel: () => ipcRenderer.send("setup:cancel"),
   onProgress: (cb) => ipcRenderer.on("setup:progress", (_e, data) => cb(data)),
 });

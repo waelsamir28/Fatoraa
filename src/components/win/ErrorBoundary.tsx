@@ -85,7 +85,7 @@ export function ErrorBoundary({ children }: { children: ReactNode }) {
           </div>
 
           <p className="text-center text-[11px] font-bold text-slate-400">
-            لو الخطأ تكرر، ابعته للدعم: 01222355769
+            لو الخطأ تكرر، ابعته للدعم: م/ وائل الجمال — 01222355769
           </p>
         </div>
       </div>

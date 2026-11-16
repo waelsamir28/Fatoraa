@@ -319,7 +319,7 @@ export function InvoiceSheet({
             ) : (
               layout.showSupportLine && (
                 <div>
-                  نظام نقاط البيع وإدارة المحلات — {APP_NAME} — {SUPPORT_PHONE}
+                  نظام نقاط البيع وإدارة المحلات — {APP_NAME} — م/ وائل الجمال — {SUPPORT_PHONE}
                 </div>
               )
             )}

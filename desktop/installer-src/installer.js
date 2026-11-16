@@ -9,6 +9,11 @@ const api =
     install: async () => ({ ok: true }),
     launch: async () => {},
     confirmUninstall: async () => true,
+    openFolder: async () => {},
+    whatsNew: async () => ({
+      version: "معاينة",
+      items: ["تثبيت بنمط Windows 11", "تحسين سرعة بدء التشغيل", "إصلاحات وتحديثات متنوعة"],
+    }),
     minimize: async () => {},
     close: async () => {},
     onProgress: (cb) => {
@@ -40,7 +45,7 @@ const TIPS = [
   "نصيحة: تقدر تفتح البرنامج من سطح المكتب أو من قائمة «ابدأ».",
   "نصيحة: البرنامج يشتغل بدون إنترنت — والبيانات محفوظة على جهازك.",
   "نصيحة: خد نسخة احتياطية من الإعدادات ← النسخ الاحتياطي.",
-  "نصيحة: أي مشكلة؟ الدعم الفني 01222355769.",
+  "نصيحة: أي مشكلة؟ الدعم الفني م/ وائل الجمال — 01222355769.",
 ];
 
 function show(page) {
@@ -61,7 +66,34 @@ async function init() {
   $("footHint").textContent = `الإصدار ${info.version}`;
   $("dir").value = info.defaultDir;
   $("spaceMeta").textContent = `المساحة المطلوبة: ${fmtBytes(info.requiredBytes)} · المتاحة: ${fmtBytes(info.freeBytes)}`;
+  void checkForUpdates();
 }
+
+async function checkForUpdates() {
+  const spin = $("checkSpin");
+  const text = $("checkText");
+  try {
+    const notes = await api.whatsNew();
+    spin.classList.add("ok");
+    text.textContent = "أنت على أحدث إصدار — البرنامج جاهز للتثبيت";
+    $("wnVer").textContent = `(${notes.version})`;
+    $("wnList").innerHTML = "";
+    for (const line of notes.items) {
+      const li = document.createElement("li");
+      li.textContent = line;
+      $("wnList").appendChild(li);
+    }
+  } catch {
+    spin.classList.add("ok");
+    text.textContent = "تعذّر التحقق من التحديثات — يمكنك المتابعة بالتثبيت";
+  }
+}
+
+$("btnOpenFolder").addEventListener("click", () => api.openFolder());
+$("btnWhatsNew").addEventListener("click", () => {
+  const box = $("whatsNew");
+  box.hidden = !box.hidden;
+});
 
 $("btnBrowse").addEventListener("click", async () => {
   const picked = await api.browse($("dir").value);
@@ -70,7 +102,11 @@ $("btnBrowse").addEventListener("click", async () => {
 
 $("btnMin").addEventListener("click", () => api.minimize());
 $("btnClose").addEventListener("click", () => api.close());
-$("btnCancel").addEventListener("click", () => api.close());
+$("btnCancel").addEventListener("click", () => {
+  if (!busy) return api.close();
+  if (!confirm("التثبيت جارٍ الآن — هل تريد إلغاءه؟ سيتم تنظيف الملفات المؤقتة.")) return;
+  api.cancel();
+});
 
 $("btnNext").addEventListener("click", async () => {
   if (busy) return;

@@ -46,7 +46,7 @@ for (const entry of fs.readdirSync(appUnpacked, { withFileTypes: true })) {
 // واجهة المثبّت داخل resources/app (Electron يحمّلها تلقائيًا)
 const installerApp = path.join(stubDir, "resources", "app");
 fs.mkdirSync(installerApp, { recursive: true });
-for (const file of ["main.js", "preload.js", "index.html", "installer.js"]) {
+for (const file of ["main.js", "preload.js", "index.html", "installer.js", "release-notes.json"]) {
   fs.copyFileSync(path.join(__dirname, file), path.join(installerApp, file));
 }
 fs.cpSync(path.join(__dirname, "assets"), path.join(installerApp, "assets"), { recursive: true });

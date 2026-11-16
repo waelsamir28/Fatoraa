@@ -18,6 +18,7 @@ const HEADER_SIZE = 32;
 const isUninstall = process.argv.includes("--uninstall");
 
 let win = null;
+let installTarget = "";
 const send = (channel, payload) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
 };
@@ -171,6 +172,8 @@ function writeUninstallRegistry({ dir, sizeKb }) {
 
 /* ---------------- التثبيت ---------------- */
 
+let cancelRequested = false;
+
 async function install({ dir, desktopShortcut, startMenuShortcut }) {
   const target = String(dir || "").trim();
   if (!target || !/^[a-zA-Z]:\\/.test(target)) {
@@ -195,6 +198,8 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
 
     fs.mkdirSync(target, { recursive: true });
 
+    installTarget = target;
+    cancelRequested = false;
     send({ percent: 4, message: "جاري فك ضغط ملفات البرنامج…" });
     const archive = extractPayloadTo7z();
     try {
@@ -213,6 +218,12 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
       } catch {
         /* ignore */
       }
+    }
+
+    if (cancelRequested) {
+      send({ percent: 0, message: "تم إلغاء التثبيت — جاري التنظيف…" });
+      removeInstalledFiles(target);
+      return { ok: false, cancelled: true, error: "تم إلغاء التثبيت وتنظيف الملفات." };
     }
 
     send({ percent: 90, message: "تجهيز ملفات التشغيل…" });
@@ -305,6 +316,42 @@ async function uninstall() {
   );
   spawn("cmd.exe", ["/c", selfDelete], { detached: true, stdio: "ignore", windowsHide: true }).unref();
   return true;
+}
+
+
+/** حذف الملفات التي نُسخت عند إلغاء التثبيت */
+function removeInstalledFiles(dir) {
+  try {
+    if (dir && fs.existsSync(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** ملاحظات الإصدار — تُقرأ من release-notes.json المرفق مع المثبّت إن وُجد */
+function releaseNotes() {
+  const fallback = [
+    "تثبيت بنمط Windows 11 (نافذة حديثة + شريط تقدم بنص متحرك)",
+    "فتح البرنامج على الشاشة الرئيسية دائمًا + وضع ملء الشاشة + حجم خط 110%",
+    "شاشة المبيعات تبدأ فارغة (بدون تحميل أي فاتورة قديمة)",
+    "إصلاح شاشة معلومات البرنامج (كانت مقصوصة)",
+    "اسم المسؤول مع رقم الدعم في كل أنحاء البرنامج",
+  ];
+  const candidates = [path.join(process.resourcesPath, "release-notes.json"), path.join(__dirname, "release-notes.json")];
+  for (const file of candidates) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, "utf8"));
+      if (Array.isArray(data.items) && data.items.length) return data;
+    } catch {
+      /* ignore */
+    }
+  }
+  return { version: app.getVersion(), items: fallback };
 }
 
 /* ---------------- النافذة ---------------- */
@@ -423,6 +470,15 @@ ipcMain.handle("setup:launch", () => {
   const exe = path.join(dir, APP_EXE);
   if (fs.existsSync(exe)) shell.openPath(exe);
   app.quit();
+});
+ipcMain.handle("setup:openFolder", () => {
+  const dir = installTarget || path.dirname(process.execPath);
+  if (fs.existsSync(dir)) return shell.openPath(dir);
+  return null;
+});
+ipcMain.handle("setup:whatsNew", () => releaseNotes());
+ipcMain.on("setup:cancel", () => {
+  cancelRequested = true;
 });
 ipcMain.on("setup:minimize", () => win && win.minimize());
 ipcMain.on("setup:close", () => app.quit());
