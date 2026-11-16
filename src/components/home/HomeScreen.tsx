@@ -265,15 +265,6 @@ export function HomeScreen() {
       title={APP_TITLE}
       onClose={exit}
       showBackBtn={false}
-      statusBar={
-        <>
-          <span className="ms-auto flex items-center gap-2">
-            <span>الإصدار {APP_VERSION}</span>
-            <span className="sep" />
-            <span>الدعم: <b className="num font-black text-blue-800">{SUPPORT_PHONE}</b></span>
-          </span>
-        </>
-      }
     >
       <div className="hs" dir="rtl">
         {/* خلفية واحدة تغطي البانر + الأزرار الجانبية كقطعة واحدة */}

@@ -182,8 +182,8 @@ export function ExitView() {
         <div className="win-dialog w-full max-w-[480px]">
           <div className="win-titlebar win-titlebar-sm" dir="ltr">
             <div className="flex items-center gap-2 px-3">
-              <CartLogo className="h-6 w-6" />
-              <span dir="rtl" className="text-[15px] font-extrabold">{APP_NAME}</span>
+              <CartLogo className="h-4 w-4" />
+              <span dir="rtl" className="text-[12.5px] font-extrabold">{APP_NAME}</span>
             </div>
           </div>
           <div className="flex flex-col items-center gap-2 bg-white p-6 text-center">
