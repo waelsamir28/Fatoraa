@@ -271,7 +271,7 @@ export function HomeScreen() {
         {/* ================= الترويسة: لوجو كبير + صورة المستخدم يمين ================= */}
         <div
           className="hs-top"
-          style={bannerImg ? { backgroundImage: `url("${bannerImg}")` } : undefined}
+          style={{ backgroundImage: `url("${bannerImg || "/images/home-banner-2027.png"}")` }}
         >
 
           {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}

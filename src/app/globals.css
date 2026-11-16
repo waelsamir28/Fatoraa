@@ -1427,7 +1427,7 @@ html[data-font="cairo-play"] body {
   position: relative;
   z-index: 1;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: center top;
   background-size: cover;
   display: flex;
   flex: none;
