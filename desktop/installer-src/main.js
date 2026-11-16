@@ -65,8 +65,8 @@ function extractPayloadTo7z() {
 /** فك ضغط 7z المرفق مع electron */
 function sevenZipBin() {
   const candidates = [
-    path.join(process.resourcesPath, "app.asar.unpacked", "7za.exe"),
     path.join(process.resourcesPath, "7za.exe"),
+    path.join(process.resourcesPath, "app.asar.unpacked", "7za.exe"),
     path.join(__dirname, "7za.exe"),
   ];
   for (const c of candidates) {
@@ -215,10 +215,23 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
 
     send({ percent: 90, message: "تجهيز ملفات التشغيل…" });
 
-    // ملف إلغاء التثبيت: نفس المثبّت مع وسيط --uninstall
+    // ملف إلغاء التثبيت: نسخة من المثبّت بدون الحمولة الملحقة (حتى لا يتضاعف الحجم)
     const uninstaller = path.join(target, UNINSTALL_EXE);
     try {
-      fs.copyFileSync(process.execPath, uninstaller);
+      const { payloadSize } = readPayloadInfo();
+      const stubSize = fs.statSync(process.execPath).size - payloadSize;
+      const fdIn = fs.openSync(process.execPath, "r");
+      const fdOut = fs.openSync(uninstaller, "w");
+      const buf = Buffer.alloc(4 * 1024 * 1024);
+      let read = 0;
+      while (read < stubSize) {
+        const n = fs.readSync(fdIn, buf, 0, Math.min(buf.length, stubSize - read), read);
+        if (n <= 0) break;
+        fs.writeSync(fdOut, buf, 0, n);
+        read += n;
+      }
+      fs.closeSync(fdIn);
+      fs.closeSync(fdOut);
     } catch {
       /* ignore */
     }

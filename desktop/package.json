@@ -9,8 +9,7 @@
   "main": "main.cjs",
   "scripts": {
     "prepare-app": "node scripts/prepare.cjs",
-    "installer:install": "npm --prefix installer-src install --no-audit --no-fund",
-    "installer:build": "electron-builder --projectDir installer-src --win dir --x64",
+    "installer:build": "node installer-src/buildSetup.cjs",
     "installer:payload": "node installer-src/writePayload.cjs",
     "dist": "npm run prepare-app && electron-builder --win --x64 --publish always && npm run installer:build && npm run installer:payload",
     "dist:setup": "npm run prepare-app && electron-builder --win --x64 --publish never && npm run installer:build && npm run installer:payload",

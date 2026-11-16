@@ -4,8 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const desktopDir = path.resolve(__dirname, "..");
-const setupExe = path.join(desktopDir, "dist-setup", "win-unpacked", "FATORA-Setup.exe");
-const payload = path.join(desktopDir, "dist", "win-unpacked", "resources", "app.7z");
+const setupExe = path.join(desktopDir, "dist-setup", "stub", "FATORA-Setup.exe");
+const payload = path.join(desktopDir, "dist-setup", "resources-payload.7z");
 const version = require(path.join(desktopDir, "package.json")).version;
 
 const SIZE_OFFSET = 8; // حجم الحمولة (BigUInt64LE)
