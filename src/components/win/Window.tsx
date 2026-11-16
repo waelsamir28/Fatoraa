@@ -128,7 +128,7 @@ export function Window({
           {showBackBtn && (
             <button
               type="button"
-              className="app-no-drag flex items-center justify-center h-6 w-6 rounded-md bg-white/15 hover:bg-white/25 text-white transition mr-1"
+              className="app-no-drag win-back mr-1 flex h-6 w-6 items-center justify-center rounded-md transition"
               title="رجوع إلى الشاشة الرئيسية"
               onClick={() => router.push("/")}
             >

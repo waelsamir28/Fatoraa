@@ -171,7 +171,6 @@ export function HomeScreen() {
   const [stats, setStats] = useState<HomeSummary | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
-  const [avatar, setAvatar] = useState("");
   const [bannerImg, setBannerImg] = useState("");
   const [lic, setLic] = useState<{
     plan: string | null;
@@ -196,9 +195,6 @@ export function HomeScreen() {
     } catch {
       /* ignore */
     }
-    api<{ avatar: string }>("/api/users/avatar")
-      .then((r) => alive && setAvatar(r.avatar))
-      .catch(() => undefined);
     api<{ plan: string | null; planLabel: string; planDaysLeft: number | null }>("/api/license")
       .then((r) => alive && setLic(r))
       .catch(() => undefined);
@@ -274,18 +270,13 @@ export function HomeScreen() {
           style={{ backgroundImage: `url("${bannerImg || "/images/home-banner-2027.png"}")` }}
         >
 
-          {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
+          {/* بيانات المستخدم — بدون صورة: بادج الدور (أبيض) + لوحة الاسم (كحلي) + نقطة متصل */}
           <div className="hs-user">
-            <div className="hs-user__ring">
-              <span className="hs-user__halo" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={avatar || "/images/avatar-user.png"} alt={userName} className="hs-user__img" />
-              <span className="hs-user__badge">{roleLabel}</span>
-            </div>
-            <div className="hs-user__plate">
+            <span className="hs-user__role">{roleLabel}</span>
+            <span className="hs-user__plate">
               <span className="hs-user__sub">{userName}</span>
               {settings?.showOnlineDot !== false && <span className="hs-user__dot" />}
-            </div>
+            </span>
           </div>
 
           {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
