@@ -128,28 +128,28 @@ export function Window({
           {showBackBtn && (
             <button
               type="button"
-              className="app-no-drag flex items-center justify-center h-7 w-7 rounded-md bg-white/15 hover:bg-white/25 text-white transition mr-1"
+              className="app-no-drag flex items-center justify-center h-6 w-6 rounded-md bg-white/15 hover:bg-white/25 text-white transition mr-1"
               title="رجوع إلى الشاشة الرئيسية"
               onClick={() => router.push("/")}
             >
-              <ArrowRight className="h-4 w-4" strokeWidth={2.8} />
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.8} />
             </button>
           )}
 
-          <span className="shrink-0">
+          <span className="win-titlebar__icon shrink-0">
             {icon ?? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={DEFAULT_LOGO} alt="logo" className="h-9 w-auto object-contain drop-shadow" />
+              <img src={DEFAULT_LOGO} alt="logo" className="h-6 w-auto object-contain drop-shadow" />
             )}
           </span>
-          <span dir="rtl" className="truncate text-[19px] font-extrabold pr-1">
+          <span dir="rtl" className="truncate text-[13px] font-extrabold pr-1 leading-none">
             {title}
           </span>
         </div>
 
         <div className="app-no-drag flex h-full shrink-0" onDoubleClick={(e) => e.stopPropagation()}>
           <button type="button" className="win-ctrl" onClick={() => setCalc(true)} title="الآلة الحاسبة">
-            <CalcIcon className="h-4 w-4" strokeWidth={2.6} />
+            <CalcIcon className="h-3.5 w-3.5" strokeWidth={2.6} />
           </button>
           <button
             type="button"
@@ -160,21 +160,21 @@ export function Window({
             }}
             title={isFs ? "إنهاء ملء الشاشة (Esc)" : "تكبير ملء الشاشة (F11)"}
           >
-            {isFs ? <Minimize2 className="h-4 w-4" strokeWidth={2.8} /> : <Maximize2 className="h-4 w-4" strokeWidth={2.8} />}
+            {isFs ? <Minimize2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : <Maximize2 className="h-3.5 w-3.5" strokeWidth={2.8} />}
           </button>
           <span className="mx-1 my-2 w-px bg-white/30" />
           <button type="button" className="win-ctrl" onClick={() => setMinimized(true)} title="تصغير">
-            <Minus className="h-4 w-4" strokeWidth={3} />
+            <Minus className="h-3.5 w-3.5" strokeWidth={3} />
           </button>
           <button type="button" className="win-ctrl" onClick={toggleMaximized} title={showRestore ? "استعادة" : "تكبير"}>
             {showRestore ? (
-              <Copy className="h-[16px] w-[16px]" strokeWidth={2.6} />
+              <Copy className="h-[13px] w-[13px]" strokeWidth={2.6} />
             ) : (
-              <Square className="h-[16px] w-[16px]" strokeWidth={2.8} />
+              <Square className="h-[13px] w-[13px]" strokeWidth={2.8} />
             )}
           </button>
           <button type="button" className="win-ctrl close" onClick={handleClose} title="إغلاق">
-            <X className="h-5 w-5" strokeWidth={3} />
+            <X className="h-4 w-4" strokeWidth={3} />
           </button>
         </div>
       </div>

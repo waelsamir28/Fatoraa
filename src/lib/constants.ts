@@ -1,6 +1,6 @@
 export const APP_NAME = "FATORA - 2027";
 export const APP_BRAND = "FATORA";
-export const APP_TITLE = "برنامج FATORA - لإدارة المحلات التجارية";
+export const APP_TITLE = "FATORA-POS 2027";
 export const APP_TAGLINE = "مناسب لجميع الأنشطة التجارية";
 export const APP_VERSION = "1.0.0";
 export const DEFAULT_LOGO = "/images/logo-fatora.png";

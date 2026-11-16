@@ -390,8 +390,8 @@ function MessageBox({ dialog, onClose }: { dialog: DialogState; onClose: (v: boo
       <div className="win-dialog w-full max-w-[460px]" role="alertdialog">
         <div className="win-titlebar win-titlebar-sm" dir="ltr">
           <div className="flex items-center gap-2 px-3">
-            <CartLogo className="h-6 w-6" />
-            <span dir="rtl" className="text-[15px] font-extrabold">
+            <CartLogo className="h-4 w-4" />
+            <span dir="rtl" className="text-[12.5px] font-extrabold">
               {dialog.title ?? APP_NAME}
             </span>
           </div>
