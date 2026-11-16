@@ -45,7 +45,6 @@ import {
   RailInfo,
   RailSupport,
   RailSettings,
-  RailShield,
   RailShifts,
   RailUsers,
 } from "@/components/home/HomeIcons";
@@ -157,7 +156,6 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
   { href: "/connection", label: "ربط قاعدة البيانات", Icon: RailDatabase },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: RailBackup },
-  { href: "/subscription", label: "حالة الاشتراك", Icon: RailShield },
   { href: "/health", label: "صحة البرنامج", Icon: IcShieldCheck as unknown as RawIcon },
   { href: "/audit", label: "سجل النشاط", Icon: IcClipboardCheck as unknown as RawIcon },
   { href: "/support", label: "الدعم الفني", Icon: RailSupport },
@@ -279,11 +277,15 @@ export function HomeScreen() {
           {/* صورة المستخدم — فوق الخلفية مباشرة بدون أي فاصل */}
           <div className="hs-user">
             <div className="hs-user__ring">
+              <span className="hs-user__halo" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={avatar || "/images/avatar-user.png"} alt={userName} className="hs-user__img" />
+              <span className="hs-user__badge">{roleLabel}</span>
             </div>
-            <div className="hs-user__name">{roleLabel}</div>
-            <div className="hs-user__sub">{userName}</div>
+            <div className="hs-user__plate">
+              <span className="hs-user__sub">{userName}</span>
+              <span className="hs-user__dot" />
+            </div>
           </div>
 
           {/* اللوجو في منتصف البانر */}
