@@ -4,23 +4,66 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { api } from "@/lib/client";
 import type { Settings } from "@/lib/types";
 
+/** تخصيص الأزرار بالكامل — يُحفظ داخل Settings.buttonOptions كـ JSON */
+export interface ButtonOptions {
+  /** لون أساسي / مرور / ضغط / نص */
+  color: string;
+  hoverColor: string;
+  activeColor: string;
+  textColor: string;
+  /** حدود */
+  radius: number;
+  borderWidth: number;
+  borderColor: string;
+  /** شكل */
+  shape: string; // rounded | pill | square | soft | sharp
+  /** حركة عند المرور */
+  animation: string; // none | lift | grow | press | shine | pulse
+  /** ظل */
+  shadow: boolean;
+  /** وزن الخط */
+  bold: boolean;
+}
+
+export const DEFAULT_BUTTONS: ButtonOptions = {
+  color: "#1a5fc0",
+  hoverColor: "#2f7fe0",
+  activeColor: "#0e4390",
+  textColor: "#ffffff",
+  radius: 8,
+  borderWidth: 1,
+  borderColor: "#0e4390",
+  shape: "rounded",
+  animation: "lift",
+  shadow: true,
+  bold: true,
+};
+
 export interface UiPrefs {
   theme: string;
   /** light | dark */
   mode: string;
   fontFamily: string;
+  fontWeight: string; // normal | bold | black
   fontScale: number;
   buttonStyle: string;
+  buttonOptions: ButtonOptions;
   tableHeaderColor: string;
+  tableHeaderFollowTheme: boolean;
+  rowSelectColor: string;
 }
 
 export const DEFAULT_PREFS: UiPrefs = {
   theme: "classic-blue",
   mode: "light",
   fontFamily: "cairo",
+  fontWeight: "normal",
   fontScale: 100,
   buttonStyle: "glossy-3d",
+  buttonOptions: DEFAULT_BUTTONS,
   tableHeaderColor: "navy-dark",
+  tableHeaderFollowTheme: true,
+  rowSelectColor: "#dbeafe",
 };
 
 export interface ThemeDef {
@@ -53,6 +96,48 @@ export const THEMES: ThemeDef[] = [
     swatch: ["#5b8fd6", "#2c5c93", "#153a5f"],
     homeBg: "linear-gradient(135deg,#0b2540,#1a4468 45%,#2f6ba3 62%,#071a2c)",
   },
+  {
+    key: "sage-green",
+    label: "أخضر مريمي",
+    hint: "أخضر هادئ مريح للعين — مناسب للاستخدام الطويل",
+    swatch: ["#8fb99a", "#4f8a63", "#2f5d44"],
+    homeBg: "linear-gradient(135deg,#22452f,#2f5d44 45%,#4f8a63 62%,#152c1e)",
+  },
+  {
+    key: "warm-sand",
+    label: "بيج رملي",
+    hint: "بيج دافئ وأنيق — ألوان محايدة مريحة",
+    swatch: ["#e0c9a6", "#b5946a", "#7d6344"],
+    homeBg: "linear-gradient(135deg,#5f4b32,#7d6344 45%,#b5946a 62%,#3f3122)",
+  },
+  {
+    key: "muted-purple",
+    label: "بنفسجي هادئ",
+    hint: "بنفسجي خفيف عصري بدون صخب",
+    swatch: ["#a99bc9", "#7a68a6", "#544778"],
+    homeBg: "linear-gradient(135deg,#413659,#544778 45%,#7a68a6 62%,#2b2339)",
+  },
+  {
+    key: "soft-teal",
+    label: "تركواز ناعم",
+    hint: "تركواز بارد هادئ — يشبه ألوان الأنظمة الطبية",
+    swatch: ["#7fc0bd", "#4a9a96", "#2f6b68"],
+    homeBg: "linear-gradient(135deg,#245250,#2f6b68 45%,#4a9a96 62%,#173736)",
+  },
+  {
+    key: "slate-gray",
+    label: "رمادي حجري",
+    hint: "رمادي محايد احترافي — يخلي الألوان الأخرى تبرز",
+    swatch: ["#a8b2bd", "#6b7885", "#454f5a"],
+    homeBg: "linear-gradient(135deg,#343c45,#454f5a 45%,#6b7885 62%,#20262c)",
+  },
+  {
+    key: "dusty-rose",
+    label: "وردي ترابي",
+    hint: "وردي باهت هادئ — لمسة أنيقة بدون مبالغة",
+    swatch: ["#d8a8b0", "#a86e7a", "#7a4b56"],
+    homeBg: "linear-gradient(135deg,#5e3942,#7a4b56 45%,#a86e7a 62%,#3f262c)",
+  },
 ];
 
 export const FONT_OPTIONS: Array<{ key: string; label: string; stack: string }> = [
@@ -62,6 +147,11 @@ export const FONT_OPTIONS: Array<{ key: string; label: string; stack: string }> 
   { key: "cairo-play", label: "Cairo Play — عريض للعناوين", stack: '"Cairo Play","Cairo","Segoe UI",Tahoma,sans-serif' },
   { key: "tahoma", label: "Tahoma — تاهوما (ويندوز)", stack: "Tahoma,Geneva,Verdana,Arial,sans-serif" },
   { key: "segoe", label: "Segoe UI — سيجو ويندوز", stack: '"Segoe UI",Tahoma,Arial,sans-serif' },
+  { key: "noto-kufi", label: "Noto Kufi Arabic — نوتو كوفي", stack: '"Noto Kufi Arabic","Cairo",Tahoma,sans-serif' },
+  { key: "ibm-plex", label: "IBM Plex Sans Arabic — آي بي إم", stack: '"IBM Plex Sans Arabic","Cairo",Tahoma,sans-serif' },
+  { key: "rubik", label: "Rubik — روبيك", stack: '"Rubik","Cairo",Tahoma,sans-serif' },
+  { key: "amiri", label: "Amiri — أميري (نسخي)", stack: '"Amiri","Cairo",serif' },
+  { key: "system", label: "خط النظام الافتراضي", stack: 'system-ui,"Segoe UI",Tahoma,sans-serif' },
 ];
 
 export const BUTTON_STYLES: Array<{ key: string; label: string; hint: string }> = [
@@ -90,6 +180,15 @@ export function normalizeTheme(key: string | null | undefined): string {
   return "classic-blue";
 }
 
+/** أشكال الأزرار المدعومة → نصف قطر الحواف */
+const SHAPES: Record<string, number> = {
+  rounded: 8,
+  pill: 999,
+  square: 2,
+  soft: 14,
+  sharp: 0,
+};
+
 export function applyUiPrefs(p: UiPrefs) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -98,10 +197,30 @@ export function applyUiPrefs(p: UiPrefs) {
   root.setAttribute("data-buttons", p.buttonStyle || "glossy-3d");
   root.setAttribute("data-table", p.tableHeaderColor || "navy-dark");
   root.setAttribute("data-font", p.fontFamily || "cairo");
+  root.setAttribute("data-fweight", p.fontWeight || "normal");
   root.setAttribute("data-scale", String(Math.round(p.fontScale || 100)));
   const font = FONT_OPTIONS.find((f) => f.key === p.fontFamily) ?? FONT_OPTIONS[0];
   root.style.setProperty("--ui-font", font.stack);
   root.style.setProperty("--ui-scale", String((p.fontScale || 100) / 100));
+
+  // ===== تخصيص الأزرار =====
+  const b: ButtonOptions = { ...DEFAULT_BUTTONS, ...(p.buttonOptions || {}) };
+  const radius = b.shape === "custom" ? b.radius : (SHAPES[b.shape] ?? b.radius ?? 8);
+  const s = root.style;
+  s.setProperty("--btn-bg", b.color || DEFAULT_BUTTONS.color);
+  s.setProperty("--btn-bg-hover", b.hoverColor || b.color || DEFAULT_BUTTONS.hoverColor);
+  s.setProperty("--btn-bg-active", b.activeColor || b.color || DEFAULT_BUTTONS.activeColor);
+  s.setProperty("--btn-text", b.textColor || DEFAULT_BUTTONS.textColor);
+  s.setProperty("--btn-radius", `${radius}px`);
+  s.setProperty("--btn-border-w", `${b.borderWidth ?? 1}px`);
+  s.setProperty("--btn-border-color", b.borderColor || "transparent");
+  s.setProperty("--btn-shadow", b.shadow ? "0 2px 6px rgba(0,0,0,.18)" : "none");
+  s.setProperty("--btn-font-weight", b.bold ? "900" : "600");
+  root.setAttribute("data-anim", b.animation || "none");
+  // تفعيل التخصيص فقط لو المستخدم غيّر شيئًا عن الافتراضي
+  root.setAttribute("data-btn-custom", JSON.stringify(b) === JSON.stringify(DEFAULT_BUTTONS) ? "0" : "1");
+  root.setAttribute("data-table-follow", p.tableHeaderFollowTheme === false ? "manual" : "theme");
+  s.setProperty("--row-select", p.rowSelectColor || "#dbeafe");
 }
 
 interface Ctx {
@@ -131,13 +250,27 @@ export function useUiPrefs(): Ctx {
   return c;
 }
 
-const fromSettings = (s: Partial<Settings>): UiPrefs => ({
+function parseButtons(raw: unknown): ButtonOptions {
+  if (typeof raw !== "string" || !raw.trim()) return DEFAULT_BUTTONS;
+  try {
+    const parsed = JSON.parse(raw) as Partial<ButtonOptions>;
+    return { ...DEFAULT_BUTTONS, ...parsed };
+  } catch {
+    return DEFAULT_BUTTONS;
+  }
+}
+
+export const fromSettings = (s: Partial<Settings>): UiPrefs => ({
   theme: normalizeTheme(s.theme),
   mode: s.mode === "dark" ? "dark" : "light",
   fontFamily: s.fontFamily || DEFAULT_PREFS.fontFamily,
+  fontWeight: s.fontWeight || "normal",
   fontScale: typeof s.fontScale === "number" && s.fontScale > 0 ? s.fontScale : DEFAULT_PREFS.fontScale,
   buttonStyle: s.buttonStyle || DEFAULT_PREFS.buttonStyle,
+  buttonOptions: parseButtons(s.buttonOptions),
   tableHeaderColor: s.tableHeaderColor || DEFAULT_PREFS.tableHeaderColor,
+  tableHeaderFollowTheme: s.tableHeaderFollowTheme !== false,
+  rowSelectColor: s.rowSelectColor || DEFAULT_PREFS.rowSelectColor,
 });
 
 export function UiPrefsProvider({ children }: { children: ReactNode }) {
@@ -149,7 +282,9 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const parsed = { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<UiPrefs>) };
+        const stored = JSON.parse(raw) as Partial<UiPrefs>;
+        const parsed = { ...DEFAULT_PREFS, ...stored };
+        parsed.buttonOptions = { ...DEFAULT_BUTTONS, ...(stored.buttonOptions || {}) };
         parsed.theme = normalizeTheme(parsed.theme);
         setPrefs(parsed);
         setSaved(parsed);
@@ -185,7 +320,12 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
       const current = await api<Settings>("/api/settings").catch(() => null);
       await api<Settings>("/api/settings", {
         method: "PUT",
-        json: { ...(current ?? {}), ...next },
+        json: {
+          ...(current ?? {}),
+          ...next,
+          // الحقول النصية في قاعدة البيانات
+          buttonOptions: JSON.stringify(next.buttonOptions || DEFAULT_BUTTONS),
+        },
       });
       setSaved(next);
       try {

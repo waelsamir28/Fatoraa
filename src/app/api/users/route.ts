@@ -25,6 +25,7 @@ export async function GET() {
         branchId: users.branchId,
         lastLoginAt: users.lastLoginAt,
         permissions: users.permissions,
+        allowedPages: users.allowedPages,
         hasPin: sql<boolean>`(${users.pinHash} <> '')`,
       })
       .from(users)
@@ -76,6 +77,12 @@ export async function POST(req: Request) {
         role,
         active: true,
         branchId: b.branchId ? Number(b.branchId) : null,
+        permissions: JSON.stringify(
+          Array.isArray(b.permissions) ? b.permissions.filter((x: unknown) => typeof x === "string") : [],
+        ),
+        allowedPages: JSON.stringify(
+          Array.isArray(b.allowedPages) ? b.allowedPages.filter((x: unknown) => typeof x === "string") : [],
+        ),
       })
       .returning({
         id: users.id,
@@ -84,6 +91,8 @@ export async function POST(req: Request) {
         role: users.role,
         active: users.active,
         branchId: users.branchId,
+        allowedPages: users.allowedPages,
+        permissions: users.permissions,
       });
 
     invalidateAuthCache();
@@ -123,6 +132,12 @@ export async function PATCH(req: Request) {
         ? b.permissions.filter((x) => typeof x === "string" && GRANULAR_PERMISSIONS.some((g) => g.key === x))
         : [];
       patch.permissions = JSON.stringify(list);
+    }
+    // الصفحات المسموح بها (فاضي = كل صفحات دوره)
+    if (b.allowedPages !== undefined) {
+      patch.allowedPages = JSON.stringify(
+        Array.isArray(b.allowedPages) ? b.allowedPages.filter((x: unknown) => typeof x === "string") : [],
+      );
     }
 
     if (!Object.keys(patch).length) {

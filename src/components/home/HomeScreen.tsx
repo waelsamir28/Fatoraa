@@ -8,6 +8,7 @@ import { ChevronDown, Lock, RefreshCw, Search, Star } from "lucide-react";
 import { Window } from "@/components/win/Window";
 import { useDesktop } from "@/components/win/DesktopProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { pageAllowed } from "@/lib/pages";
 import { APP_TITLE, APP_VERSION, DEFAULT_LOGO, SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { api } from "@/lib/client";
 import { fmt } from "@/lib/format";
@@ -138,6 +139,8 @@ const SECTIONS: Section[] = [
     title: "إعدادات النظام",
     items: [
       { href: "/users", label: "الصلاحيات", Icon: IcUserGear },
+      { href: "/pages", label: "صلاحيات الشاشات", Icon: IcContract },
+      { href: "/devices", label: "التحكم في الأجهزة", Icon: IcContract },
       { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IcBackup },
       // بدل «الفروع» — الفروع باقية زر في القائمة الجانبية
       { href: "/subscription", label: "حالة الاشتراك", Icon: IcContract },
@@ -151,6 +154,8 @@ const SECTIONS: Section[] = [
 const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: boolean; action?: "exit" }> = [
   { href: "/", label: "الرئيسية", Icon: RailHome },
   { href: "/users", label: "المستخدمين", Icon: RailUsers },
+  { href: "/pages", label: "صلاحيات الشاشات", Icon: RailUsers },
+  { href: "/devices", label: "التحكم في الأجهزة", Icon: RailUsers },
   { href: "/branches", label: "الفروع", Icon: IcBuilding as unknown as RawIcon },
   { href: "/shifts", label: "الورديات", Icon: RailShifts },
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
@@ -258,6 +263,22 @@ export function HomeScreen() {
 
   const toggle = (id: string) => setOpenSection((o) => ({ ...o, [id]: o[id] === false }));
 
+  /**
+   * إخفاء الكروت غير المسموح بها لهذا الحساب:
+   * - المالك يرى كل شيء.
+   * - الكاشير يرى فقط ما سُمح له به (الصفحات + صلاحيات الدور).
+   */
+  const allowedSections = SECTIONS.map((sec) => ({
+    ...sec,
+    items: sec.items.filter((it) => {
+      if (!it.href) return true;
+      const path = it.href.split("?")[0];
+      return pageAllowed(user, path);
+    }),
+  })).filter((sec) => sec.items.length > 0);
+
+  const visibleRail = RAIL.filter((r) => !r.href || r.href === "/" || pageAllowed(user, r.href));
+
   const userName = user?.name || activeUser || settings?.userName || "FATORA";
   const roleLabel = user?.roleLabel || "مستخدم";
   const dateStr = now ? now.toLocaleDateString("en-GB").replace(/\//g, "/") : "";
@@ -304,7 +325,7 @@ export function HomeScreen() {
           {/* ---- يمين: القائمة الثابتة ---- */}
           <nav className="hs-rail" style={railImg ? { backgroundImage: `url("${railImg}")` } : undefined}>
             <div className="hs-rail__inner">
-            {RAIL.map((r) => {
+            {visibleRail.map((r) => {
               const on = r.href ? (r.href === "/" ? pathname === "/" : pathname === r.href || pathname.startsWith(`${r.href}/`)) : false;
               const inner = (
                 <>
@@ -374,7 +395,7 @@ export function HomeScreen() {
 
             {/* الأقسام */}
             <div className="hs-board" style={{ flex: 1, minHeight: 0 }}>
-              {SECTIONS.map((sec) => {
+              {allowedSections.map((sec) => {
                 const collapsed = openSection[sec.id] === false;
                 return (
                   <div key={sec.id} className="hs-sec">

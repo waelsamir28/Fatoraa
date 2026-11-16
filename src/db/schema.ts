@@ -48,6 +48,20 @@ export const settings = pgTable("settings", {
   /** إعدادات محرّر قوالب الفاتورة (JSON) — ترويسة، تذييل، حجم، إظهار الأجزاء */
   invoiceLayout: text("invoice_layout").notNull().default(""),
   fontScale: doublePrecision("font_scale").notNull().default(100), // template-classic-a5 | template-modern-a5 | template-pos-thermal
+  /** تخصيص الأزرار (JSON): لون/شكل/حركة/حدود/خط */
+  buttonOptions: text("button_options").notNull().default(""),
+  /** إظهار/إخفاء عناصر شاشة المبيعات (JSON) */
+  salesLayout: text("sales_layout").notNull().default(""),
+  /** خلفية شاشة الدخول (base64) */
+  loginBgUrl: text("login_bg_url").notNull().default(""),
+  /** خلفية شاشة القفل (base64) */
+  lockBgUrl: text("lock_bg_url").notNull().default(""),
+  /** لون تحديد الصف في الجداول */
+  rowSelectColor: text("row_select_color").notNull().default("#dbeafe"),
+  /** وزن الخط: normal | bold | black */
+  fontWeight: text("font_weight").notNull().default("normal"),
+  /** لون ترويسات الجداول — يتبع الثيم عند القيمة "theme" */
+  tableHeaderFollowTheme: boolean("table_header_follow_theme").notNull().default(true),
   updatedAt: ts("updated_at"),
 });
 
@@ -326,6 +340,8 @@ export const users = pgTable(
     pinHash: text("pin_hash").notNull().default(""),
     /** صلاحيات مخصصة (فوق صلاحيات الدور) — JSON array */
     permissions: text("permissions").notNull().default("[]"),
+    /** الشاشات المسموحة لهذا المستخدم (JSON array) — فاضي = حسب الدور */
+    allowedPages: text("allowed_pages").notNull().default(""),
     createdAt: ts("created_at"),
   },
   (t) => [uniqueIndex("users_username_idx").on(t.username)],
@@ -410,3 +426,35 @@ export const appConfig = pgTable("app_config", {
   value: text("value").notNull().default(""),
   updatedAt: ts("updated_at"),
 });
+
+/** التحكم عن بُعد في أجهزة العملاء (إلغاء/إعادة تفعيل من لوحة التحكم) */
+export const deviceControl = pgTable(
+  "device_control",
+  {
+    id: serial("id").primaryKey(),
+    deviceId: text("device_id").notNull(),
+    storeName: text("store_name").notNull().default(""),
+    revoked: boolean("revoked").notNull().default(false),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
+    note: text("note").notNull().default(""),
+    lastSeenAt: ts("last_seen_at"),
+    createdAt: ts("created_at"),
+  },
+  (t) => [uniqueIndex("device_control_device_idx").on(t.deviceId)],
+);
+
+/** جلسات الماسح بالموبايل (ربط كاميرا الموبايل بالكاشير) */
+export const scanSession = pgTable(
+  "scan_session",
+  {
+    id: serial("id").primaryKey(),
+    /** كود من 6 أرقام يظهر على شاشة الكاشير ويُدخل في الموبايل */
+    code: text("code").notNull(),
+    /** آخر باركود وصله من الموبايل */
+    lastCode: text("last_code").notNull().default(""),
+    /** رقم تسلسلي يزيد مع كل باركود حتى لا يتكرر */
+    seq: integer("seq").notNull().default(0),
+    updatedAt: ts("updated_at"),
+  },
+  (t) => [uniqueIndex("scan_session_code_idx").on(t.code)],
+);

@@ -20,6 +20,8 @@ interface Check {
   level: "ok" | "warn" | "fail";
   value: string;
   hint?: string;
+  path?: string;
+  cloud?: boolean;
 }
 
 interface Report {
@@ -153,9 +155,46 @@ export function HealthView() {
                 </div>
                 <div className="num text-[12.5px] font-bold text-slate-700">{c.value}</div>
                 {c.hint && <div className="text-[11.5px] font-bold text-slate-500">{c.hint}</div>}
+                {c.path && (
+                  <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] font-bold text-slate-500">
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">مكان التخزين الفعلي:</span>
+                    <code dir="ltr" className="select-all rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[10.5px] text-emerald-200">
+                      {c.path}
+                    </code>
+                  </div>
+                )}
               </div>
             </div>
           ))}
+        </div>
+
+        {/* شرح «مساحة التخزين» بلغة واضحة */}
+        <div className="rounded-xl border-2 border-[#c9d8ee] bg-white p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-[13px] font-black text-[#0f2942]">
+            <HardDrive className="h-4 w-4 text-[#1a6fd0]" />
+            يعني إيه «مساحة التخزين»؟ وفين بالظبط؟
+          </div>
+          <ul className="list-inside list-disc space-y-1 text-[11.5px] font-bold leading-5 text-slate-600">
+            <li>
+              مساحة التخزين هنا معناها <b>مساحة القرص اللي قاعدة بيانات البرنامج محفوظة عليه</b> — مش مساحة الكمبيوتر
+              اللي قدامك بالضرورة.
+            </li>
+            <li>
+              لو البرنامج مثبّت محلياً على ويندوز: البيانات في <code dir="ltr" className="rounded bg-slate-100 px-1 font-mono text-[10.5px]">%APPDATA%\fatora</code>{" "}
+              أو <code dir="ltr" className="rounded bg-slate-100 px-1 font-mono text-[10.5px]">%LOCALAPPDATA%\fatora</code> حسب الإصدار — على نفس قرص C.
+            </li>
+            <li>
+              لو البرنامج شغّال على السحابة (Vercel) أو نسخة ويب: الفحص بيقرأ مساحة <b>السيرفر</b> وليس جهازك، ولهذا تظهر
+              الأرقام على جهاز وتغيب على جهاز آخر.
+            </li>
+            <li>
+              لو الرقم ظهر <b>«غير متاح للفحص»</b> فهذا طبيعي على بعض الأنظمة (ويندوز قديم/سيرفر مقيد) — ومش معناه إن
+              بياناتك في خطر.
+            </li>
+            <li>
+              المهم دايماً: <b>حجم قاعدة البيانات نفسها</b> ونسبة نجاح آخر نسخة احتياطية (موجودين فوق).
+            </li>
+          </ul>
         </div>
 
         <div className="rounded-xl border border-[#c9d8ee] bg-white p-3 text-[11.5px] font-bold text-slate-600">

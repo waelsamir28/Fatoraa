@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api, errMsg } from "@/lib/client";
 import { APP_NAME, DEFAULT_LOGO, SUPPORT_PERSON, SUPPORT_PHONE } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useScreenBg } from "@/lib/useScreenBg";
 
 /** مدة الخمول قبل القفل التلقائي (5 دقائق) */
 const IDLE_MS = 5 * 60 * 1000;
@@ -29,6 +30,8 @@ export function LockScreen() {
   const [lastActivity, setLastActivity] = useState(0);
   const [show, setShow] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // خلفية شاشة القفل (تُضبط من الإعدادات ← الشعار والخلفية)
+  const lockBg = useScreenBg("lock");
 
   // قراءة الإعداد المحفوظ + بدء عدّاد الخمول
   useEffect(() => {
@@ -132,7 +135,11 @@ export function LockScreen() {
   if (!locked) return null;
 
   return (
-    <div className={`lock-overlay ${show ? "is-in" : ""}`} dir="rtl">
+    <div
+      className={`lock-overlay ${show ? "is-in" : ""} ${lockBg ? "has-bg" : ""}`}
+      style={lockBg ? { backgroundImage: `linear-gradient(rgba(4,14,26,.62), rgba(4,14,26,.8)), url(${lockBg})` } : undefined}
+      dir="rtl"
+    >
       {/* خلفية زخرفية */}
       <span className="lock-blob lock-blob--1" />
       <span className="lock-blob lock-blob--2" />

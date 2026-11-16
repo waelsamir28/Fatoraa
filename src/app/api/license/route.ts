@@ -111,8 +111,16 @@ export async function POST(req: Request) {
       );
     }
 
+    /**
+     * تاريخ بداية الاشتراك:
+     * - لو الاشتراك القديم **ساري** ⇒ نكمل من تاريخ انتهائه (ما يضيع حق العميل).
+     * - لو منتهي أو مفيش اشتراك ⇒ نبدأ من اليوم.
+     * - الترقية لخطة أعلى ⇒ تبدأ من اليوم مع رصيد أفضل.
+     */
+    const oldExpiry = oldStatus?.isActivated && oldStatus.expiresAt ? new Date(oldStatus.expiresAt).getTime() : 0;
+    const startFrom = mode === "upgrade" || !oldExpiry || oldExpiry < Date.now() ? Date.now() : oldExpiry;
     data.activationKey = activationKey;
-    data.activatedAt = new Date().toISOString();
+    data.activatedAt = new Date(startFrom).toISOString();
 
     const saved = await saveLicenseData(data);
     const status = await getCurrentLicense();

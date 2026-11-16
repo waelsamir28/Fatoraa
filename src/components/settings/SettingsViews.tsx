@@ -24,6 +24,14 @@ import { CartLogo, IconBackup, IconSettings } from "@/components/icons/AppIcons"
 import { TemplateEditor } from "@/components/print/TemplateEditor";
 import { TEMPLATE_PRESETS } from "@/lib/invoiceLayout";
 import { api, errMsg } from "@/lib/client";
+import {
+  DEFAULT_SALES_LAYOUT,
+  SALES_LABELS,
+  parseSalesLayout,
+  resetSalesLayoutCache,
+  type SalesLayout,
+} from "@/lib/salesLayout";
+import { resetScreenBgCache } from "@/lib/useScreenBg";
 import { fmtDate, fmtTime } from "@/lib/format";
 import { DEFAULT_LOGO } from "@/lib/constants";
 import { BANNER_SPEC, RAIL_SPEC, imageSize, pxToCm, ratioText, resizeDataUrl } from "@/lib/homeImages";
@@ -31,18 +39,23 @@ import type { BackupPreview } from "@/lib/backup-preview";
 import type { Settings } from "@/lib/types";
 import {
   BUTTON_STYLES,
+  DEFAULT_BUTTONS,
   FONT_OPTIONS,
   TABLE_HEADERS,
   THEMES,
   applyUiPrefs,
+  fromSettings,
   useUiPrefs,
+  type ButtonOptions,
   type UiPrefs,
 } from "@/components/win/UiPrefs";
 
-type SForm = Record<Exclude<keyof Settings, "id" | "showBigTitle" | "showLogo" | "showOnlineDot">, string> & {
+type BoolKeys = "showBigTitle" | "showLogo" | "showOnlineDot" | "tableHeaderFollowTheme";
+type SForm = Record<Exclude<keyof Settings, "id" | BoolKeys>, string> & {
   showBigTitle: boolean;
   showLogo: boolean;
   showOnlineDot: boolean;
+  tableHeaderFollowTheme: boolean;
 };
 
 const toForm = (s: Settings): SForm => ({
@@ -71,6 +84,13 @@ const toForm = (s: Settings): SForm => ({
   invoiceTemplate: s.invoiceTemplate || "template-modern-a5",
   fontScale: String(s.fontScale ?? 100),
   invoiceLayout: s.invoiceLayout || "",
+  fontWeight: s.fontWeight || "normal",
+  buttonOptions: s.buttonOptions || "",
+  salesLayout: s.salesLayout || "",
+  loginBgUrl: s.loginBgUrl || "",
+  lockBgUrl: s.lockBgUrl || "",
+  rowSelectColor: s.rowSelectColor || "#dbeafe",
+  tableHeaderFollowTheme: s.tableHeaderFollowTheme !== false,
 });
 
 export function SettingsForm() {
@@ -79,9 +99,26 @@ export function SettingsForm() {
   const [f, setF] = useState<SForm | null>(null);
   const [savedForm, setSavedForm] = useState<SForm | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding" | "thanks">("appearance");
+  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding" | "sales" | "thanks">("appearance");
   const [editorOpen, setEditorOpen] = useState(false);
+  // تخصيص الأزرار (يعمل على القيم المحفوظة في النموذج)
+  const btnOpts: ButtonOptions = (() => {
+    try {
+      return { ...DEFAULT_BUTTONS, ...(JSON.parse(f?.buttonOptions || "{}") as Partial<ButtonOptions>) };
+    } catch {
+      return DEFAULT_BUTTONS;
+    }
+  })();
+  const setBtn = (patch: Partial<ButtonOptions>) => {
+    setVisual({ buttonOptions: JSON.stringify({ ...btnOpts, ...patch }) });
+  };
+  // تخطيط شاشة المبيعات
+  const salesLayout: SalesLayout = parseSalesLayout(f?.salesLayout);
+  const setSales = (patch: Partial<SalesLayout>) =>
+    setF((prev) => (prev ? { ...prev, salesLayout: JSON.stringify({ ...parseSalesLayout(prev.salesLayout), ...patch }) } : prev));
   const bgFileRef = useRef<HTMLInputElement>(null);
+  const loginBgRef = useRef<HTMLInputElement>(null);
+  const lockBgRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
   const bannerFileRef = useRef<HTMLInputElement>(null);
   const railFileRef = useRef<HTMLInputElement>(null);
@@ -174,7 +211,16 @@ export function SettingsForm() {
     setF((p) => (p ? { ...p, [k]: e.target.value } : p));
 
   /** تغيير مظهر مع معاينة فورية قبل الحفظ */
-  type VisualKey = "theme" | "buttonStyle" | "fontFamily" | "tableHeaderColor" | "fontScale";
+  type VisualKey =
+    | "theme"
+    | "buttonStyle"
+    | "fontFamily"
+    | "fontWeight"
+    | "tableHeaderColor"
+    | "tableHeaderFollowTheme"
+    | "rowSelectColor"
+    | "fontScale"
+    | "buttonOptions";
   const setVisual = (patch: Partial<Pick<SForm, VisualKey>>) => {
     setF((p) => (p ? { ...p, ...patch } : p));
     const ui: Partial<UiPrefs> = {};
@@ -183,7 +229,16 @@ export function SettingsForm() {
     if (patch.fontFamily !== undefined) ui.fontFamily = patch.fontFamily;
     if (patch.tableHeaderColor !== undefined) ui.tableHeaderColor = patch.tableHeaderColor;
     if (patch.fontScale !== undefined) ui.fontScale = Number(patch.fontScale);
-    void 0;
+    if (patch.fontWeight !== undefined) ui.fontWeight = patch.fontWeight;
+    if (patch.tableHeaderFollowTheme !== undefined) ui.tableHeaderFollowTheme = patch.tableHeaderFollowTheme;
+    if (patch.rowSelectColor !== undefined) ui.rowSelectColor = patch.rowSelectColor;
+    if (patch.buttonOptions !== undefined) {
+      try {
+        ui.buttonOptions = { ...DEFAULT_BUTTONS, ...JSON.parse(patch.buttonOptions || "{}") };
+      } catch {
+        /* ignore */
+      }
+    }
     if (Object.keys(ui).length) preview(ui);
   };
 
@@ -193,6 +248,27 @@ export function SettingsForm() {
       const b64 = reader.result as string;
       setF((p) => (p ? { ...p, customBgUrl: b64 } : p));
       toast("تم تحميل صورة الخلفية بنجاح — اضغط تطبيق وحفظ لتثبيتها");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /** خلفية شاشة الدخول / القفل — تُصغَّر تلقائياً لتفادي تضخّم قاعدة البيانات */
+  const handleLoginBgUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const resized = await resizeDataUrl(reader.result as string, 1600);
+      setF((p) => (p ? { ...p, loginBgUrl: resized } : p));
+      toast("تم تحميل خلفية شاشة الدخول — اضغط تطبيق وحفظ لتثبيتها");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleLockBgUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const resized = await resizeDataUrl(reader.result as string, 1600);
+      setF((p) => (p ? { ...p, lockBgUrl: resized } : p));
+      toast("تم تحميل خلفية شاشة القفل — اضغط تطبيق وحفظ لتثبيتها");
     };
     reader.readAsDataURL(file);
   };
@@ -216,16 +292,12 @@ export function SettingsForm() {
       const form = toForm(s);
       setF(form);
       setSavedForm(form);
-      const applied: UiPrefs = {
-        theme: form.theme,
-        mode: form.mode,
-        fontFamily: form.fontFamily,
-        fontScale: Number(form.fontScale) || 100,
-        buttonStyle: form.buttonStyle,
-        tableHeaderColor: form.tableHeaderColor,
-      };
+      const applied: UiPrefs = fromSettings(s);
       applyUiPrefs(applied);
       preview(applied);
+      // إبطال كاش خلفيات الشاشات وتخطيط المبيعات حتى يُقرأ الجديد فوراً
+      resetScreenBgCache();
+      resetSalesLayoutCache();
       try {
         localStorage.setItem("aljamal.ui.prefs", JSON.stringify(applied));
       } catch {
@@ -242,14 +314,7 @@ export function SettingsForm() {
   const cancelPreview = () => {
     if (savedForm) {
       setF(savedForm);
-      const applied: UiPrefs = {
-        theme: savedForm.theme,
-        mode: savedForm.mode,
-        fontFamily: savedForm.fontFamily,
-        fontScale: Number(savedForm.fontScale) || 100,
-        buttonStyle: savedForm.buttonStyle,
-        tableHeaderColor: savedForm.tableHeaderColor,
-      };
+      const applied: UiPrefs = fromSettings(savedForm as unknown as Settings);
       applyUiPrefs(applied);
       preview(applied);
     }
@@ -261,12 +326,13 @@ export function SettingsForm() {
   const scale = Number(f?.fontScale ?? prefs.fontScale ?? 100);
 
   // ===== تبويبات الإعدادات =====
-  type TabKey = "appearance" | "store" | "invoices" | "branding" | "thanks";
+  type TabKey = "appearance" | "store" | "invoices" | "branding" | "sales" | "thanks";
   const TABS: { key: TabKey; label: string; hint: string }[] = [
     { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والأزرار" },
     { key: "store", label: "بيانات المحل", hint: "الاسم والهاتف والعنوان والضريبة" },
     { key: "invoices", label: "قوالب الفواتير", hint: "القالب والمقاس والتذييل" },
     { key: "branding", label: "الشعار والخلفية", hint: "اللوجو والشاشة الرئيسية" },
+    { key: "sales", label: "شاشة المبيعات", hint: "إظهار / إخفاء عناصر الشاشة" },
     { key: "thanks", label: "رسالة الترحيب", hint: "شكر وعرض بعد أول فاتورة" },
   ];
   const dirty = Boolean(f && savedForm && JSON.stringify(f) !== JSON.stringify(savedForm));
@@ -490,53 +556,231 @@ export function SettingsForm() {
                         </div>
                       </div>
 
-                      <div className="col-span-2 rounded-md border border-slate-200 bg-[#f8fafd] p-2 text-center" style={{ fontFamily: FONT_OPTIONS.find((o) => o.key === f.fontFamily)?.stack }}>
+                      <div className="col-span-2">
+                        <span className="form-label">وزن الخط (سُمك الحروف)</span>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            ["normal", "عادي", 400],
+                            ["bold", "عريض", 700],
+                            ["black", "عريض جداً", 900],
+                          ].map(([k, label, w]) => (
+                            <button
+                              key={String(k)}
+                              type="button"
+                              onClick={() => setVisual({ fontWeight: String(k) })}
+                              className={`rounded-md border-2 py-1.5 text-[13px] transition ${
+                                (f.fontWeight || "normal") === k ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
+                              }`}
+                              style={{ fontWeight: Number(w) }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="col-span-2 rounded-md border border-slate-200 bg-[#f8fafd] p-2 text-center" style={{ fontFamily: FONT_OPTIONS.find((o) => o.key === f.fontFamily)?.stack, fontWeight: f.fontWeight === "black" ? 900 : f.fontWeight === "bold" ? 700 : 400 }}>
                         <div className="text-[15px] font-black text-[#0c2340]">معاينة الخط: فاتورة مبيعات — 1,508.00 ج.م</div>
                         <div className="text-[12px] font-bold text-slate-500">أرقام: 0123456789 — ABCdef 123</div>
                       </div>
                     </div>
                   </div>
 
+                  {/* ===== مصمم الأزرار الكامل ===== */}
                   <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
                     <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
                       <Sliders className="h-4 w-4 text-[#f5c518]" />
-                      أشكال الأزرار وألوان ترويسة الجداول
+                      تصميم الأزرار — الألوان والشكل والحركة
                     </div>
-                    <div className="grid grid-cols-2 gap-3 p-3">
-                      <div>
-                        <span className="form-label">شكل الأزرار</span>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {BUTTON_STYLES.map((b) => {
-                            const active = prefs.buttonStyle === b.key;
-                            return (
+                    <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
+                      {/* الألوان */}
+                      <div className="space-y-2">
+                        <span className="form-label">الألوان</span>
+                        {(
+                          [
+                            ["color", "اللون الطبيعي"],
+                            ["hoverColor", "لون المرور (Hover)"],
+                            ["activeColor", "لون الضغط (Active)"],
+                            ["textColor", "لون الكلام على الزر"],
+                            ["borderColor", "لون حدود الزر"],
+                          ] as Array<[keyof ButtonOptions, string]>
+                        ).map(([k, label]) => (
+                          <label key={k} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 px-2 py-1">
+                            <span className="text-[12px] font-black text-[#0c2340]">{label}</span>
+                            <span className="flex items-center gap-1.5">
+                              <input
+                                type="color"
+                                className="h-7 w-9 cursor-pointer rounded border border-slate-300 bg-white p-0"
+                                value={String(btnOpts[k] ?? "#000000")}
+                                onChange={(e) => setBtn({ [k]: e.target.value } as Partial<ButtonOptions>)}
+                              />
+                              <span className="num text-[10.5px] font-bold text-slate-500" dir="ltr">
+                                {String(btnOpts[k] ?? "")}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* الشكل والحدود */}
+                      <div className="space-y-2">
+                        <span className="form-label">الشكل والحدود</span>
+                        <div>
+                          <div className="mb-1 text-[11.5px] font-bold text-slate-600">شكل الزر</div>
+                          <div className="grid grid-cols-3 gap-1">
+                            {[
+                              ["rounded", "مستدير"],
+                              ["pill", "كبسولة"],
+                              ["soft", "ناعم"],
+                              ["square", "مربع"],
+                              ["sharp", "حاد"],
+                            ].map(([k, label]) => (
                               <button
-                                key={b.key}
+                                key={k}
                                 type="button"
-                                onClick={() => setVisual({ buttonStyle: b.key })}
-                                className={`rounded-md border-2 px-2 py-1.5 text-right transition ${
-                                  active ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
+                                onClick={() => setBtn({ shape: k })}
+                                className={`rounded-md border-2 px-1 py-1 text-[11.5px] font-black transition ${
+                                  btnOpts.shape === k ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
                                 }`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[12.5px] font-black text-[#0c2340]">{b.label}</span>
-                                  {active && <Check className="h-3.5 w-3.5 text-[#0f8f82]" strokeWidth={3.5} />}
-                                </div>
-                                <div className="text-[10.5px] font-bold text-slate-500">{b.hint}</div>
+                                {label}
                               </button>
-                            );
-                          })}
+                            ))}
+                          </div>
                         </div>
+
+                        <div className="flex items-center justify-between rounded-md border border-slate-200 px-2 py-1">
+                          <span className="text-[12px] font-black text-[#0c2340]">استدارة الحواف</span>
+                          <span className="num text-[12px] font-black">{btnOpts.radius}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={24}
+                          value={btnOpts.radius}
+                          onChange={(e) => setBtn({ radius: Number(e.target.value), shape: "custom" })}
+                          className="w-full"
+                        />
+
+                        <div className="flex items-center justify-between rounded-md border border-slate-200 px-2 py-1">
+                          <span className="text-[12px] font-black text-[#0c2340]">سُمك الحدود</span>
+                          <span className="num text-[12px] font-black">{btnOpts.borderWidth}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={4}
+                          value={btnOpts.borderWidth}
+                          onChange={(e) => setBtn({ borderWidth: Number(e.target.value) })}
+                          className="w-full"
+                        />
+
+                        <label className="flex items-center gap-2 text-[12.5px] font-black text-[#0c2340]">
+                          <input type="checkbox" checked={btnOpts.shadow} onChange={(e) => setBtn({ shadow: e.target.checked })} />
+                          ظل خلف الزر
+                        </label>
+                        <label className="flex items-center gap-2 text-[12.5px] font-black text-[#0c2340]">
+                          <input type="checkbox" checked={btnOpts.bold} onChange={(e) => setBtn({ bold: e.target.checked })} />
+                          خط عريض على الزر
+                        </label>
                       </div>
+
+                      {/* الحركة + معاينة */}
+                      <div className="space-y-2">
+                        <span className="form-label">حركة الزر عند المرور</span>
+                        <div className="grid grid-cols-2 gap-1">
+                          {[
+                            ["none", "بدون"],
+                            ["lift", "يرتفع"],
+                            ["grow", "يكبر"],
+                            ["press", "ينضغط"],
+                            ["shine", "لمعة"],
+                            ["pulse", "نبضة"],
+                          ].map(([k, label]) => (
+                            <button
+                              key={k}
+                              type="button"
+                              onClick={() => setBtn({ animation: k })}
+                              className={`rounded-md border-2 px-1 py-1 text-[11.5px] font-black transition ${
+                                btnOpts.animation === k ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="rounded-md border border-slate-200 bg-[#f8fafd] p-2">
+                          <div className="mb-1 text-[11px] font-bold text-slate-500">معاينة مباشرة</div>
+                          <button
+                            type="button"
+                            className="btn w-full"
+                            style={{
+                              background: btnOpts.color,
+                              color: btnOpts.textColor,
+                              borderRadius: btnOpts.shape === "custom" ? btnOpts.radius : btnOpts.shape === "pill" ? 999 : btnOpts.shape === "soft" ? 14 : btnOpts.shape === "square" ? 2 : btnOpts.shape === "sharp" ? 0 : 8,
+                              border: `${btnOpts.borderWidth}px solid ${btnOpts.borderColor}`,
+                              fontWeight: btnOpts.bold ? 900 : 600,
+                              boxShadow: btnOpts.shadow ? "0 2px 6px rgba(0,0,0,.18)" : "none",
+                            }}
+                          >
+                            حفظ الفاتورة
+                          </button>
+                          <div className="mt-1.5 flex gap-1">
+                            {["إلغاء", "طباعة", "جديد"].map((t) => (
+                              <span
+                                key={t}
+                                className="flex-1 rounded text-center text-[11px] font-black"
+                                style={{
+                                  background: btnOpts.color,
+                                  color: btnOpts.textColor,
+                                  padding: "3px 0",
+                                  borderRadius: btnOpts.shape === "pill" ? 999 : btnOpts.shape === "soft" ? 10 : 6,
+                                  border: `${btnOpts.borderWidth}px solid ${btnOpts.borderColor}`,
+                                }}
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn h-8 w-full text-[12px] font-black"
+                          onClick={() => setBtn(DEFAULT_BUTTONS)}
+                        >
+                          استعادة ألوان الأزرار الافتراضية
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ===== الجداول: الترويسة وتحديد الصف ===== */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Sliders className="h-4 w-4 text-[#f5c518]" />
+                      ألوان الجداول وتحديد الصف
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
                       <div>
                         <span className="form-label">لون ترويسة الجداول</span>
-                        <div className="space-y-1">
+                        <label className="mb-2 flex items-center gap-2 rounded-md border-2 border-[#2fb3a6] bg-[#eefaf8] px-2 py-1.5 text-[12.5px] font-black text-[#0c2340]">
+                          <input
+                            type="checkbox"
+                            checked={f.tableHeaderFollowTheme}
+                            onChange={(e) => setVisual({ tableHeaderFollowTheme: e.target.checked })}
+                          />
+                          تتبع لون الثيم (موصى به)
+                        </label>
+                        <div className={`space-y-1 ${f.tableHeaderFollowTheme ? "pointer-events-none opacity-45" : ""}`}>
                           {TABLE_HEADERS.map((t) => {
                             const active = prefs.tableHeaderColor === t.key;
                             return (
                               <button
                                 key={t.key}
                                 type="button"
-                                onClick={() => setVisual({ tableHeaderColor: t.key })}
+                                onClick={() => setVisual({ tableHeaderColor: t.key, tableHeaderFollowTheme: false })}
                                 className={`flex w-full items-center justify-between rounded-md border-2 px-2 py-1 transition ${
                                   active ? "border-[#2fb3a6]" : "border-slate-300 hover:border-[#8fb3e0]"
                                 }`}
@@ -549,6 +793,43 @@ export function SettingsForm() {
                               </button>
                             );
                           })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="form-label">لون الصف المحدد في الجدول</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            className="h-9 w-14 cursor-pointer rounded border border-slate-300 bg-white p-0"
+                            value={f.rowSelectColor}
+                            onChange={(e) => setVisual({ rowSelectColor: e.target.value })}
+                          />
+                          <span className="num text-[12px] font-bold text-slate-500" dir="ltr">{f.rowSelectColor}</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-4 gap-1">
+                          {["#dbeafe", "#e0f2fe", "#dcfce7", "#fef3c7", "#fae8ff", "#fee2e2", "#e2e8f0", "#ccfbf1"].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setVisual({ rowSelectColor: c })}
+                              className="h-7 rounded border border-slate-300"
+                              style={{ background: c }}
+                              title={c}
+                            />
+                          ))}
+                        </div>
+                        <div className="mt-2 overflow-hidden rounded-md border border-slate-200">
+                          <table className="w-full text-[11.5px]">
+                            <tbody>
+                              {["صنف ١", "صنف ٢", "صنف ٣"].map((t, i) => (
+                                <tr key={t} style={{ background: i === 1 ? f.rowSelectColor : "#fff" }}>
+                                  <td className="px-2 py-1 font-black text-[#0c2340]">{t}</td>
+                                  <td className="num px-2 py-1 text-left">{(i + 1) * 25}.00</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </div>
@@ -594,6 +875,10 @@ export function SettingsForm() {
                     <Field label="اسم المندوب / البائع">
                       <input className="win-input w-full" value={f.salesRep} onChange={set("salesRep")} />
                     </Field>
+                    <div className="col-span-2 rounded-md border border-[#c9d8ee] bg-[#f7faff] px-2.5 py-1.5 text-[11.5px] font-bold leading-5 text-slate-600">
+                      البيانات دي هي اللي تُطبع في ترويسة الفاتورة وبها يعرف العميل اسمك ورقمك. أي خانة تتركها فاضية
+                      تختفي تلقائياً من الفاتورة (مفيش سطور فاضية).
+                    </div>
                   </div>
                 </div>
               )}
@@ -653,9 +938,81 @@ export function SettingsForm() {
                       <Field label="الاسم الكبير (شاشة الدخول)" className="col-span-2">
                         <input className="win-input w-full font-black text-red-600" value={f.customBigTitle} onChange={set("customBigTitle")} />
                       </Field>
+                      <Field label="الجملة التعريفية أسفل الشعار — الشاشة الرئيسية" className="col-span-2">
+                        <input
+                          className="win-input w-full"
+                          value={f.customTagline}
+                          onChange={set("customTagline")}
+                          placeholder="إدارة احترافية .. لمحل تجاري أكثر نجاحاً"
+                        />
+                      </Field>
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ---------- 6) شاشة المبيعات ---------- */}
+              {tab === "sales" && (
+                <div className="space-y-3">
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <span className="flex items-center gap-2">
+                        <Sliders className="h-4 w-4 text-[#f5c518]" />
+                        عناصر شاشة المبيعات — إظهار / إخفاء
+                      </span>
+                      <span className="flex gap-1.5">
+                        <button
+                          type="button"
+                          className="rounded bg-white/15 px-2 py-0.5 text-[11.5px] font-black hover:bg-white/25"
+                          onClick={() => setSales(DEFAULT_SALES_LAYOUT)}
+                        >
+                          إظهار الكل
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded bg-white/15 px-2 py-0.5 text-[11.5px] font-black hover:bg-white/25"
+                          onClick={() => {
+                            const all: Partial<SalesLayout> = {};
+                            SALES_LABELS.forEach((r) => {
+                              all[r.key] = false;
+                            });
+                            setSales({ ...all, toolbar: true } as Partial<SalesLayout>);
+                          }}
+                        >
+                          إخفاء التفاصيل
+                        </button>
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[12px] font-bold text-amber-800">
+                        أي عنصر تخفيه هنا يختفي من شاشة المبيعات فوراً بعد الحفظ — ويمكنك إرجاعه في أي وقت.
+                      </p>
+                      {Array.from(new Set(SALES_LABELS.map((r) => r.group))).map((group) => (
+                        <div key={group} className="mb-2">
+                          <div className="mb-1 text-[12.5px] font-black text-[#0f2942]">{group}</div>
+                          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
+                            {SALES_LABELS.filter((r) => r.group === group).map((r) => (
+                              <label
+                                key={r.key}
+                                className={`flex cursor-pointer items-center justify-between gap-2 rounded-md border px-2 py-1 text-[12px] font-bold transition ${
+                                  salesLayout[r.key] ? "border-[#8fd3c9] bg-[#eefaf8] text-[#0c2340]" : "border-slate-200 bg-slate-50 text-slate-400"
+                                }`}
+                              >
+                                <span>{r.label}</span>
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4"
+                                  checked={salesLayout[r.key]}
+                                  onChange={(e) => setSales({ [r.key]: e.target.checked } as Partial<SalesLayout>)}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* ---------- 5) رسالة الترحيب ---------- */}
@@ -828,96 +1185,122 @@ export function SettingsForm() {
                         </span>
                       </div>
                     </div>
+
+                    {/* ===== خلفيات الشاشات: الدخول والقفل ===== */}
+                    <div className="col-span-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {[
+                        {
+                          key: "loginBgUrl" as const,
+                          title: "خلفية شاشة الدخول (Login)",
+                          ref: loginBgRef,
+                          onFile: handleLoginBgUpload,
+                          spec: "مقاس مُفضّل: 1920×1080 بكسل — نسبة 16:9 — حجم أقل من 2 ميجا (JPG)",
+                          clear: () => setF((p) => (p ? { ...p, loginBgUrl: "" } : p)),
+                        },
+                        {
+                          key: "lockBgUrl" as const,
+                          title: "خلفية شاشة القفل",
+                          ref: lockBgRef,
+                          onFile: handleLockBgUpload,
+                          spec: "مقاس مُفضّل: 1920×1080 بكسل — نفس الشاشة عند قفل البرنامج",
+                          clear: () => setF((p) => (p ? { ...p, lockBgUrl: "" } : p)),
+                        },
+                      ].map((item) => {
+                        const url = f[item.key];
+                        return (
+                          <div key={item.key} className="rounded-lg border-2 border-[#c9d8ee] bg-[#f4f8fd] p-2.5">
+                            <div className="mb-1 text-[13.5px] font-black text-[#0f2942]">{item.title}</div>
+                            <div
+                              className="mb-2 grid h-[86px] place-items-center overflow-hidden rounded-md border border-slate-300 bg-white bg-cover bg-center text-[11px] font-bold text-slate-400"
+                              style={url ? { backgroundImage: `url(${url})` } : undefined}
+                            >
+                              {!url && "بدون صورة — الخلفية الافتراضية"}
+                            </div>
+                            <div className="mb-2 text-[11px] font-bold leading-4 text-slate-600">{item.spec}</div>
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                ref={item.ref}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) item.onFile(file);
+                                }}
+                              />
+                              <button type="button" className="btn btn-blue h-8 px-3 text-[12px]" onClick={() => item.ref.current?.click()}>
+                                <Upload className="h-3.5 w-3.5" /> رفع صورة
+                              </button>
+                              {url && (
+                                <button type="button" className="btn btn-red h-8 px-2 text-[12px]" onClick={item.clear}>
+                                  <Trash2 className="h-3.5 w-3.5" /> حذف
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* ============ العمود الجانبي: المعاينة الحية ============ */}
+            {/* ============ العمود الجانبي: بطاقة الستايل + المواصفات ============ */}
             <div className="space-y-3">
+              {/* بطاقة الهوية البصرية للمظهر المختار */}
               <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
-                <div className="bg-[#0f2942] px-3 py-2 text-[14px] font-black text-white">معاينة حية للمظهر المختار</div>
-                <div className="space-y-2 p-3">
-                  <div className="overflow-hidden rounded-lg border border-slate-400 shadow">
-                    <div
-                      className="flex h-[42px] items-center justify-between px-2 text-white"
-                      style={{
-                        background: `linear-gradient(180deg, ${activeTabTheme.swatch[0]}, ${activeTabTheme.swatch[1]} 50%, ${activeTabTheme.swatch[2]})`,
-                      }}
-                    >
-                      <span className="flex items-center gap-1 text-[11px] font-black">
-                        <CartLogo className="h-4 w-4" /> فاتورة مبيعات
+                <div className="bg-[#0f2942] px-3 py-2 text-[14px] font-black text-white">هوية المظهر المختار</div>
+                <div className="p-3">
+                  <div
+                    className="relative flex h-[92px] flex-col justify-between overflow-hidden rounded-lg p-3 text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${activeTabTheme.swatch[2]}, ${activeTabTheme.swatch[1]} 55%, ${activeTabTheme.swatch[0]})`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-[13px] font-black">
+                        <CartLogo className="h-5 w-5" />
+                        {activeTabTheme.label}
                       </span>
-                      <span className="flex gap-0.5">
-                        <span className="h-2.5 w-2.5 rounded-sm bg-white/70" />
-                        <span className="h-2.5 w-2.5 rounded-sm bg-white/70" />
-                        <span className="h-2.5 w-2.5 rounded-sm bg-red-400" />
+                      <span className="flex gap-1">
+                        {activeTabTheme.swatch.map((c) => (
+                          <span key={c} className="h-3 w-3 rounded-full border border-white/60" style={{ background: c }} />
+                        ))}
                       </span>
                     </div>
-                    <div className="bg-[#edf2f8] p-2">
-                      <div className="mb-1.5 flex gap-1">
-                        <button type="button" className="btn btn-green h-6 flex-1 text-[10px] font-black">
-                          حفظ
-                        </button>
-                        <button type="button" className="btn h-6 flex-1 text-[10px] font-black">
-                          جديد
-                        </button>
-                        <button type="button" className="btn btn-red h-6 flex-1 text-[10px] font-black">
-                          حذف
-                        </button>
-                      </div>
-                      <table className="w-full overflow-hidden rounded border border-slate-300 text-center text-[10px]">
-                        <thead>
-                          <tr style={{ background: `linear-gradient(180deg,${headerTheme.from},${headerTheme.to})`, color: "#fff" }}>
-                            <th className="py-1">الصنف</th>
-                            <th className="py-1">الكمية</th>
-                            <th className="py-1">الإجمالي</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white">
-                          <tr>
-                            <td className="py-1 text-right font-bold">كارت أفراح ليزر</td>
-                            <td className="num">3</td>
-                            <td className="num font-black">1,260.00</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <div className="due-box mt-1.5 flex h-[30px] items-center justify-between px-2">
-                        <span className="text-[10px] font-black text-white">المطلوب دفعه</span>
-                        <span className="due-value num text-[15px]">1,508.00</span>
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-r from-[#1a4f9c] to-[#0b3370] px-2 py-1 text-center text-[10px] font-bold text-white">
-                      {activeTheme.label}
-                    </div>
+                    <div className="text-[11px] font-bold text-white/85">{activeTabTheme.hint}</div>
                   </div>
 
-                  <div className="space-y-0.5 rounded-md border border-slate-200 bg-[#f8fafd] p-2 text-[12px] font-bold text-slate-600">
-                    <div className="flex justify-between">
-                      <span>الخط:</span>
-                      <b>{FONT_OPTIONS.find((o) => o.key === prefs.fontFamily)?.label.split(" — ")[0]}</b>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>حجم الخط:</span>
-                      <b className="num">{scale}%</b>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>شكل الأزرار:</span>
-                      <b>{btnStyle?.label}</b>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>لون الجداول:</span>
-                      <b>{headerTheme.label}</b>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>قالب الفاتورة:</span>
-                      <b>{pickedTemplate.label.replace(/^[①-⑥]\s*/, "")}</b>
-                    </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11.5px] font-bold text-slate-600">
+                    {[
+                      ["الثيم", activeTabTheme.label],
+                      ["نمط الأزرار", btnStyle?.label ?? "—"],
+                      ["الخط", (FONT_OPTIONS.find((o) => o.key === prefs.fontFamily)?.label ?? "").split(" — ")[0]],
+                      ["وزن الخط", prefs.fontWeight === "black" ? "عريض جداً" : prefs.fontWeight === "bold" ? "عريض" : "عادي"],
+                      ["حجم الخط", `${scale}%`],
+                      ["الترويسة", prefs.tableHeaderFollowTheme === false ? headerTheme.label : "تتبع الثيم"],
+                      ["الصف المحدد", prefs.rowSelectColor],
+                      ["القالب", pickedTemplate.label.replace(/^[①-⑥]\s*/, "")],
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex items-center justify-between rounded border border-slate-200 bg-[#f8fafd] px-1.5 py-1">
+                        <span className="text-slate-500">{k}</span>
+                        <b className="truncate ps-1 text-[#0c2340]" dir="auto">{v}</b>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="h-5 flex-1 rounded" style={{ background: btnOpts.color }} title="لون الزر" />
+                    <span className="h-5 flex-1 rounded" style={{ background: btnOpts.hoverColor }} title="لون المرور" />
+                    <span className="h-5 flex-1 rounded" style={{ background: btnOpts.activeColor }} title="لون الضغط" />
+                    <span className="h-5 flex-1 rounded border border-slate-300" style={{ background: btnOpts.textColor }} title="لون النص" />
+                    <span className="h-5 flex-1 rounded border border-slate-300" style={{ background: f.rowSelectColor }} title="لون تحديد الصف" />
                   </div>
 
                   <button
                     type="button"
-                    className="btn btn-green h-11 w-full text-[15.5px] font-black shadow"
+                    className="btn btn-green mt-2 h-11 w-full text-[15.5px] font-black shadow"
                     onClick={() => void save()}
                     disabled={busy}
                   >
@@ -925,6 +1308,10 @@ export function SettingsForm() {
                     {busy ? "جاري التطبيق..." : "تطبيق وحفظ الإعدادات"}
                   </button>
                 </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-[#f8fafd] p-2.5 text-[11px] font-bold leading-5 text-slate-500">
+                كل تعديل هنا يظهر فوراً على الشاشات أثناء العمل، ولا يُثبَّت إلا بعد الضغط على «تطبيق وحفظ الإعدادات».
               </div>
             </div>
           </div>

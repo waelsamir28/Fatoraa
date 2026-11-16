@@ -520,10 +520,12 @@ body {
   .dgrid tbody tr.clickable:hover td {
     background: #e9f2ff;
   }
+  /* الصف المحدد — لون فاتح يتحكم فيه المستخدم من الإعدادات */
   .dgrid tbody tr.sel td,
   .dgrid tbody tr.sel:hover td {
-    background: linear-gradient(180deg, #4d9bf5 0%, #2270dd 100%);
-    color: #ffffff;
+    background: var(--row-select, #dbeafe) !important;
+    color: var(--c-ink) !important;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
   }
   .dgrid tbody tr.empty td {
     background: #ffffff;
@@ -1173,6 +1175,109 @@ html[data-theme="steel-blue"] {
   --ui-side-from: #3a6ea5;
   --ui-side-mid: #2c5c93;
   --ui-side-to: #153a5f;
+}
+
+html[data-theme="sage-green"] {
+  --ui-title-from: #7fae8c;
+  --ui-title-mid: #4f8a63;
+  --ui-title-dark: #3f7452;
+  --ui-title-to: #5d9a72;
+  --ui-title-border: #2b5340;
+  --ui-desktop-1: #3f7452;
+  --ui-desktop-2: #2f5d44;
+  --ui-desktop-3: #22452f;
+  --ui-desktop-4: #152c1e;
+  --ui-head-from: #4f8a63;
+  --ui-head-mid: #3f7452;
+  --ui-head-to: #2b5340;
+  --ui-side-from: #5d9a72;
+  --ui-side-mid: #4f8a63;
+  --ui-side-to: #2f5d44;
+}
+html[data-theme="warm-sand"] {
+  --ui-title-from: #d8bd94;
+  --ui-title-mid: #b5946a;
+  --ui-title-dark: #9c7c55;
+  --ui-title-to: #c8a877;
+  --ui-title-border: #6d5539;
+  --ui-desktop-1: #9c7c55;
+  --ui-desktop-2: #7d6344;
+  --ui-desktop-3: #5f4b32;
+  --ui-desktop-4: #3f3122;
+  --ui-head-from: #b5946a;
+  --ui-head-mid: #9c7c55;
+  --ui-head-to: #7d6344;
+  --ui-side-from: #c8a877;
+  --ui-side-mid: #b5946a;
+  --ui-side-to: #9c7c55;
+}
+html[data-theme="muted-purple"] {
+  --ui-title-from: #9a8bc0;
+  --ui-title-mid: #7a68a6;
+  --ui-title-dark: #63538c;
+  --ui-title-to: #8a7bb2;
+  --ui-title-border: #4a3f6b;
+  --ui-desktop-1: #63538c;
+  --ui-desktop-2: #544778;
+  --ui-desktop-3: #413659;
+  --ui-desktop-4: #2b2339;
+  --ui-head-from: #7a68a6;
+  --ui-head-mid: #63538c;
+  --ui-head-to: #544778;
+  --ui-side-from: #8a7bb2;
+  --ui-side-mid: #7a68a6;
+  --ui-side-to: #63538c;
+}
+html[data-theme="soft-teal"] {
+  --ui-title-from: #6fb2af;
+  --ui-title-mid: #4a9a96;
+  --ui-title-dark: #3b807c;
+  --ui-title-to: #5ba8a4;
+  --ui-title-border: #2a5b58;
+  --ui-desktop-1: #3b807c;
+  --ui-desktop-2: #2f6b68;
+  --ui-desktop-3: #245250;
+  --ui-desktop-4: #173736;
+  --ui-head-from: #4a9a96;
+  --ui-head-mid: #3b807c;
+  --ui-head-to: #2f6b68;
+  --ui-side-from: #5ba8a4;
+  --ui-side-mid: #4a9a96;
+  --ui-side-to: #3b807c;
+}
+html[data-theme="slate-gray"] {
+  --ui-title-from: #96a1ad;
+  --ui-title-mid: #6b7885;
+  --ui-title-dark: #55606c;
+  --ui-title-to: #828d99;
+  --ui-title-border: #3a434c;
+  --ui-desktop-1: #55606c;
+  --ui-desktop-2: #454f5a;
+  --ui-desktop-3: #343c45;
+  --ui-desktop-4: #20262c;
+  --ui-head-from: #6b7885;
+  --ui-head-mid: #55606c;
+  --ui-head-to: #454f5a;
+  --ui-side-from: #828d99;
+  --ui-side-mid: #6b7885;
+  --ui-side-to: #55606c;
+}
+html[data-theme="dusty-rose"] {
+  --ui-title-from: #cc98a2;
+  --ui-title-mid: #a86e7a;
+  --ui-title-dark: #8f5b66;
+  --ui-title-to: #bd8a94;
+  --ui-title-border: #66404a;
+  --ui-desktop-1: #8f5b66;
+  --ui-desktop-2: #7a4b56;
+  --ui-desktop-3: #5e3942;
+  --ui-desktop-4: #3f262c;
+  --ui-head-from: #a86e7a;
+  --ui-head-mid: #8f5b66;
+  --ui-head-to: #7a4b56;
+  --ui-side-from: #bd8a94;
+  --ui-side-mid: #a86e7a;
+  --ui-side-to: #8f5b66;
 }
 
 
@@ -2721,4 +2826,85 @@ table, tbody, tr, td, th {
 .tile {
   will-change: auto !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ==================================================================
+   تخصيص الأزرار الكامل — يتحكم فيه المستخدم من الإعدادات
+   html[data-anim] = حركة المرور، والمتغيرات --btn-* من applyUiPrefs
+   ================================================================== */
+html[data-btn-custom="1"] .btn,
+html[data-btn-custom="1"] .btn-blue,
+html[data-btn-custom="1"] .pay-btn {
+  background: var(--btn-bg) !important;
+  color: var(--btn-text) !important;
+  border-radius: var(--btn-radius) !important;
+  border: var(--btn-border-w) solid var(--btn-border-color) !important;
+  box-shadow: var(--btn-shadow) !important;
+  font-weight: var(--btn-font-weight) !important;
+  transition: transform .16s ease, background-color .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+html[data-btn-custom="1"] .btn:hover:not(:disabled),
+html[data-btn-custom="1"] .btn-blue:hover:not(:disabled),
+html[data-btn-custom="1"] .pay-btn:hover:not(:disabled) {
+  background: var(--btn-bg-hover) !important;
+}
+html[data-btn-custom="1"] .btn:active:not(:disabled),
+html[data-btn-custom="1"] .btn-blue:active:not(:disabled),
+html[data-btn-custom="1"] .pay-btn:active:not(:disabled) {
+  background: var(--btn-bg-active) !important;
+}
+
+/* ---- الحركات ---- */
+html[data-anim="lift"] .btn:hover:not(:disabled) { transform: translateY(-2px); }
+html[data-anim="grow"] .btn:hover:not(:disabled) { transform: scale(1.04); }
+html[data-anim="press"] .btn:hover:not(:disabled) { transform: translateY(1px) scale(.985); }
+html[data-anim="pulse"] .btn:hover:not(:disabled) { animation: btnPulse 1.1s ease-in-out infinite; }
+@keyframes btnPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+html[data-anim="shine"] .btn { position: relative; overflow: hidden; }
+html[data-anim="shine"] .btn::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 45%;
+  left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
+  transform: skewX(-18deg); pointer-events: none;
+}
+html[data-anim="shine"] .btn:hover::after { animation: btnShine .75s ease; }
+@keyframes btnShine { to { left: 130%; } }
+
+/* ==================================================================
+   ترويسات الجداول: تتبع الثيم أو لون مخصص + لون تحديد الصف
+   ================================================================== */
+html[data-table-follow="theme"] .dgrid thead th,
+html[data-table-follow="theme"] th.navy-head,
+html[data-table-follow="theme"] .navy-head {
+  background: linear-gradient(180deg, var(--ui-head-from) 0%, var(--ui-head-mid) 52%, var(--ui-head-to) 100%) !important;
+  color: #fff !important;
+}
+
+/* لون تحديد الصف (وردي أزرق فاتح افتراضي) */
+:root { --row-select: #dbeafe; }
+.dgrid tbody tr.is-selected,
+.dgrid tbody tr[data-selected="true"],
+.dgrid tbody tr.selected,
+table.grid tbody tr.is-selected {
+  background: var(--row-select) !important;
+}
+.dgrid tbody tr.is-selected > td,
+.dgrid tbody tr[data-selected="true"] > td,
+.dgrid tbody tr.selected > td {
+  background: var(--row-select) !important;
+  border-top-color: color-mix(in srgb, var(--row-select) 70%, #000 8%);
+  border-bottom-color: color-mix(in srgb, var(--row-select) 70%, #000 8%);
+}
+
+/* وزن الخط العام */
+html[data-fweight="bold"] body { font-weight: 700; }
+html[data-fweight="black"] body { font-weight: 800; }
+
+/* خلفية مخصصة لشاشة القفل */
+.lock-overlay.has-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

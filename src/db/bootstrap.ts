@@ -310,6 +310,27 @@ CREATE INDEX IF NOT EXISTS "payments_invoice_idx" ON "payments" ("invoice_id");
 ALTER TABLE "expenses" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "cash_moves" ADD COLUMN IF NOT EXISTS "shift_id" integer;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "invoice_layout" text DEFAULT '' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "button_options" text DEFAULT '' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "sales_layout" text DEFAULT '' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "login_bg_url" text DEFAULT '' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "lock_bg_url" text DEFAULT '' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "row_select_color" text DEFAULT '#dbeafe' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "font_weight" text DEFAULT 'normal' NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "table_header_follow_theme" boolean DEFAULT true NOT NULL;
+-- صلاحيات الشاشات لكل مستخدم (JSON)
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "allowed_pages" text DEFAULT '' NOT NULL;
+-- التحكم عن بعد في الأجهزة (إلغاء التفعيل من لوحة التحكم)
+CREATE TABLE IF NOT EXISTS "device_control" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "device_id" text NOT NULL,
+  "store_name" text DEFAULT '' NOT NULL,
+  "revoked" boolean DEFAULT false NOT NULL,
+  "revoked_at" timestamp with time zone,
+  "note" text DEFAULT '' NOT NULL,
+  "last_seen_at" timestamp with time zone DEFAULT now() NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "device_control_device_idx" ON "device_control" ("device_id");
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "branch_id" integer;
 -- فواتير معلقة (مسودات)
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "is_draft" boolean DEFAULT false NOT NULL;
@@ -341,5 +362,15 @@ CREATE TABLE IF NOT EXISTS "stock_movements" (
 );
 CREATE INDEX IF NOT EXISTS "stock_moves_product_idx" ON "stock_movements" ("product_id");
 CREATE INDEX IF NOT EXISTS "stock_moves_date_idx" ON "stock_movements" ("created_at");
+
+-- جلسات الماسح بالموبايل (ربط كاميرا الموبايل بالكاشير)
+CREATE TABLE IF NOT EXISTS "scan_session" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"code" text NOT NULL,
+	"last_code" text DEFAULT '' NOT NULL,
+	"seq" integer DEFAULT 0 NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "scan_session_code_idx" ON "scan_session" ("code");
 
 `;

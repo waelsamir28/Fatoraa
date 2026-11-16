@@ -41,6 +41,7 @@ export async function GET() {
       branchId: session.branchId,
       permissions: ROLE_PERMISSIONS[session.role] || [],
       perms: session.perms || [],
+      pages: session.pages || [],
     },
   });
 }

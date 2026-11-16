@@ -31,6 +31,20 @@ export interface Settings {
   customTagline: string;
   invoiceTemplate: string; // template-modern-a5 | template-classic-a5 | template-lines-a5 | template-minimal-a5 | template-pos-thermal | template-a4-full
   fontScale: number; // 80 .. 130 (نسبة حجم الخط)
+  /** وزن الخط: normal | bold | black */
+  fontWeight: string;
+  /** تخصيص الأزرار (JSON string في قاعدة البيانات) */
+  buttonOptions: string;
+  /** إظهار/إخفاء عناصر شاشة المبيعات (JSON) */
+  salesLayout: string;
+  /** خلفية شاشة الدخول */
+  loginBgUrl: string;
+  /** خلفية شاشة القفل */
+  lockBgUrl: string;
+  /** لون تحديد الصف في الجداول */
+  rowSelectColor: string;
+  /** لون ترويسة الجداول يتبع الثيم */
+  tableHeaderFollowTheme: boolean;
   /** إعدادات محرّر قوالب الفاتورة (JSON) */
   invoiceLayout: string;
 }

@@ -11,6 +11,8 @@ export interface SessionUser {
   roleLabel: string;
   branchId: number | null;
   permissions: string[];
+  /** صفحات مسموح بها (فاضي = كل صفحات دوره) */
+  pages?: string[];
 }
 
 interface MeResponse {

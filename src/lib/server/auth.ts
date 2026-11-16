@@ -81,6 +81,87 @@ export const GRANULAR_PERMISSIONS: Array<{ key: string; label: string; group: st
   { key: "manage_shifts", label: "فتح/تقفيل الورديات", group: "المالية" },
 ];
 
+/**
+ * صفحات البرنامج القابلة للتحكم — لكل صفحة: المسار + الاسم + الصلاحية المطلوبة
+ * + هل تظهر كزر في الشاشة الرئيسية.
+ */
+export const APP_PAGES: Array<{ path: string; label: string; perm?: string; homeButton?: boolean }> = [
+  { path: "/", label: "الرئيسية", homeButton: true },
+  { path: "/sales", label: "المبيعات (فاتورة جديدة)", perm: "sales", homeButton: true },
+  { path: "/sales/list", label: "قائمة فواتير المبيعات", perm: "sales", homeButton: true },
+  { path: "/returns/sales", label: "مرتجع مبيعات", perm: "sales", homeButton: true },
+  { path: "/returns/sales/list", label: "قائمة مرتجعات المبيعات", perm: "sales" },
+  { path: "/purchases", label: "المشتريات", perm: "purchases", homeButton: true },
+  { path: "/purchases/list", label: "قائمة فواتير المشتريات", perm: "purchases" },
+  { path: "/returns/purchases", label: "مرتجع مشتريات", perm: "purchases" },
+  { path: "/products-manager", label: "الأصناف والمجموعات", perm: "products", homeButton: true },
+  { path: "/item-card", label: "كارت الصنف", perm: "products" },
+  { path: "/inventory", label: "المخازن", perm: "inventory", homeButton: true },
+  { path: "/stock-movements", label: "حركات المخزون", perm: "inventory" },
+  { path: "/low-stock", label: "النواقص", perm: "inventory", homeButton: true },
+  { path: "/customers", label: "العملاء", perm: "customers", homeButton: true },
+  { path: "/suppliers", label: "الموردين", perm: "suppliers", homeButton: true },
+  { path: "/treasury", label: "الخزينة", perm: "treasury", homeButton: true },
+  { path: "/expenses", label: "المصروفات", perm: "expenses", homeButton: true },
+  { path: "/installments", label: "الأقساط", perm: "installments", homeButton: true },
+  { path: "/shifts", label: "الورديات", perm: "shifts", homeButton: true },
+  { path: "/reports", label: "التقارير", perm: "reports", homeButton: true },
+  { path: "/profit", label: "تقرير الأرباح", perm: "reports" },
+  { path: "/smart-orders", label: "طلبات الشراء الذكية", perm: "reports" },
+  { path: "/barcode", label: "طباعة الباركود", perm: "barcode", homeButton: true },
+  { path: "/price-checker", label: "استعلام الأسعار", perm: "price-checker", homeButton: true },
+  { path: "/deleted-invoices", label: "سجل المحذوفات", perm: "reports" },
+  { path: "/dashboard", label: "لوحة المؤشرات", perm: "reports" },
+  { path: "/audit", label: "سجل المراجعة", perm: "view_audit", homeButton: true },
+  { path: "/backup", label: "النسخ الاحتياطي", perm: "backup", homeButton: true },
+  { path: "/backup-schedule", label: "جدولة النسخ الاحتياطي", perm: "backup" },
+  { path: "/settings", label: "الإعدادات", perm: "settings", homeButton: true },
+  { path: "/users", label: "المستخدمون", perm: "users", homeButton: true },
+  { path: "/pages", label: "صلاحيات الشاشات", perm: "users", homeButton: true },
+  { path: "/devices", label: "التحكم في الأجهزة", perm: "users", homeButton: true },
+  { path: "/branches", label: "الفروع", perm: "branches", homeButton: true },
+  { path: "/health", label: "صحة النظام", perm: "settings" },
+  { path: "/connection", label: "الاتصال والشبكة", perm: "settings" },
+  { path: "/support", label: "الدعم الفني" },
+  { path: "/about", label: "معلومات عن البرنامج" },
+  { path: "/licenses", label: "التراخيص" },
+  { path: "/subscription", label: "الاشتراك" },
+];
+
+/** تحويل نص الصلاحيات في قاعدة البيانات إلى مصفوفة آمنة */
+export function parseAllowedPages(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === "string");
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * هل يستطيع المستخدم فتح هذه الصفحة؟
+ * allowedPages فاضي = «لم يُخصَّص شيء» ⇒ نرجع لصلاحيات الدور كما هي.
+ */
+export function canOpenPage(
+  session: { role: string; perms?: string[]; pages?: string[] } | null | undefined,
+  path: string,
+): boolean {
+  if (!session) return false;
+  if (session.role === "owner") return true;
+  const pages = session.pages || [];
+  const norm = path === "" ? "/" : path;
+  if (pages.length) {
+    // مطابقة مباشرة أو مطابقة بادئة (مثل /sales/list تحت /sales)
+    const ok = pages.some((p) => norm === p || norm.startsWith(`${p}/`));
+    if (!ok) return false;
+  }
+  const def = APP_PAGES.find((p) => p.path === norm) ?? APP_PAGES.find((p) => p.path !== "/" && norm.startsWith(p.path));
+  if (def?.perm) return hasPermission(session, def.perm);
+  return true;
+}
+
 export function can(role: string, permission: string): boolean {
   const list = ROLE_PERMISSIONS[(role as Role) || "cashier"] || [];
   return list.includes("*") || list.includes(permission);
@@ -125,6 +206,8 @@ export interface SessionPayload {
   branchId: number | null;
   /** صلاحيات إضافية مخصصة للمستخدم */
   perms?: string[];
+  /** صفحات مسموح بها لهذا الحساب (فاضي = كل صفحات دوره) */
+  pages?: string[];
   exp: number;
 }
 

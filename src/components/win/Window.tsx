@@ -163,18 +163,16 @@ export function Window({
             {isFs ? <Minimize2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : <Maximize2 className="h-3.5 w-3.5" strokeWidth={2.8} />}
           </button>
           <span className="mx-1 my-2 w-px bg-white/30" />
-          {native && (
-            <button type="button" className="win-ctrl" onClick={() => setMinimized(true)} title="تصغير">
-              <Minus className="h-3.5 w-3.5" strokeWidth={3} />
+          {/* نسخة سطح المكتب: النافذة ملء الشاشة دائماً — لا تصغير ولا استعادة */}
+          {!native && (
+            <button type="button" className="win-ctrl" onClick={toggleMaximized} title={showRestore ? "استعادة" : "تكبير"}>
+              {showRestore ? (
+                <Copy className="h-[13px] w-[13px]" strokeWidth={2.6} />
+              ) : (
+                <Square className="h-[13px] w-[13px]" strokeWidth={2.8} />
+              )}
             </button>
           )}
-          <button type="button" className="win-ctrl" onClick={toggleMaximized} title={showRestore ? "استعادة" : "تكبير"}>
-            {showRestore ? (
-              <Copy className="h-[13px] w-[13px]" strokeWidth={2.6} />
-            ) : (
-              <Square className="h-[13px] w-[13px]" strokeWidth={2.8} />
-            )}
-          </button>
           <button type="button" className="win-ctrl close" onClick={handleClose} title="إغلاق">
             <X className="h-4 w-4" strokeWidth={3} />
           </button>
