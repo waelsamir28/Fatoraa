@@ -8,7 +8,6 @@ contextBridge.exposeInMainWorld("installer", {
   launch: () => ipcRenderer.invoke("setup:launch"),
   minimize: () => ipcRenderer.send("setup:minimize"),
   close: () => ipcRenderer.send("setup:close"),
-  confirmUninstall: () => ipcRenderer.invoke("setup:confirmUninstall"),
   openFolder: () => ipcRenderer.invoke("setup:openFolder"),
   whatsNew: () => ipcRenderer.invoke("setup:whatsNew"),
   cancel: () => ipcRenderer.send("setup:cancel"),

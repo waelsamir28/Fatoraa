@@ -8,7 +8,6 @@ const api =
     browse: async () => null,
     install: async () => ({ ok: true }),
     launch: async () => {},
-    confirmUninstall: async () => true,
     openFolder: async () => {},
     whatsNew: async () => ({
       version: "معاينة",
@@ -66,16 +65,17 @@ async function init() {
   $("footHint").textContent = `الإصدار ${info.version}`;
   $("dir").value = info.defaultDir;
   $("spaceMeta").textContent = `المساحة المطلوبة: ${fmtBytes(info.requiredBytes)} · المتاحة: ${fmtBytes(info.freeBytes)}`;
-  void checkForUpdates();
+  void loadReleaseInfo();
 }
 
-async function checkForUpdates() {
+async function loadReleaseInfo() {
+  // ملاحظة: يتم هنا قراءة ملاحظات الإصدار المرفقة مع المثبّت (بدون اتصال بالإنترنت)
   const spin = $("checkSpin");
   const text = $("checkText");
   try {
     const notes = await api.whatsNew();
     spin.classList.add("ok");
-    text.textContent = "أنت على أحدث إصدار — البرنامج جاهز للتثبيت";
+    text.textContent = "الإصدار جاهز للتثبيت — لا حاجة لاتصال بالإنترنت";
     $("wnVer").textContent = `(${notes.version})`;
     $("wnList").innerHTML = "";
     for (const line of notes.items) {
@@ -85,7 +85,7 @@ async function checkForUpdates() {
     }
   } catch {
     spin.classList.add("ok");
-    text.textContent = "تعذّر التحقق من التحديثات — يمكنك المتابعة بالتثبيت";
+    text.textContent = "يمكنك المتابعة بالتثبيت";
   }
 }
 

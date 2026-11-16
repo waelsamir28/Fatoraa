@@ -8,14 +8,12 @@ const { spawn } = require("node:child_process");
 
 const APP_NAME = "FATORA";
 const APP_EXE = "AlGamal.exe";
-const UNINSTALL_EXE = "Uninstall FATORA.exe";
+const UNINSTALL_EXE = "Uninstall FATORA.bat";
 const UNINSTALL_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\FATORA";
 
 const SIZE_OFFSET = 8;
 const LOGO_SIZE_OFFSET = 16;
 const HEADER_SIZE = 32;
-
-const isUninstall = process.argv.includes("--uninstall");
 
 let win = null;
 let installTarget = "";
@@ -26,8 +24,9 @@ const send = (channel, payload) => {
 /* ---------------- الحمولة الملحقة ---------------- */
 
 function payloadPath() {
-  // داخل المثبّت نفسه: process.execPath
-  return process.execPath;
+  // المثبّت ملف واحد (portable): بعد فك نفسه يعمل من مجلد مؤقت،
+  // والملف الأصلي الحقيقي موجود في هذا المتغير.
+  return process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
 }
 
 function readPayloadInfo() {
@@ -153,7 +152,7 @@ function writeUninstallRegistry({ dir, sizeKb }) {
     `Publisher=FATORA`,
     `DisplayIcon=${path.join(dir, APP_EXE)}`,
     `InstallLocation=${dir}`,
-    `UninstallString="${uninstaller}" --uninstall`,
+    `UninstallString="${uninstaller}"`,
     `NoModify=1`,
     `NoRepair=1`,
     `EstimatedSize=${sizeKb}`,
@@ -168,6 +167,33 @@ function writeUninstallRegistry({ dir, sizeKb }) {
     .join(" ");
   const ensure = `New-Item -Path '${psEscape(key)}' -Force | Out-Null;`;
   return runPowerShell(ensure + " " + script);
+}
+
+
+/** ملف إزالة خفيف (bat) بجانب البرنامج — يحذف الملفات والاختصارات وسجل ويندوز */
+function writeUninstallerScript({ dir, file, appName }) {
+  const startMenu = path.join(app.getPath("appData"), "Microsoft", "Windows", "Start Menu", "Programs", `${appName}.lnk`);
+  const desktop = path.join(app.getPath("desktop"), `${appName}.lnk`);
+  const lines = [
+    "@echo off",
+    "chcp 65001 >nul",
+    `title إزالة ${appName}`,
+    "echo.",
+    `echo   سيتم إزالة برنامج ${appName} من هذا الجهاز.`,
+    "echo   ملاحظة: بيانات المتجر (الفواتير والمخزون) لن تُحذف.",
+    "echo.",
+    "pause",
+    "taskkill /f /im AlGamal.exe >nul 2>&1",
+    `del /f /q "${desktop}" >nul 2>&1`,
+    `del /f /q "${startMenu}" >nul 2>&1`,
+    `reg delete "HKCU\\${UNINSTALL_KEY}" /f >nul 2>&1`,
+    `rmdir /s /q "${dir}" >nul 2>&1`,
+    "echo.",
+    `echo   تمت إزالة ${appName} بنجاح.`,
+    "timeout /t 2 /nobreak >nul",
+    'del /f /q "%~f0"',
+  ];
+  fs.writeFileSync(file, lines.join("\r\n") + "\r\n", "utf8");
 }
 
 /* ---------------- التثبيت ---------------- */
@@ -228,26 +254,9 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
 
     send({ percent: 90, message: "تجهيز ملفات التشغيل…" });
 
-    // ملف إلغاء التثبيت: نسخة من المثبّت بدون الحمولة الملحقة (حتى لا يتضاعف الحجم)
+    // ملف إلغاء التثبيت: سكربت صغير (بدون نسخ المثبّت 250 ميجا)
     const uninstaller = path.join(target, UNINSTALL_EXE);
-    try {
-      const { payloadSize } = readPayloadInfo();
-      const stubSize = fs.statSync(process.execPath).size - payloadSize;
-      const fdIn = fs.openSync(process.execPath, "r");
-      const fdOut = fs.openSync(uninstaller, "w");
-      const buf = Buffer.alloc(4 * 1024 * 1024);
-      let read = 0;
-      while (read < stubSize) {
-        const n = fs.readSync(fdIn, buf, 0, Math.min(buf.length, stubSize - read), read);
-        if (n <= 0) break;
-        fs.writeSync(fdOut, buf, 0, n);
-        read += n;
-      }
-      fs.closeSync(fdIn);
-      fs.closeSync(fdOut);
-    } catch {
-      /* ignore */
-    }
+    writeUninstallerScript({ dir: target, file: uninstaller, appName: APP_NAME });
 
     send({ percent: 94, message: "إنشاء الاختصارات…" });
     await createShortcuts({ dir: target, desktopShortcut, startMenuShortcut });
@@ -289,71 +298,6 @@ async function closeRunningApp() {
   }
 }
 
-/* ---------------- إلغاء التثبيت ---------------- */
-
-async function uninstall() {
-  const dir = path.dirname(process.execPath);
-  await closeRunningApp();
-  send({ percent: 20, message: "جاري إزالة الملفات…" });
-
-  const script = [
-    `Remove-Item -Path '${psEscape(path.join(app.getPath("desktop"), `${APP_NAME}.lnk`))}' -Force -ErrorAction SilentlyContinue;`,
-    `Remove-Item -Path '${psEscape(path.join(app.getPath("appData"), "Microsoft", "Windows", "Start Menu", "Programs", `${APP_NAME}.lnk`))}' -Force -ErrorAction SilentlyContinue;`,
-    `Remove-Item -Path 'HKCU:\\${UNINSTALL_KEY}' -Recurse -Force -ErrorAction SilentlyContinue;`,
-  ].join(" ");
-  try {
-    await runPowerShell(script);
-  } catch {
-    /* ignore */
-  }
-
-  // حذف البرنامج نفسه في النهاية (بعد خروج المثبّت)
-  const selfDelete = path.join(os.tmpdir(), `fatora-rm-${Date.now()}.cmd`);
-  fs.writeFileSync(
-    selfDelete,
-    `@echo off\r\ntimeout /t 2 /nobreak >nul\r\nrmdir /s /q "${dir}"\r\ndel /f /q "%~f0"\r\n`,
-    "utf8",
-  );
-  spawn("cmd.exe", ["/c", selfDelete], { detached: true, stdio: "ignore", windowsHide: true }).unref();
-  return true;
-}
-
-
-/** حذف الملفات التي نُسخت عند إلغاء التثبيت */
-function removeInstalledFiles(dir) {
-  try {
-    if (dir && fs.existsSync(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
-  } catch {
-    /* ignore */
-  }
-  try {
-    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
-  } catch {
-    /* ignore */
-  }
-}
-
-/** ملاحظات الإصدار — تُقرأ من release-notes.json المرفق مع المثبّت إن وُجد */
-function releaseNotes() {
-  const fallback = [
-    "تثبيت بنمط Windows 11 (نافذة حديثة + شريط تقدم بنص متحرك)",
-    "فتح البرنامج على الشاشة الرئيسية دائمًا + وضع ملء الشاشة + حجم خط 110%",
-    "شاشة المبيعات تبدأ فارغة (بدون تحميل أي فاتورة قديمة)",
-    "إصلاح شاشة معلومات البرنامج (كانت مقصوصة)",
-    "اسم المسؤول مع رقم الدعم في كل أنحاء البرنامج",
-  ];
-  const candidates = [path.join(process.resourcesPath, "release-notes.json"), path.join(__dirname, "release-notes.json")];
-  for (const file of candidates) {
-    try {
-      const data = JSON.parse(fs.readFileSync(file, "utf8"));
-      if (Array.isArray(data.items) && data.items.length) return data;
-    } catch {
-      /* ignore */
-    }
-  }
-  return { version: app.getVersion(), items: fallback };
-}
-
 /* ---------------- النافذة ---------------- */
 
 function createWindow() {
@@ -376,67 +320,22 @@ function createWindow() {
     },
   });
   win.loadFile(path.join(__dirname, "index.html"));
-  win.once("ready-to-show", () => {
-    if (!isUninstall) win.show();
-  });
+  win.once("ready-to-show", () => win.show());
   win.on("closed", () => {
     win = null;
   });
 }
 
-app.whenReady().then(async () => {
+app.whenReady().then(() => {
   createWindow();
-  if (isUninstall) {
-    // إزالة البرنامج: نستخدم نفس الواجهة (أزرار «إلغاء التثبيت / تراجع»)
-    win.webContents.once("did-finish-load", async () => {
-      win.show();
-      try {
-        $ui_uninstallMode();
-      } catch {
-        /* ignore */
-      }
-    });
-    ipcMain.handle("setup:confirmUninstall", async () => {
-      const done = await uninstall();
-      if (done) app.quit();
-      return done;
-    });
-  }
 });
-
-// وضع الإزالة: نبدّل واجهة الصفحة الأولى إلى تأكيد الحذف
-function $ui_uninstallMode() {
-  win.webContents.executeJavaScript(`
-    (function () {
-      var dir = document.getElementById('pgDir');
-      var prog = document.getElementById('pgProg');
-      if (!dir) return;
-      dir.querySelector('h1').textContent = 'إزالة برنامج FATORA';
-      dir.querySelector('.lead').textContent = 'سيتم حذف ملفات البرنامج والاختصارات. لن تُحذف بيانات المتجر (الفواتير والمخزون).';
-      var field = dir.querySelector('.field');
-      if (field) field.style.display = 'none';
-      var opts = dir.querySelector('.opts');
-      if (opts) opts.style.display = 'none';
-      var next = document.getElementById('btnNext');
-      var cancel = document.getElementById('btnCancel');
-      next.textContent = 'إلغاء التثبيت';
-      if (cancel) cancel.style.display = 'none';
-      next.onclick = function () {
-        next.disabled = true;
-        next.textContent = 'جاري الإزالة…';
-        if (prog) { document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');}); prog.classList.add('on'); }
-        window.installer.confirmUninstall();
-      };
-    })();
-  `);
-}
-
-app.on("window-all-closed", () => app.quit());
 
 /* ---------------- IPC ---------------- */
 
 ipcMain.handle("setup:info", () => {
-  const defaultDir = path.join(process.env.ProgramFiles || "C:\\Program Files", APP_NAME);
+  // التثبيت في حساب المستخدم حتى لا يحتاج صلاحيات مدير
+  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+  const defaultDir = path.join(localAppData, "Programs", APP_NAME);
   let freeBytes = 0;
   try {
     const stats = fs.statfsSync(path.parse(defaultDir).root);
