@@ -47,53 +47,62 @@
   --ui-font: "Rubik", "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
   --ui-scale: 1;
 
-  /* لوحة الألوان الأساسية */
-  --c-ink: #0b2545;          /* نص أساسي */
-  --c-ink-2: #274b74;        /* نص ثانوي */
-  --c-ink-3: #64789a;        /* نص خافت */
-  --c-line: #dce7f5;         /* حدود خفيفة */
-  --c-line-2: #c2d6ea;       /* حدود متوسطة */
-  --c-line-3: #9dbbe0;       /* حدود قوية */
+  /* ===== لوحة الألوان: Fluent 2 / Windows 11 (Light — أزرق فاتح) ===== */
+  --c-ink: #12263f;          /* نص أساسي */
+  --c-ink-2: #4a6484;        /* نص ثانوي */
+  --c-ink-3: #7a94b3;        /* نص خافت */
+  --c-line: #dce7f4;         /* حدود خفيفة */
+  --c-line-2: #cfdff0;       /* حدود متوسطة */
+  --c-line-3: #bfd4e9;       /* حدود قوية */
   --c-surface: #ffffff;
-  --c-surface-2: #f7fafd;    /* خلفية ثانوية */
+  --c-surface-2: #f7fbff;    /* خلفية ثانوية */
   --c-surface-3: #eef4fb;    /* خلفية ثالثة */
-  --c-page: #edf3fa;         /* خلفية الصفحات */
-  --c-brand: #1d6ff2;        /* اللون الأساسي */
-  --c-brand-2: #2f8bff;      /* تدرج فاتح */
-  --c-brand-3: #1150ba;      /* تدرج غامق */
-  --c-success: #12a150;
-  --c-danger: #e2453c;
-  --c-warning: #e5860a;
+  --c-page: #eef4fb;         /* خلفية الصفحات (Mica — أزرق فاتح) */
+  --c-brand: #0067c0;        /* Fluent Accent */
+  --c-brand-2: #1975c5;      /* تدرج فاتح */
+  --c-brand-3: #005a9e;      /* تدرج غامق */
+  --c-success: #0f7b0f;
+  --c-danger: #c42b1c;
+  --c-warning: #9d5d00;
+  --c-violet: #5c2e91;       /* Fluent violet */
+  --c-teal: #0f6cbd;
 
-  /* أنصاف الأقطار */
-  --r-sm: 7px;
-  --r-md: 10px;
-  --r-lg: 14px;
+  /* حقول Fluent */
+  --c-field-bg: #ffffff;
+  --c-field-bg-hover: #fbfdff;
+  --c-field-border: #cfdff0;
+  --c-field-border-hover: #a9c6e4;
+  --c-field-focus: #0067c0;
 
-  /* الظلال */
-  --sh-sm: 0 1px 2px rgba(11, 37, 69, 0.08), 0 1px 1px rgba(11, 37, 69, 0.04);
-  --sh-md: 0 4px 12px rgba(11, 37, 69, 0.09), 0 1px 3px rgba(11, 37, 69, 0.06);
-  --sh-lg: 0 18px 45px -12px rgba(3, 15, 38, 0.55), 0 6px 16px rgba(0, 0, 0, 0.18);
+  /* أنصاف الأقطار — Fluent يستخدم 4/8 */
+  --r-sm: 5px;
+  --r-md: 8px;
+  --r-lg: 12px;
+
+  /* الظلال — Fluent خفيفة جداً */
+  --sh-sm: 0 1px 2px rgba(18, 38, 63, 0.05), 0 1px 1px rgba(18, 38, 63, 0.03);
+  --sh-md: 0 2px 8px rgba(18, 38, 63, 0.07), 0 1px 3px rgba(18, 38, 63, 0.04);
+  --sh-lg: 0 8px 32px -8px rgba(10, 30, 60, 0.28), 0 2px 8px rgba(10, 30, 60, 0.10);
 
   /* ألوان الثيم (تُبدّل من الإعدادات) */
-  --ui-title-from: #4f95f5;
-  --ui-title-mid: #1d6ff2;
-  --ui-title-dark: #1150ba;
-  --ui-title-to: #2478f0;
-  --ui-title-border: #0a3d96;
-  --ui-desktop-1: #14498f;
-  --ui-desktop-2: #0d3468;
-  --ui-desktop-3: #071f43;
-  --ui-desktop-4: #030f26;
-  --ui-head-from: #1d6ff2;
-  --ui-head-mid: #1257c9;
-  --ui-head-to: #0c3f9a;
-  --ui-table-from: #1d6ff2;
-  --ui-table-to: #0e4494;
-  --ui-table-border: #072a5f;
-  --ui-side-from: #2f7ff0;
-  --ui-side-mid: #1a5fd0;
-  --ui-side-to: #0e4398;
+  --ui-title-from: #f6fafe;
+  --ui-title-mid: #f2f8fe;
+  --ui-title-dark: #eef4fb;
+  --ui-title-to: #eef4fb;
+  --ui-title-border: #dce7f4;
+  --ui-desktop-1: #d5e5f7;
+  --ui-desktop-2: #c2d6ee;
+  --ui-desktop-3: #b3cbe8;
+  --ui-desktop-4: #a5c0e2;
+  --ui-head-from: #0067c0;
+  --ui-head-mid: #0067c0;
+  --ui-head-to: #005a9e;
+  --ui-table-from: #eaf3fd;
+  --ui-table-to: #e2eefa;
+  --ui-table-border: #cfdff0;
+  --ui-side-from: #eaf3fd;
+  --ui-side-mid: #e3eef9;
+  --ui-side-to: #dae8f6;
 }
 
 html, body {
@@ -105,7 +114,7 @@ body {
   margin: 0;
   font-family: var(--ui-font);
   color: var(--c-ink);
-  background: #071f43;
+  background: #d5e5f7;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -146,15 +155,17 @@ body {
     height: 11px;
   }
   ::-webkit-scrollbar-track {
-    background: #eef4fb;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #b3c9e4;
+    background: #c3d4e6;
     border-radius: 6px;
-    border: 2px solid #eef4fb;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #8fb0d6;
+    background: #a3bbd4;
+    background-clip: padding-box;
   }
 
   /* ============ سطح المكتب ============ */
@@ -163,16 +174,16 @@ body {
     inset: 0;
     overflow: hidden;
     background:
-      radial-gradient(circle at 50% 0%, var(--ui-desktop-1) 0%, var(--ui-desktop-2) 38%, var(--ui-desktop-3) 72%, var(--ui-desktop-4) 100%);
+      radial-gradient(circle at 50% -10%, #f2f8ff 0%, var(--ui-desktop-1) 32%, var(--ui-desktop-2) 62%, var(--ui-desktop-3) 100%);
   }
   .desktop::before {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.45;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-    background-size: 26px 26px;
+    opacity: 0.55;
+    background-image: radial-gradient(rgba(0, 103, 192, 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
   /* ============ إطار النافذة ============ */
@@ -183,12 +194,12 @@ body {
     flex-direction: column;
     overflow: hidden;
     background: var(--c-page);
-    border: 1px solid rgba(255, 255, 255, 0.34);
+    border: 1px solid rgba(255, 255, 255, 0.72);
     box-shadow: var(--sh-lg);
   }
   .win-normal {
     inset: 6px 8px 8px;
-    border-radius: var(--r-md);
+    border-radius: 9px;
   }
   .win-max {
     inset: 0;
@@ -201,25 +212,24 @@ body {
   .win-titlebar {
     position: relative;
     flex: none;
-    height: 32px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
+    color: var(--c-ink);
     user-select: none;
     overflow: hidden;
-    border-bottom: 1px solid var(--ui-title-border);
-    background: linear-gradient(180deg, var(--ui-title-from) 0%, var(--ui-title-mid) 48%, var(--ui-title-dark) 52%, var(--ui-title-to) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 1px 0 rgba(0, 0, 0, 0.2);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid var(--c-line);
+    background: #f4f8fd;
+    box-shadow: none;
+    text-shadow: none;
   }
   .win-titlebar::before {
     content: "";
     position: absolute;
-    inset: 0 0 auto 0;
-    height: 50%;
+    inset: 0;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.02));
+    background: none;
   }
   .win-titlebar > * {
     position: relative;
@@ -258,20 +268,41 @@ body {
     object-fit: contain;
   }
   .win-ctrl {
-    width: 38px;
+    width: 44px;
     height: 100%;
     display: grid;
     place-items: center;
-    color: #fff;
+    color: var(--c-ink-2);
     background: transparent;
     border: 0;
-    transition: background 0.13s ease, color 0.13s ease;
+    border-radius: 0;
+    transition: background 0.12s ease, color 0.12s ease;
   }
   .win-ctrl:hover {
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.045);
+    color: var(--c-ink);
   }
   .win-ctrl.close:hover {
-    background: #e2402f;
+    background: #c42b1c;
+    color: #ffffff;
+  }
+  .win-ctrl:active {
+    background: rgba(0, 0, 0, 0.08);
+  }
+  /* زر الرجوع للرئيسية في الترويسة الفاتحة */
+  .win-back {
+    color: var(--c-ink) !important;
+    border: 1px solid var(--c-line-2) !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+  .win-back:hover {
+    background: #f2f8fe !important;
+    border-color: var(--c-field-border-hover) !important;
+    box-shadow: 0 0 0 2px rgba(0, 103, 192, 0.12) !important;
+  }
+  .win-back:active {
+    background: #e5f1fb !important;
   }
 
   .win-body {
@@ -292,8 +323,8 @@ body {
     font-size: 12.5px;
     font-weight: 700;
     color: var(--c-ink-2);
-    background: linear-gradient(180deg, #ffffff 0%, #f1f6fc 55%, #e4edf8 100%);
-    border-top: 1px solid var(--c-line-2);
+    background: #f4f8fd;
+    border-top: 1px solid var(--c-line);
     white-space: nowrap;
     overflow: hidden;
   }
@@ -308,159 +339,175 @@ body {
     padding: 1px 6px;
     margin-inline-end: 4px;
     border-radius: 5px;
-    background: linear-gradient(180deg, #ffffff, #eef4fb);
+    background: #ffffff;
     border: 1px solid var(--c-line-2);
-    box-shadow: 0 1px 1px rgba(11, 37, 69, 0.06);
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--c-brand-3);
+    box-shadow: 0 1px 0 rgba(18, 38, 63, 0.06);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--c-ink-2);
   }
 
-  /* ============ الأزرار ============ */
+  /* ============ الأزرار — Fluent 2 / Windows 11 ============ */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
-    font-weight: 800;
-    color: #123a6b;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--c-ink);
     border-radius: var(--r-sm);
     border: 1px solid var(--c-line-2);
-    background: linear-gradient(180deg, #ffffff 0%, #f7fafd 55%, #eaf2fb 100%);
-    box-shadow: var(--sh-sm), inset 0 1px 0 #ffffff;
-    transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(18, 38, 63, 0.05);
+    transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
     white-space: nowrap;
     user-select: none;
     padding: 0 12px;
   }
   .btn:hover:not(:disabled) {
-    border-color: #7fb0ea;
-    box-shadow: 0 0 0 3px rgba(29, 111, 242, 0.13), var(--sh-md);
+    background: #f7fbff;
+    border-color: var(--c-field-border-hover);
   }
-  /* عند الضغط: درجة أفتح بدرجتين من لون الزر نفسه — الكلام يفضل مقروء */
   .btn:active:not(:disabled) {
-    transform: translateY(1px) scale(0.995);
-    box-shadow: inset 0 2px 5px rgba(11, 37, 69, 0.18);
-    background: linear-gradient(180deg, #ffffff 0%, #dce9f8 100%) !important;
-    color: #0b2545 !important;
-    border-color: #7fa6d4 !important;
+    background: #eef4fb;
+    border-color: var(--c-line-3);
+    transform: none;
+    box-shadow: inset 0 1px 2px rgba(18, 38, 63, 0.06);
   }
   .btn:active:not(:disabled) svg {
-    color: #0b2545 !important;
+    color: inherit !important;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--c-brand);
+    outline-offset: 1px;
+  }
+
+  /* ---- أكسنت Fluent: أزرار ملوّنة مسطّحة (بدون تدرجات لامعة) ---- */
+  .btn-blue {
+    color: #ffffff;
+    border-color: #005a9e;
+    background: #0067c0;
+    box-shadow: 0 1px 2px rgba(0, 90, 158, 0.20);
+  }
+  .btn-blue:hover:not(:disabled) {
+    background: #1975c5;
+    border-color: #005a9e;
   }
   .btn-blue:active:not(:disabled) {
-    background: linear-gradient(180deg, #6fa8f2 0%, #3d82e0 100%) !important;
+    background: #005a9e !important;
+    border-color: #004c87 !important;
     color: #ffffff !important;
-    border-color: #1d63c4 !important;
-  }
-  .btn-blue:active:not(:disabled) svg {
-    color: #ffffff !important;
-  }
-  .btn-blue:active:not(:disabled) {
-    background: linear-gradient(180deg, #6fa8f2 0%, #3d82e0 100%) !important;
-    color: #ffffff !important;
-    border-color: #1d63c4 !important;
-  }
-  .btn-green:active:not(:disabled) {
-    background: linear-gradient(180deg, #6ee7a8 0%, #34c47a 100%) !important;
-    color: #07351f !important;
-    border-color: #12a05c !important;
-  }
-  .btn-green:active:not(:disabled) svg {
-    color: #07351f !important;
-  }
-  .btn-red:active:not(:disabled) {
-    background: linear-gradient(180deg, #fca5a0 0%, #ef5b52 100%) !important;
-    color: #3d0703 !important;
-    border-color: #cf3227 !important;
-  }
-  .btn-red:active:not(:disabled) svg {
-    color: #3d0703 !important;
   }
   .btn-green {
     color: #ffffff;
-    border-color: #137a3c;
-    background: linear-gradient(180deg, #63e08a 0%, #29b957 52%, #0f9e42 100%);
-    box-shadow: 0 2px 6px rgba(15, 158, 66, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+    border-color: #0c5f0c;
+    background: #0f7b0f;
+    box-shadow: 0 1px 2px rgba(12, 95, 12, 0.20);
+    text-shadow: none;
   }
   .btn-green:hover:not(:disabled) {
-    border-color: #0d6a33;
-    box-shadow: 0 0 0 3px rgba(18, 161, 80, 0.22), 0 3px 8px rgba(15, 158, 66, 0.32);
+    background: #128a12;
+  }
+  .btn-green:active:not(:disabled) {
+    background: #0c5f0c !important;
+    border-color: #0a4e0a !important;
+    color: #ffffff !important;
+  }
+  .btn-green:active:not(:disabled) svg {
+    color: #ffffff !important;
   }
   .btn-red {
     color: #ffffff;
-    border-color: #b51b1b;
-    background: linear-gradient(180deg, #ff8577 0%, #ec4238 52%, #cf1e14 100%);
-    box-shadow: 0 2px 6px rgba(207, 30, 20, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.42);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+    border-color: #9e2015;
+    background: #c42b1c;
+    box-shadow: 0 1px 2px rgba(158, 32, 21, 0.20);
+    text-shadow: none;
   }
   .btn-red:hover:not(:disabled) {
-    border-color: #8f1414;
-    box-shadow: 0 0 0 3px rgba(226, 69, 60, 0.22), 0 3px 8px rgba(207, 30, 20, 0.32);
+    background: #d1341f;
   }
-  .btn-blue {
-    color: #ffffff;
-    border-color: #1450b0;
-    background: linear-gradient(180deg, #6fb2ff 0%, #2f83f4 52%, #1360cf 100%);
-    box-shadow: 0 2px 6px rgba(19, 96, 207, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.48);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  .btn-red:active:not(:disabled) {
+    background: #9e2015 !important;
+    border-color: #86180f !important;
+    color: #ffffff !important;
   }
-  .btn-blue:hover:not(:disabled) {
-    border-color: #0d3f8f;
-    box-shadow: 0 0 0 3px rgba(47, 131, 244, 0.22), 0 3px 8px rgba(19, 96, 207, 0.32);
+  .btn-red:active:not(:disabled) svg {
+    color: #ffffff !important;
   }
   .btn-orange {
     color: #ffffff;
-    border-color: #b7570a;
-    background: linear-gradient(180deg, #ffbe6b 0%, #f2901e 52%, #d97407 100%);
-    box-shadow: 0 2px 6px rgba(217, 116, 7, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.45);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    border-color: #7a4600;
+    background: #9d5d00;
+    box-shadow: 0 1px 2px rgba(122, 70, 0, 0.20);
+    text-shadow: none;
+  }
+  .btn-orange:hover:not(:disabled) {
+    background: #b06a00;
+  }
+  .btn-violet {
+    color: #ffffff;
+    border-color: #47216f;
+    background: #5c2e91;
+    box-shadow: 0 1px 2px rgba(71, 33, 111, 0.20);
+  }
+  .btn-violet:hover:not(:disabled) {
+    background: #6a36a5;
+  }
+  .btn-teal {
+    color: #ffffff;
+    border-color: #0b5596;
+    background: #0f6cbd;
+    box-shadow: 0 1px 2px rgba(11, 85, 150, 0.20);
+  }
+  .btn-teal:hover:not(:disabled) {
+    background: #1579cc;
   }
   .btn-big {
     flex-direction: column;
     gap: 0.2rem;
-    font-size: 18.5px;
-    font-weight: 900;
+    font-size: 16.5px;
+    font-weight: 700;
     line-height: 1.2;
     border-radius: var(--r-md);
-    border-width: 2px;
+    border-width: 1px;
     padding: 6px 10px;
   }
   .btn-big svg {
-    width: 30px;
-    height: 30px;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+    width: 26px;
+    height: 26px;
+    filter: none;
   }
 
   /* ============ البانلات ============ */
   .panel {
     border-radius: var(--r-md);
     border: 1px solid var(--c-line);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 62%, #f3f8fe 100%);
+    background: #ffffff;
     box-shadow: var(--sh-sm);
   }
   .panel-head {
-    background: linear-gradient(180deg, #ffffff 0%, #eef4fb 100%);
+    background: #f4f8fd;
     border-bottom: 1px solid var(--c-line);
     color: var(--c-ink);
-    font-weight: 800;
+    font-weight: 700;
   }
+  /* ترويسة ملونة — Fluent accent (مسطّحة، بدون لمعان) */
   .navy-head {
     color: #ffffff;
-    font-weight: 900;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    background: linear-gradient(180deg, var(--ui-head-from) 0%, var(--ui-head-mid) 52%, var(--ui-head-to) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    font-weight: 700;
+    text-shadow: none;
+    background: var(--c-brand);
+    box-shadow: none;
   }
   .f-label {
     display: flex;
     align-items: center;
     padding: 0 10px;
-    font-weight: 800;
-    font-size: 13px;
-    color: var(--c-ink);
-    background: linear-gradient(180deg, #ffffff 0%, #eef4fb 100%);
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--c-ink-2);
+    background: #f4f8fd;
     border: 1px solid var(--c-line);
     border-radius: var(--r-sm);
     white-space: nowrap;
@@ -468,27 +515,35 @@ body {
 
   /* ============ الحقول ============ */
   .win-input {
-    height: 32px;
+    height: 30px;
     padding: 0 9px;
-    background: #ffffff;
-    border: 1px solid var(--c-line-2);
+    background: var(--c-field-bg);
+    border: 1px solid var(--c-field-border);
+    border-bottom-width: 1px;
     border-radius: var(--r-sm);
-    font-weight: 700;
+    font-weight: 600;
     color: var(--c-ink);
     outline: none;
     min-width: 0;
-    box-shadow: inset 0 1px 2px rgba(11, 37, 69, 0.07);
-    transition: border-color 0.13s ease, box-shadow 0.13s ease;
+    box-shadow: none;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
   .win-input:hover:not(:disabled):not([readonly]) {
-    border-color: var(--c-line-3);
+    background: var(--c-field-bg-hover);
+    border-color: var(--c-field-border-hover);
   }
+  /* Fluent focus: خط سفلي سميك + حدود أكسنت */
   .win-input:focus {
-    border-color: var(--c-brand);
-    box-shadow: 0 0 0 3px rgba(29, 111, 242, 0.17);
+    background: #ffffff;
+    border-color: var(--c-field-focus);
+    box-shadow: inset 0 -2px 0 var(--c-field-focus);
   }
   .win-input[readonly] {
-    background: #f6f9fd;
+    background: #f4f8fd;
+    border-color: var(--c-line);
+  }
+  .win-input:disabled {
+    background: #f4f8fd;
   }
   textarea.win-input {
     height: auto;
@@ -497,7 +552,7 @@ body {
   }
   select.win-input {
     appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, #5a7ba3 50%), linear-gradient(135deg, #5a7ba3 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, #5f7d9e 50%), linear-gradient(135deg, #5f7d9e 50%, transparent 50%);
     background-position: calc(0% + 12px) calc(50% - 2px), calc(0% + 17px) calc(50% - 2px);
     background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
@@ -522,34 +577,34 @@ body {
     position: sticky;
     top: 0;
     z-index: 2;
-    height: 36px;
+    height: 34px;
     padding: 0 8px;
-    font-weight: 800;
-    color: var(--c-ink);
-    background: linear-gradient(180deg, #ffffff 0%, #eef4fb 58%, #e0eaf6 100%);
+    font-weight: 700;
+    color: var(--c-ink-2);
+    background: #f4f8fd;
     border-bottom: 1px solid var(--c-line-2);
-    border-left: 1px solid #e7eef8;
-    box-shadow: inset 0 1px 0 #ffffff;
+    border-left: 1px solid #eaf1fa;
+    box-shadow: none;
     white-space: nowrap;
   }
   .dgrid tbody td {
-    height: 34px;
+    height: 32px;
     padding: 0 8px;
-    border-bottom: 1px solid #e8eff8;
-    border-left: 1px solid #eff4fb;
-    font-weight: 700;
+    border-bottom: 1px solid #edf3fa;
+    border-left: 1px solid #f4f8fd;
+    font-weight: 600;
     white-space: nowrap;
     background: #ffffff;
-    color: #17365f;
+    color: var(--c-ink);
   }
   .dgrid tbody tr:nth-child(even) td {
-    background: #f7fbff;
+    background: #fafcff;
   }
   .dgrid tbody tr.clickable {
     cursor: pointer;
   }
   .dgrid tbody tr.clickable:hover td {
-    background: #e9f2ff;
+    background: #eef5fd;
   }
   /* الصف المحدد — لون فاتح يتحكم فيه المستخدم من الإعدادات */
   .dgrid tbody tr.sel td,
@@ -566,10 +621,10 @@ body {
     bottom: 0;
     height: 36px;
     padding: 0 8px;
-    font-weight: 900;
+    font-weight: 700;
     color: var(--c-ink);
-    background: linear-gradient(180deg, #eef4fb, #dde8f5);
-    border-top: 2px solid var(--c-line-2);
+    background: #f4f8fd;
+    border-top: 1px solid var(--c-line-2);
   }
   .cell-input {
     width: 100%;
@@ -603,29 +658,29 @@ body {
     position: sticky;
     top: 0;
     z-index: 2;
-    height: 37px;
+    height: 34px;
     padding: 0 8px;
-    font-weight: 900;
-    font-size: 14.5px;
-    color: #ffffff !important;
-    background: linear-gradient(180deg, var(--ui-table-from) 0%, var(--ui-table-to) 100%) !important;
-    border-bottom: 2px solid var(--ui-table-border) !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.18) !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--c-ink-2) !important;
+    background: #f4f8fd !important;
+    border-bottom: 1px solid var(--c-line-2) !important;
+    border-left: 1px solid #eaf1fa !important;
+    text-shadow: none;
+    box-shadow: none;
     white-space: nowrap;
   }
   .dgrid-invoice tbody td {
-    height: 34px;
+    height: 32px;
     padding: 0 8px;
-    border-bottom: 1px solid #d3e2f2 !important;
-    border-left: 1px solid #e3edf8 !important;
-    font-weight: 800;
+    border-bottom: 1px solid #edf3fa !important;
+    border-left: 1px solid #f4f8fd !important;
+    font-weight: 600;
     color: var(--c-ink) !important;
     white-space: nowrap;
   }
   .dgrid-invoice tbody tr:nth-child(even) td {
-    background: #f4f9ff;
+    background: #fafcff;
   }
   .dgrid-invoice tbody tr:nth-child(odd) td {
     background: #ffffff;
@@ -634,15 +689,16 @@ body {
     cursor: pointer;
   }
   .dgrid-invoice tbody tr.clickable:hover td {
-    background: #e5f0fe !important;
+    background: #eef5fd !important;
   }
   .dgrid-invoice tbody tr.sel td,
   .dgrid-invoice tbody tr.sel:hover td {
-    background: linear-gradient(180deg, #2f83f4 0%, #1558c4 100%) !important;
-    color: #ffffff !important;
+    background: #e5f1fb !important;
+    color: var(--c-brand-3) !important;
+    box-shadow: inset 0 0 0 1px var(--c-brand) !important;
   }
   .dgrid-invoice tbody tr.sel .cell-input {
-    color: #ffffff !important;
+    color: var(--c-brand-3) !important;
   }
   .dgrid-invoice tbody tr.empty td {
     background: #ffffff;
