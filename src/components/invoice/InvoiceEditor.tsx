@@ -135,6 +135,14 @@ const ALLOWED_PAYMENT_METHODS: Array<{ key: PaymentMethodKey; label: string }> =
   { key: "wallet", label: "محفظة إلكترونية" },
 ];
 
+// ألوان خانات المال الأربع — كل خانة بلون مختلف (نفس حجم ومستوى بروز)
+const MONEY_COLORS: Record<string, { bg: string; border: string; ink: string }> = {
+  gross:  { bg: "#e8f0fa", border: "#a9c6e4", ink: "#123a63" },  // إجمالي — أزرق فاتح
+  paid:   { bg: "#dff6dd", border: "#9fd89f", ink: "#0f7b0f" },   // مدفوع — أخضر
+  remain: { bg: "#fde7e9", border: "#f1aeb5", ink: "#c42b1c" },   // متبقي — أحمر
+  due:    { bg: "#0067c0", border: "#005a9e", ink: "#ffffff" },  // مطلوب — أكسنت غامق
+};
+
 const EMPTY_ENTRY: Entry = { product: null, text: "", price: "", qty: "1", discount: "0" };
 
 function priceFor(p: Product, type: InvoiceType, level: "retail" | "wholesale") {
@@ -1006,6 +1014,8 @@ export function InvoiceEditor({
   const selProduct = entry.product ?? (selRow?.productId ? productById.get(selRow.productId) : undefined);
   const entryValue = entry.product ? Math.max(0, toNum(entry.qty) * toNum(entry.price) - toNum(entry.discount)) : 0;
   const paidNum = Math.max(0, toNum(state.paid));
+  // المدفوع: لو المستخدم كتب مبلغ يستخدمه، غير كده في النقدي = المطلوب كامل
+  const paidValue = state.paid.trim() ? paidNum : (state.paymentType === "credit" ? 0 : round2(totals.total));
   const change = state.paymentType === "credit" ? round2(totals.total - paidNum) : (paidNum > 0 ? round2(paidNum - totals.total) : 0);
 
   return (
@@ -1216,10 +1226,10 @@ export function InvoiceEditor({
           </div>
         </div>
 
-        {/* ===== بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
-        <div className="flex h-[178px] shrink-0 gap-2">
-          {/* بيانات العميل — بدون إطار، جزء أوسع */}
-          <div className={`flex w-[36%] min-w-[360px] max-w-[430px] shrink-0 flex-col justify-between gap-1 rounded-lg bg-white/70 p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
+        {/* ===== البيانات الأساسية: العميل (3 خانات + الرصيد) | الإدخال السريع | الأسعار والتحكم ===== */}
+        <div className="flex h-[204px] shrink-0 items-stretch gap-2">
+          <div className="flex w-[268px] min-w-[252px] shrink-0 flex-col gap-2">
+          <div className={`flex w-full flex-col gap-[3px] rounded-lg bg-white/70 p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
               <FRow label={`رقم ${cfg.partyLabel}`}>
                 <input
                   className="win-input num h-full flex-1 text-center text-[16px] font-black text-[#d0190f]"
@@ -1268,172 +1278,19 @@ export function InvoiceEditor({
                   <X className="h-3.5 w-3.5 text-red-600" strokeWidth={3} />
                 </button>
               </FRow>
-          </div>
-
-          {/* إطار أزرار الفاتورة والأسعار */}
-          <div className="panel flex min-w-0 flex-1 flex-col justify-between gap-1.5 overflow-hidden border border-[#dce7f4] p-1.5 shadow-sm">
-            {/* الصف الأول: باركود وتجميع (يمين) + شريط رصيد العميل العريض (يسار) */}
-            <div className="flex w-full items-stretch gap-1.5">
-              <div className="flex shrink-0 items-center gap-1">
-                {(
-                  [
-                    ["باركود", barcodeMode, setBarcodeMode, "إضافة الصنف المباشرة عند مسح الباركود"],
-                    ["تجميع", mergeSame, setMergeSame, "تجميع الصنف المكرر في نفس السطر"],
-                  ] as Array<[string, boolean, (v: boolean) => void, string]>
-                ).map(([label, on, setter, title]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    title={title}
-                    onClick={() => setter(!on)}
-                    className={`panel flex h-[46px] shrink-0 items-center gap-1.5 px-2 shadow-sm ${
-                      on ? "!border-[#2563eb] !bg-[#eaf2fe]" : ""
-                    }`}
-                  >
-                    <span className="whitespace-nowrap text-[12px] font-black text-[#0c2340]">{label}</span>
-                    <span
-                      className={`relative inline-flex h-[20px] w-[36px] items-center rounded-full border transition ${
-                        on ? "border-[#15459b] bg-[#1f6ede]" : "border-slate-400 bg-slate-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-[1px] h-[16px] w-[16px] rounded-full bg-white shadow transition-all ${
-                          on ? "left-[18px]" : "left-[1px]"
-                        }`}
-                      />
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* شريط رصيد العميل — خلفية صفراء ورقم كحلي متوسط، عرض أقل */}
-              <div className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-md border-2 border-[#e6bf3a] bg-gradient-to-b from-[#ffe97a] to-[#ffd83d] px-2 shadow-inner">
-                <span className="whitespace-nowrap text-[12.5px] font-black leading-none text-[#0f2942]">
+              {/* رصيد العميل — بنفس عرض بيانات العميل ورقم كبير واضح */}
+              <div className={`mt-0.5 flex h-[46px] w-full shrink-0 items-center justify-between gap-2 rounded-md border-2 border-[#e6bf3a] bg-gradient-to-b from-[#ffe97a] to-[#ffd83d] px-2.5 shadow-inner ${L.partyBox ? "" : "hidden"}`}>
+                <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[12.5px] font-black text-[#0f2942]">
+                  <Wallet className="h-4 w-4" strokeWidth={2.6} />
                   رصيد العميل
                 </span>
-                <span className="num flex-1 text-center text-[24px] font-black leading-none text-[#0f2942]">
+                <span className="num flex-1 text-center text-[26px] font-black leading-none text-[#0f2942]">
                   {fmt(state.party.balance)}
                 </span>
               </div>
-            </div>
-
-            {/* الصف الثاني: نقدي | أجل | قطاعي/جملة + كشف حساب */}
-            <div className="flex w-full items-stretch gap-1.5">
-              <div className="grid w-[262px] shrink-0 grid-cols-3 gap-1.5">
-                <button
-                  type="button"
-                  className={`btn h-[42px] w-full justify-center px-1 text-[14px] font-black ${
-                    state.paymentType === "cash" ? "btn-blue" : ""
-                  }`}
-                  onClick={() => patch({ paymentType: "cash" })}
-                >
-                  نقدي
-                </button>
-                <button
-                  type="button"
-                  className={`btn h-[42px] w-full justify-center px-1 text-[14px] font-black ${
-                    state.paymentType === "credit" ? "btn-blue" : ""
-                  }`}
-                  onClick={setCredit}
-                >
-                  أجل
-                </button>
-                {type === "sale" ? (
-                  <div className="flex h-[42px] w-full flex-col gap-[3px]">
-                    <button
-                      type="button"
-                      onClick={() => changePriceLevel("retail")}
-                      title="البيع بسعر القطاعي"
-                      className={`flex flex-1 items-center justify-center rounded-[5px] border text-[12px] font-black leading-none transition ${
-                        state.priceLevel === "retail"
-                          ? "border-[#005a9e] bg-[#0067c0] text-white shadow-sm"
-                          : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484] hover:border-[#a9c6e4] hover:bg-white"
-                      }`}
-                    >
-                      قطاعي
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => changePriceLevel("wholesale")}
-                      title="البيع بسعر الجملة"
-                      className={`flex flex-1 items-center justify-center rounded-[5px] border text-[12px] font-black leading-none transition ${
-                        state.priceLevel === "wholesale"
-                          ? "border-[#005a9e] bg-[#0067c0] text-white shadow-sm"
-                          : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484] hover:border-[#a9c6e4] hover:bg-white"
-                      }`}
-                    >
-                      جملة
-                    </button>
-                  </div>
-                ) : (
-                  <div className="win-input flex h-[42px] w-full items-center justify-center text-[12px] font-black text-slate-500">
-                    شراء
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-blue h-[42px] min-w-0 flex-1 justify-center gap-2 px-3 text-[14.5px] font-black shadow-sm"
-                onClick={() => void goTo(cfg.partiesHref)}
-                title="كشف حساب العميل"
-              >
-                <div className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/25">
-                  <Search className="h-3.5 w-3.5 stroke-[3] text-amber-300" />
-                </div>
-                <span>كشف حساب</span>
-              </button>
-            </div>
-
-            {/* الصف الثالث: الشريط الوردي ممتد حتى زر إضافة صنف */}
-            <div className="flex w-full items-stretch gap-1.5">
-              <div className="pink-bar grid h-[40px] min-w-0 flex-1 grid-cols-5 items-center text-center shadow-inner px-1">
-                {(
-                  [
-                    ["الرصيد", selProduct ? fmtQty(selProduct.stock) : "0.0"],
-                    ["سعر الشراء", selProduct ? fmt(selProduct.costPrice) : "0.0"],
-                    ["سعر الجملة", selProduct ? fmt(selProduct.wholesalePrice) : "0.0"],
-                    ["سعر البيع", selProduct ? fmt(selProduct.salePrice) : "0.0"],
-                    ["ربح الوحدة", selProduct ? fmt(selProduct.salePrice - selProduct.costPrice) : "0.0"],
-                  ] as const
-                ).map(([l, v]) => (
-                  <div key={l} className="leading-tight px-0.5">
-                    <div className="text-[10px] font-bold text-[#8a2a2a]">{l}</div>
-                    <div className="num text-[12.5px] font-black text-[#c0170e] truncate">{v}</div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-green h-[40px] shrink-0 gap-1.5 px-3 text-[13.5px] font-black shadow-sm"
-                onClick={() => setShowFloatingProduct(true)}
-                title="إضافة صنف جديد سريعاً للفاتورة والمخزن (F8)"
-              >
-                <div className="grid h-6 w-6 place-items-center rounded bg-black/20">
-                  <Plus className="h-4 w-4 stroke-[3] text-white" />
-                </div>
-                <span>إضافة صنف</span>
-              </button>
-            </div>
           </div>
-
-          {/* كارت صورة الصنف على اليسار كما في الصورة */}
-          <div className={`panel flex w-[11%] min-w-[130px] max-w-[158px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden bg-white p-2 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
-            {selProduct?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[82px] max-w-full object-contain" />
-            ) : (
-              <Camera className="h-10 w-10 text-[#8094ae]" strokeWidth={1.8} />
-            )}
-            <div className="line-clamp-2 text-[12.5px] font-extrabold text-[#0b2350] leading-tight text-center">
-              {selProduct ? selProduct.name : "صورة الصنف"}
-            </div>
-            {selProduct && <div className="num text-[11px] font-bold text-slate-500">{selProduct.code}</div>}
           </div>
-        </div>
-
-        {/* ===== سطر الإدخال السريع للأصناف مع زر إضافة مجموعة جديدة ➕ المضاف بجانب المجموعات ===== */}
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className={`flex h-[50px] shrink-0 items-end gap-1.5 ${L.quickAdd ? "" : "hidden"}`}>
           <div className="flex h-[38px] items-center gap-1.5">
             {/* القائمة المنسدلة الاحترافية للمجموعات */}
@@ -1584,10 +1441,252 @@ export function InvoiceEditor({
             </button>
           </div>
         </div>
+          {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
+          <div className={`panel flex w-full shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
+            <div className="navy-head flex h-[26px] shrink-0 items-center justify-center text-[12.5px]">طريقة الدفع</div>
+            <div className="flex flex-1 flex-row items-stretch gap-1.5 p-1.5 bg-white/50">
+              {ALLOWED_PAYMENT_METHODS.map((m) => {
+                const active = state.paymentMethod === m.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    className={`pay-btn flex-1 h-[34px] flex-col gap-0 ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
+                    onClick={() => selectMethod(m.key)}
+                  >
+                    <span className="text-[11px] font-black leading-none">{m.label}</span>
+                    <span className="flex items-center gap-1">
+                      {METHOD_ICONS[m.key]}
+                      {active && <CheckCircle2 className="h-3 w-3 fill-green-600 text-white" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
+          <div className={`panel flex min-w-0 flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
+            <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
+              <PencilLine className="h-3.5 w-3.5 text-blue-600" />
+              ملاحظات الفاتورة والبيان
+            </div>
+            <textarea
+              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
+              placeholder="اكتب أية ملاحظات للعميل هنا ..."
+              value={state.notes}
+              onChange={(e) => patch({ notes: e.target.value })}
+            />
+          </div>
 
-        {/* ===== هيكل جدول الفاتورة (مطابق تماماً لهيكل جدول الأصناف) + قائمة الأصناف الكروت ===== */}
+          </div>
+          {/* ===== يمين: نوع الدفع والأسعار + كشف حساب + كشف الأسعار + إضافة صنف + صورة الصنف ===== */}
+          <div className="flex w-[318px] min-w-[300px] shrink-0 flex-col gap-1.5">
+
+            {/* نقدي / أجل */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                className={`btn h-[32px] justify-center text-[13px] font-black ${state.paymentType === "cash" ? "btn-blue" : ""}`}
+                style={state.paymentType === "cash" ? { background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" } : undefined}
+                onClick={() => patch({ paymentType: "cash" })}
+              >
+                نقدي
+              </button>
+              <button
+                type="button"
+                className={`btn h-[32px] justify-center text-[13px] font-black ${state.paymentType === "credit" ? "btn-blue" : ""}`}
+                style={state.paymentType === "credit" ? { background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" } : undefined}
+                onClick={setCredit}
+              >
+                أجل
+              </button>
+            </div>
+
+            {/* قطاعي / جملة */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {type === "sale" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => changePriceLevel("retail")}
+                    title="البيع بسعر القطاعي"
+                    className="flex h-[30px] items-center justify-center rounded-[5px] border text-[12.5px] font-black transition"
+                    style={
+                      state.priceLevel === "retail"
+                        ? { background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }
+                        : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
+                    }
+                  >
+                    قطاعي
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changePriceLevel("wholesale")}
+                    title="البيع بسعر الجملة"
+                    className="flex h-[30px] items-center justify-center rounded-[5px] border text-[12.5px] font-black transition"
+                    style={
+                      state.priceLevel === "wholesale"
+                        ? { background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }
+                        : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
+                    }
+                  >
+                    جملة
+                  </button>
+                </>
+              ) : (
+                <div className="col-span-2 win-input flex h-[30px] items-center justify-center text-[12px] font-black text-slate-500">
+                  شراء
+                </div>
+              )}
+            </div>
+
+            {/* باركود / تجميع */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {(
+                [
+                  ["باركود", barcodeMode, setBarcodeMode, "إضافة الصنف المباشرة عند مسح الباركود"],
+                  ["تجميع", mergeSame, setMergeSame, "تجميع الصنف المكرر في نفس السطر"],
+                ] as Array<[string, boolean, (v: boolean) => void, string]>
+              ).map(([label, on, setter, title]) => (
+                <button
+                  key={label}
+                  type="button"
+                  title={title}
+                  onClick={() => setter(!on)}
+                  className="flex h-[30px] items-center justify-center gap-1.5 rounded-[5px] border text-[12px] font-black transition"
+                  style={
+                    on
+                      ? { background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }
+                      : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
+                  }
+                >
+                  <span className="whitespace-nowrap">{label}</span>
+                  <span
+                    className="relative inline-flex h-[16px] w-[30px] shrink-0 items-center rounded-full border transition"
+                    style={on ? { borderColor: "#0b5596", background: "#ffffff" } : { borderColor: "#b8c8dc", background: "#dfe8f3" }}
+                  >
+                    <span
+                      className="absolute top-[1px] h-[12px] w-[12px] rounded-full bg-white shadow transition-all"
+                      style={on ? { left: "16px", background: "#0b5596" } : { left: "1px" }}
+                    />
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* كشف حساب — أصفر ذهبي */}
+            <button
+              type="button"
+              className="btn h-[32px] justify-center gap-2 text-[13px] font-black"
+              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
+              onClick={() => void goTo(cfg.partiesHref)}
+              title="كشف حساب العميل"
+            >
+              <Search className="h-4 w-4" strokeWidth={3} color="#ffffff" stroke="#ffffff" />
+              <span>كشف حساب</span>
+            </button>
+
+            {/* كشف الأسعار — الشريط الوردي (5 خانات) */}
+            <div className="pink-bar grid h-[38px] shrink-0 grid-cols-5 items-center text-center shadow-inner px-1">
+              {(
+                [
+                  ["الرصيد", selProduct ? fmtQty(selProduct.stock) : "0.0"],
+                  ["سعر الشراء", selProduct ? fmt(selProduct.costPrice) : "0.0"],
+                  ["سعر الجملة", selProduct ? fmt(selProduct.wholesalePrice) : "0.0"],
+                  ["سعر البيع", selProduct ? fmt(selProduct.salePrice) : "0.0"],
+                  ["ربح الوحدة", selProduct ? fmt(selProduct.salePrice - selProduct.costPrice) : "0.0"],
+                ] as const
+              ).map(([l, v]) => (
+                <div key={l} className="leading-tight px-0.5">
+                  <div className="text-[9px] font-bold text-[#8a2a2a]">{l}</div>
+                  <div className="num text-[11.5px] font-black text-[#c0170e] truncate">{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* إضافة صنف — أخضر */}
+            <button
+              type="button"
+              className="btn h-[32px] shrink-0 justify-center gap-1.5 text-[13px] font-black"
+              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
+              onClick={() => setShowFloatingProduct(true)}
+              title="إضافة صنف جديد سريعاً للفاتورة والمخزن (F8)"
+            >
+              <Plus className="h-4 w-4" strokeWidth={3} color="#ffffff" stroke="#ffffff" />
+              <span>إضافة صنف</span>
+            </button>
+
+            {/* صورة الصنف */}
+            <div className={`panel flex min-h-0 flex-1 items-center justify-center gap-1 overflow-hidden bg-white p-1.5 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
+              {selProduct?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[52px] max-w-full object-contain" />
+              ) : (
+                <Camera className="h-7 w-7 text-[#8094ae]" strokeWidth={1.8} />
+              )}
+              <div className="line-clamp-2 text-[11px] font-extrabold text-[#0b2350] leading-tight">
+                {selProduct ? selProduct.name : "صورة الصنف"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== شريط المال الموحّد: الإجمالي | المدفوع | المتبقي | المطلوب دفعه ===== */}
+        <div className={`flex h-[96px] shrink-0 items-stretch gap-2 ${L.totals ? "" : "hidden"}`}>
+          {[
+            { key: "gross", label: "إجمالي الأصناف", value: fmt(totals.gross), icon: BarChart3 },
+            { key: "paid", label: "المدفوع", value: fmt(paidValue), icon: Banknote },
+            { key: "remain", label: "المتبقي", value: fmt(Math.abs(change)), icon: CreditCard },
+            { key: "due", label: "المطلوب دفعه", value: fmt(totals.total), icon: Wallet },
+          ].map(({ key, label, value, icon: Icon }) => {
+            const c = MONEY_COLORS[key];
+            return (
+              <div
+                key={key}
+                className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-xl px-3 py-2 shadow-sm"
+                style={{ background: c.bg, border: `2px solid ${c.border}` }}
+              >
+                <span className="flex items-center gap-1.5 whitespace-nowrap text-[13.5px] font-black" style={{ color: c.ink }}>
+                  <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2.6} style={{ color: c.ink }} />
+                  {label}
+                </span>
+                <span className="num truncate text-center text-[30px] font-black leading-none" style={{ color: c.ink }}>
+                  {value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ===== الإضافات الثانوية: خصم إضافي + الضريبة + الخصم الكلي + عدد الأصناف ===== */}
+        <div className={`flex h-[44px] shrink-0 items-stretch gap-2 ${L.totals ? "" : "hidden"}`}>
+          <label className="panel flex min-w-0 flex-1 items-center gap-2 px-2.5 shadow-sm">
+            <span className="whitespace-nowrap text-[12px] font-black text-[#9d5d00]">خصم إضافي</span>
+            <input
+              className="win-input num h-[30px] w-full min-w-0 text-center text-[15px] font-black text-red-600"
+              inputMode="decimal"
+              placeholder="0"
+              value={state.extraDiscount}
+              onChange={(e) => patch({ extraDiscount: e.target.value })}
+            />
+          </label>
+          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+            <span className="text-[12px] font-bold text-[#4a6484]">الخصم الكلي</span>
+            <span className="num text-[15px] font-black text-red-600">{fmt(totals.discount)}</span>
+          </div>
+          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+            <span className="text-[12px] font-bold text-[#4a6484]">الضريبة</span>
+            <span className="num text-[15px] font-black text-[#4a6484]">{fmt(totals.tax)}</span>
+          </div>
+          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+            <span className="text-[12px] font-bold text-[#4a6484]">عدد الأصناف</span>
+            <span className="num text-[15px] font-black text-[#12263f]">{state.rows.length}</span>
+          </div>
+        </div>
+
+
+        {/* ===== جدول الفاتورة + الأصناف السريعة ===== */}
         <div className="flex min-h-0 flex-1 gap-2">
-          {/* جدول الفاتورة - هيكل كحلي داكن عالي التباين وواضح تماماً مثل جدول الأصناف */}
           <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-sm border border-[#dce7f4] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
             <table className="dgrid-invoice text-center">
               <thead>
@@ -1646,164 +1745,8 @@ export function InvoiceEditor({
               </tbody>
             </table>
           </div>
-
-
-        {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
-        <div className="flex h-[196px] shrink-0 gap-2">
-          {/* أزرار العمليات */}
-          <div className={`grid w-[292px] min-w-[292px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5 ${L.actions ? "" : "hidden"}`}>
-            <button type="button" className="btn btn-blue btn-big"
-              style={{ background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" }}
-              onClick={() => void newInvoice()}
-            >
-              <FilePlus2 className="text-white" color="#ffffff" stroke="#ffffff" />
-              <span>فاتورة جديدة</span>
-            </button>
-
-            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
-            <button type="button" className="btn btn-green btn-big"
-              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
-              onClick={() => void save()}
-              disabled={saving}
-            >
-              <Save color="#ffffff" stroke="#ffffff" />
-              <span>حفظ الفاتورة</span>
-            </button>
-
-            <button type="button" className="btn btn-teal btn-big"
-              style={{ background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }}
-              onClick={() => void goTo(cfg.listHref)}
-            >
-              <BarChart3 color="#ffffff" stroke="#ffffff" />
-              <span>{cfg.listLabel}</span>
-            </button>
-
-            <button type="button" className="btn btn-red btn-big"
-              style={{ background: "#c42b1c", borderColor: "#9e2015", color: "#ffffff" }}
-              onClick={() => void cancelInvoice()}
-            >
-              <X strokeWidth={4} color="#ffffff" stroke="#ffffff" />
-              <span>إلغاء الفاتورة</span>
-            </button>
-
-            {/* تعليق الفاتورة كمسودة */}
-            <button
-              type="button"
-              className="btn btn-orange btn-big"
-              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
-              onClick={() => void holdDraft()}
-              disabled={saving}
-              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
-            >
-              <FileClock color="#ffffff" stroke="#ffffff" />
-              <span>تعليق الفاتورة</span>
-            </button>
-
-            {/* قائمة الفواتير المعلقة */}
-            <button
-              type="button"
-              className="btn btn-violet btn-big"
-              style={{ background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }}
-              onClick={() => void openDrafts()}
-              title="عرض الفواتير المعلقة واستكمالها"
-            >
-              <List color="#ffffff" stroke="#ffffff" />
-              <span>الفواتير المعلقة</span>
-            </button>
-          </div>
-
-
-          {/* الإجماليات والمطلوب دفعه */}
-          <div className="flex w-[282px] min-w-[270px] shrink-0 flex-col gap-1.5">
-            <div className="panel flex flex-1 flex-col justify-around overflow-hidden shadow-sm">
-              <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
-              <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
-              <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
-              <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
-            </div>
-            <div className={`due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
-              <span className="text-[19px] font-black text-white">المطلوب دفعه</span>
-              <span className="due-value num text-[36px] leading-none">{fmt(totals.total)}</span>
-            </div>
-          </div>
-        </div>
-
-          {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className={`panel flex min-w-0 flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
-            <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
-              <PencilLine className="h-3.5 w-3.5 text-blue-600" />
-              ملاحظات الفاتورة والبيان
-            </div>
-            <textarea
-              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
-              placeholder="اكتب أية ملاحظات للعميل هنا ..."
-              value={state.notes}
-              onChange={(e) => patch({ notes: e.target.value })}
-            />
-            {/* شريط المبالغ بحجم مكبر وبدون (ج.م) والأخير: المتبقي (آجل) */}
-            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] bg-white p-2">
-              <label className="text-[12px] font-black text-[#1e3a6a]">
-                خصم إضافي
-                <input
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[17px] font-black text-red-600"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={state.extraDiscount}
-                  onChange={(e) => patch({ extraDiscount: e.target.value })}
-                />
-              </label>
-
-              <label className="text-[12px] font-black text-[#1e3a6a]">
-                <span className="flex items-center justify-between gap-1">
-                  <span>{state.paymentType === "credit" ? "المدفوع" : "المبلغ المستلم"}</span>
-                  {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
-                  <span className="flex items-center gap-0.5">
-                    <button
-                      type="button"
-                      title="دفع المبلغ كاملاً"
-                      onClick={() => patch({ paid: String(totals.total) })}
-                      className="rounded bg-[#2fb3a6] px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-[#25938a]"
-                    >
-                      الكل
-                    </button>
-                    <button
-                      type="button"
-                      title="مسح المبلغ"
-                      onClick={() => patch({ paid: "" })}
-                      className="rounded bg-slate-400 px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-slate-500"
-                    >
-                      مسح
-                    </button>
-                  </span>
-                </span>
-                <input
-                  type="text"
-                  dir="ltr"
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[20px] font-black text-green-700 bg-green-50/60 border-green-400"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="0"
-                  value={state.paid}
-                  onChange={(e) => patch({ paid: e.target.value.replace(/[^\d.]/g, "") })}
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-              </label>
-
-              <div className="text-[12px] font-black text-[#1e3a6a]">
-                {state.paymentType === "credit" ? "المتبقي ( آجل )" : "الباقي للعميل"}
-                <div
-                  className={`win-input num mt-0.5 flex h-[34px] items-center justify-center text-[20px] font-black ${
-                    change < 0 ? "text-red-600 bg-red-50/60 border-red-300" : "text-blue-800 bg-blue-50/60 border-blue-300"
-                  }`}
-                >
-                  {fmt(change)}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className={`flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
+          <div className={`flex min-h-0 w-[300px] min-w-[280px] shrink-0 flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
             <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
               <span>الأصناف ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
@@ -1883,31 +1826,69 @@ export function InvoiceEditor({
             </div>
           </div>
 
-          </div>
-          {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
-          <div className={`panel flex w-[232px] min-w-[228px] shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
-            <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
-            <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
-              {ALLOWED_PAYMENT_METHODS.map((m) => {
-                const active = state.paymentMethod === m.key;
-                return (
-                  <button
-                    key={m.key}
-                    type="button"
-                    className={`pay-btn flex-1 h-[38px] ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
-                    onClick={() => selectMethod(m.key)}
-                  >
-                    <span className="text-[15px] font-black">{m.label}</span>
-                    <span className="flex items-center gap-2">
-                      {METHOD_ICONS[m.key]}
-                      {active && <CheckCircle2 className="h-4.5 w-4.5 fill-green-600 text-white" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        </div>
 
+          {/* الأزرار الستة — جنب بعض في صف واحد، كل زر بلونه */}
+          <div className={`grid w-full shrink-0 grid-cols-6 grid-rows-1 gap-2 ${L.actions ? "" : "hidden"}`}>
+            <button type="button" className="btn btn-blue btn-big"
+              style={{ background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" }}
+              onClick={() => void newInvoice()}
+            >
+              <FilePlus2 className="text-white" color="#ffffff" stroke="#ffffff" />
+              <span>فاتورة جديدة</span>
+            </button>
+
+            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
+            <button type="button" className="btn btn-green btn-big"
+              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
+              onClick={() => void save()}
+              disabled={saving}
+            >
+              <Save color="#ffffff" stroke="#ffffff" />
+              <span>حفظ الفاتورة</span>
+            </button>
+
+            <button type="button" className="btn btn-teal btn-big"
+              style={{ background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }}
+              onClick={() => void goTo(cfg.listHref)}
+            >
+              <BarChart3 color="#ffffff" stroke="#ffffff" />
+              <span>{cfg.listLabel}</span>
+            </button>
+
+            <button type="button" className="btn btn-red btn-big"
+              style={{ background: "#c42b1c", borderColor: "#9e2015", color: "#ffffff" }}
+              onClick={() => void cancelInvoice()}
+            >
+              <X strokeWidth={4} color="#ffffff" stroke="#ffffff" />
+              <span>إلغاء الفاتورة</span>
+            </button>
+
+            {/* تعليق الفاتورة كمسودة */}
+            <button
+              type="button"
+              className="btn btn-orange btn-big"
+              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
+              onClick={() => void holdDraft()}
+              disabled={saving}
+              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
+            >
+              <FileClock color="#ffffff" stroke="#ffffff" />
+              <span>تعليق الفاتورة</span>
+            </button>
+
+            {/* قائمة الفواتير المعلقة */}
+            <button
+              type="button"
+              className="btn btn-violet btn-big"
+              style={{ background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }}
+              onClick={() => void openDrafts()}
+              title="عرض الفواتير المعلقة واستكمالها"
+            >
+              <List color="#ffffff" stroke="#ffffff" />
+              <span>الفواتير المعلقة</span>
+            </button>
+          </div>
       </div>
 
       {/* النوافذ العائمة الذكية */}
