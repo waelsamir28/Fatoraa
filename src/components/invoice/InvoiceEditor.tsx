@@ -1290,7 +1290,7 @@ export function InvoiceEditor({
               </div>
           </div>
           </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex w-[762px] min-w-[762px] shrink-0 flex-col gap-2">
         <div className={`flex h-[50px] shrink-0 items-end gap-1.5 ${L.quickAdd ? "" : "hidden"}`}>
           <div className="flex h-[38px] items-center gap-1.5">
             {/* القائمة المنسدلة الاحترافية للمجموعات */}
@@ -1342,8 +1342,8 @@ export function InvoiceEditor({
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 items-end gap-1">
-            <div className="etab relative min-w-[230px] flex-1">
+          <div className="flex w-[762px] shrink-0 items-end gap-1">
+            <div className="etab relative w-[353px] shrink-0">
               <span>الصنف</span>
               <input
                 ref={productRef}
@@ -1444,14 +1444,14 @@ export function InvoiceEditor({
           {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
           <div className={`panel flex w-full shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
             <div className="navy-head flex h-[26px] shrink-0 items-center justify-center text-[12.5px]">طريقة الدفع</div>
-            <div className="flex flex-1 flex-row items-stretch gap-1.5 p-1.5 bg-white/50">
+            <div className="flex flex-row items-stretch gap-1.5 p-1.5 bg-white/50">
               {ALLOWED_PAYMENT_METHODS.map((m) => {
                 const active = state.paymentMethod === m.key;
                 return (
                   <button
                     key={m.key}
                     type="button"
-                    className={`pay-btn flex-1 h-[34px] flex-col gap-0 ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
+                    className={`pay-btn h-[34px] w-[250px] shrink-0 flex-col gap-0 ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
                     onClick={() => selectMethod(m.key)}
                   >
                     <span className="text-[11px] font-black leading-none">{m.label}</span>
@@ -1465,7 +1465,7 @@ export function InvoiceEditor({
             </div>
           </div>
           {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className={`panel flex min-w-0 flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
+          <div className={`panel flex w-[762px] shrink-0 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
             <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
               <PencilLine className="h-3.5 w-3.5 text-blue-600" />
               ملاحظات الفاتورة والبيان
@@ -1617,7 +1617,7 @@ export function InvoiceEditor({
             </button>
 
             {/* صورة الصنف */}
-            <div className={`panel flex min-h-0 flex-1 items-center justify-center gap-1 overflow-hidden bg-white p-1.5 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
+            <div className={`panel flex h-[58px] shrink-0 items-center justify-center gap-1 overflow-hidden bg-white p-1.5 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
               {selProduct?.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[52px] max-w-full object-contain" />
@@ -1643,7 +1643,7 @@ export function InvoiceEditor({
             return (
               <div
                 key={key}
-                className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-xl px-3 py-2 shadow-sm"
+                className="flex w-[335px] shrink-0 flex-col justify-between overflow-hidden rounded-xl px-3 py-2 shadow-sm"
                 style={{ background: c.bg, border: `2px solid ${c.border}` }}
               >
                 <span className="flex items-center gap-1.5 whitespace-nowrap text-[13.5px] font-black" style={{ color: c.ink }}>
@@ -1660,7 +1660,7 @@ export function InvoiceEditor({
 
         {/* ===== الإضافات الثانوية: خصم إضافي + الضريبة + الخصم الكلي + عدد الأصناف ===== */}
         <div className={`flex h-[44px] shrink-0 items-stretch gap-2 ${L.totals ? "" : "hidden"}`}>
-          <label className="panel flex min-w-0 flex-1 items-center gap-2 px-2.5 shadow-sm">
+          <label className="panel flex w-[335px] shrink-0 items-center gap-2 px-2.5 shadow-sm">
             <span className="whitespace-nowrap text-[12px] font-black text-[#9d5d00]">خصم إضافي</span>
             <input
               className="win-input num h-[30px] w-full min-w-0 text-center text-[15px] font-black text-red-600"
@@ -1670,15 +1670,15 @@ export function InvoiceEditor({
               onChange={(e) => patch({ extraDiscount: e.target.value })}
             />
           </label>
-          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
             <span className="text-[12px] font-bold text-[#4a6484]">الخصم الكلي</span>
             <span className="num text-[15px] font-black text-red-600">{fmt(totals.discount)}</span>
           </div>
-          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
             <span className="text-[12px] font-bold text-[#4a6484]">الضريبة</span>
             <span className="num text-[15px] font-black text-[#4a6484]">{fmt(totals.tax)}</span>
           </div>
-          <div className="panel flex min-w-0 flex-1 items-center justify-between gap-2 px-2.5 shadow-sm">
+          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
             <span className="text-[12px] font-bold text-[#4a6484]">عدد الأصناف</span>
             <span className="num text-[15px] font-black text-[#12263f]">{state.rows.length}</span>
           </div>
@@ -1686,8 +1686,8 @@ export function InvoiceEditor({
 
 
         {/* ===== جدول الفاتورة + الأصناف السريعة ===== */}
-        <div className="flex min-h-0 flex-1 gap-2">
-          <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-sm border border-[#dce7f4] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
+        <div className="flex min-h-0 w-full gap-2">
+          <div className={`panel w-[1064px] min-w-[1064px] shrink-0 overflow-auto p-0 shadow-sm border border-[#dce7f4] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
             <table className="dgrid-invoice text-center">
               <thead>
                 <tr>
