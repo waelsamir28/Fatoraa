@@ -64,6 +64,11 @@ export function PhoneScannerDialog({
             setHits((h) => [r.barcode, ...h].slice(0, 6));
             onDetect(r.barcode);
             if (navigator.vibrate) navigator.vibrate(40);
+            // ✅ الموبايل اتصل والكاميرا شغالة: نقفل النافذة فورًا حتى لا
+            // تغطي الفاتورة. الكاميرا تفضل شغالة على الموبايل وكل باركود
+            // جديد يوصل للفاتورة عبر /api/scan بدون الحاجة للنافذة.
+            scanning.current = false;
+            onClose();
           }
         }
       } catch {

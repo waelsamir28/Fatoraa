@@ -198,25 +198,13 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* شريط حالة الاشتراك (سنة / سنتين) للنسخة المفعّلة */}
-      {info?.isActivated && !info.isExpired && info.plan && info.plan !== "lifetime" && info.planDaysLeft !== null && (
-        <div className="fixed bottom-8 left-3 z-40 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50/95 px-3 py-1.5 text-[12px] font-bold text-emerald-900 shadow-lg">
-          <ShieldCheck className="h-4 w-4 text-emerald-600" />
-          <span>
-            {info.planLabel} — متبقي {info.planDaysLeft} يوم
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setShowPlans(true);
-              setModalOpen(true);
-            }}
-            className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-black text-white hover:bg-emerald-800"
-          >
-            تجديد
-          </button>
-        </div>
-      )}
+      {/*
+        شريط حالة الاشتراك (سنة / سنتين) — كان يظهر دائمًا للنسخة المفعّلة.
+        بقى مخفيًا تمامًا بعد التفعيل: المالك شايف حالة الاشتراك في «معلومات
+        البرنامج» وشريط التذييل، ومش محتاج تنبيه دائم فوق الشاشة.
+        يظهر فقط في الفترة التجريبية (الشريط الأصفر أعلى) أو عند قرب الانتهاء
+        (RenewalReminder قبل 15 و5 أيام).
+      */}
 
       {/* نافذة التفعيل المنبثقة */}
       {info && modalOpen && (

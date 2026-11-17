@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS = {
   customLogoUrl: "",
   phone2: "",
   showBigTitle: true,
-  showLogo: true,
+  showLogo: false,
   showOnlineDot: true,
   customBigTitle: "FATORA",
   customTagline: "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",
@@ -214,10 +214,27 @@ async function seedIfEmpty() {
   await insertDemoData();
 }
 
+/**
+ * ترقية إعدادات لمرة واحدة: اللوجو بقى مخفيًا افتراضيًا (صورة البانر نفسها
+ * فيها الشعار). نخفي اللوجو مرة واحدة فقط للمستخدمين الموجودين — لو أظهره
+ * المستخدم يدويًا من الإعدادات بعد كده يفضل ظاهرًا ولا نلمسه تاني.
+ */
+async function migrateHideLogoOnce() {
+  try {
+    await db.update(settings).set({ showLogo: false }).where(eq(settings.id, 1));
+    console.info("[settings] hideLogo migration: تم إخفاء اللوجو مرة واحدة");
+  } catch {
+    /* الترقية اختيارية — لا تعطّل تحميل الإعدادات */
+  }
+}
+
 export async function getSettings() {
   await ensureSchema();
   const [row] = await db.select().from(settings).where(eq(settings.id, 1));
-  if (row) return row;
+  if (row) {
+    if (row.showLogo) await migrateHideLogoOnce();
+    return row;
+  }
   await db.insert(settings).values({ id: 1, ...DEFAULT_SETTINGS }).onConflictDoNothing();
   const [created] = await db.select().from(settings).where(eq(settings.id, 1));
   return created ?? { id: 1, ...DEFAULT_SETTINGS };
