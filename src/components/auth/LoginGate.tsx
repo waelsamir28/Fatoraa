@@ -17,7 +17,9 @@ import { SetupWizard } from "./SetupWizard";
  */
 export function LoginGate() {
   const { authEnabled, refresh, setUser, loading, dbError, dbErrorMessage } = useAuth();
-  const [mode, setMode] = useState<"login" | "setup">("login");
+  // نبدأ بـ null: لا نعرض شاشة دخول لحظيًا قبل أن نعرف هل فيه مالك أم لا.
+  // (كان يحدث فلاش لشاشة الدخول ثم تنقلب لشاشة التسجيل)
+  const [mode, setMode] = useState<"login" | "setup" | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   /** دخول سريع برمز PIN (للكاشير) */
@@ -87,8 +89,23 @@ export function LoginGate() {
     }
   };
 
+  // نحتفظ بالحالة كقيمة منطقية قبل التضييق حتى تبقى فروع شاشة الدخول صحيحة النوع
+  const isSetup = mode === "setup";
+
+  // لسه بنحدد الوضع: شاشة انتظار (تمنع وميض شاشة الدخول)
+  if (mode === null || loading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#0f2942] to-[#081a2b]" dir="rtl">
+        <div className="flex flex-col items-center gap-2 text-white">
+          <Loader2 className="h-8 w-8 animate-spin text-[#2fb3a6]" />
+          <span className="text-[14px] font-black">جارٍ التحميل...</span>
+        </div>
+      </div>
+    );
+  }
+
   // أول مرة: شاشة إعداد مبسطة في 3 خطوات (بدون أكواد)
-  if (mode === "setup" && !loading) {
+  if (mode === "setup") {
     return (
       <SetupWizard
         onDone={async () => {
@@ -115,12 +132,12 @@ export function LoginGate() {
           <div className="mt-1 text-[19px] font-black">{APP_NAME}</div>
           <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[12px] font-bold text-blue-200">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
-            {mode === "setup" ? "إعداد أول مرة — إنشاء حساب المالك" : "دخول آمن للنظام"}
+            {isSetup ? "إعداد أول مرة — إنشاء حساب المالك" : "دخول آمن للنظام"}
           </div>
         </div>
 
         <form onSubmit={submit} className="space-y-3 p-5">
-          {mode === "setup" && (
+          {isSetup && (
             <Field icon={<Sparkles className="h-4 w-4 text-amber-500" />} label="اسمك (يظهر في الفواتير)">
               <input
                 type="text"
@@ -132,7 +149,7 @@ export function LoginGate() {
             </Field>
           )}
 
-          {mode !== "setup" && pinMode && (
+          {!isSetup && pinMode && (
             <div className="rounded-xl border-2 border-[#c9d8ee] bg-[#f4f8fd] p-3">
               <label className="mb-1 flex items-center gap-1.5 text-[12.5px] font-black text-slate-600">
                 <Lock className="h-4 w-4 text-amber-600" />
@@ -174,7 +191,7 @@ export function LoginGate() {
               <input
                 type={showPass ? "text" : "password"}
                 dir="ltr"
-                autoComplete={mode === "setup" ? "new-password" : "current-password"}
+                autoComplete={isSetup ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -191,7 +208,7 @@ export function LoginGate() {
             </div>
           </Field>
 
-          {mode === "setup" && (
+          {isSetup && (
             <Field icon={<KeyRound className="h-4 w-4 text-blue-600" />} label="تأكيد كلمة المرور">
               <input
                 type={showPass ? "text" : "password"}
@@ -207,7 +224,7 @@ export function LoginGate() {
           </>
           )}
 
-          {mode !== "setup" && (
+          {!isSetup && (
             <button
               type="button"
               onClick={() => {
@@ -233,10 +250,10 @@ export function LoginGate() {
             className="btn btn-blue flex h-11 w-full items-center justify-center gap-2 text-[15px] disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CartLogo className="!h-5 !w-5" />}
-            {mode === "setup" ? "إنشاء الحساب وبدء الاستخدام" : "دخول"}
+            {isSetup ? "إنشاء الحساب وبدء الاستخدام" : "دخول"}
           </button>
 
-          {mode === "setup" && (
+          {isSetup && (
             <p className="text-center text-[11.5px] font-bold leading-relaxed text-slate-500">
               هذا الحساب هو «المالك» وله كل الصلاحيات. يمكنك بعد الدخول إنشاء حسابات للموظفين
               (مدير / كاشير) من شاشة «المستخدمون».
@@ -244,7 +261,7 @@ export function LoginGate() {
           )}
 
           <p className="text-center text-[11px] font-bold text-slate-400">
-            {mode === "setup" ? "🔒 تُحفظ كلمة المرور مشفّرة (scrypt) ولا يمكن استرجاعها." : `النسخة ${APP_BRAND}`}
+            {isSetup ? "🔒 تُحفظ كلمة المرور مشفّرة (scrypt) ولا يمكن استرجاعها." : `النسخة ${APP_BRAND}`}
           </p>
         </form>
       </div>

@@ -26,6 +26,13 @@ export interface AuthState {
   enabled: boolean;
   dbError: boolean;
   users: number;
+  /**
+   * عدد حسابات «المالك». شاشة إعداد أول مرة تعتمد على هذا الرقم مش على
+   * إجمالي المستخدمين: لو فيه كاشير/مدير بدون مالك (بيانات قديمة أو استيراد)
+   * لازم تظهر شاشة إنشاء حساب المالك، وإلا البرنامج يقفل على شاشة دخول
+   * مفيش فيها أي حساب مالك تنشئه.
+   */
+  owners: number;
   message?: string;
 }
 
@@ -38,7 +45,7 @@ export function invalidateAuthCache() {
 export async function getAuthState(): Promise<AuthState> {
   // تعطيل صريح للمصادقة (للتجربة فقط)
   if (process.env.AUTH_DISABLED === "1") {
-    return { enabled: false, dbError: false, users: 0 };
+    return { enabled: false, dbError: false, users: 0, owners: 0 };
   }
 
   if (cachedState && Date.now() - cachedState.at < 5000) return cachedState.value;
@@ -52,9 +59,22 @@ export async function getAuthState(): Promise<AuthState> {
     const { db } = await import("@/db");
     const { users } = await import("@/db/schema");
     const { sql } = await import("drizzle-orm");
+    const { eq, and } = await import("drizzle-orm");
     const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
     const count = Number(row?.count ?? 0);
-    const value: AuthState = { enabled: count > 0, dbError: false, users: count };
+    // عدد المالكين: شاشة الإعداد الأول تعتمد عليه (انظر تعليق AuthState.owners)
+    let owners = 0;
+    try {
+      const [own] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users)
+        .where(and(eq(users.role, "owner"), eq(users.active, true)));
+      owners = Number(own?.count ?? 0);
+    } catch {
+      // لو الاستعلام فشل: نرجع للسلوك القديم حتى لا نعرض شاشة إعداد كاذبة
+      owners = count;
+    }
+    const value: AuthState = { enabled: owners > 0, dbError: false, users: count, owners };
     cachedState = { value, at: Date.now() };
     return value;
   } catch (e) {
@@ -63,6 +83,7 @@ export async function getAuthState(): Promise<AuthState> {
       enabled: true,
       dbError: true,
       users: 0,
+      owners: 0,
       message: dbErrorMessage(e),
     };
     cachedState = { value, at: Date.now() };
