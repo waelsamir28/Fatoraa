@@ -271,21 +271,6 @@ api.onProgress((payload) => {
   if (detail) addDetail(detail);
 });
 
-/** صورة الترحيب أعلى صفحة اختيار المجلد — بديل نصي لو الصورة مش موجودة */
-function initHero() {
-  const img = $("dirHeroImg");
-  const fb = $("dirHeroFallback");
-  if (!img || !fb) return;
-  const showFallback = () => {
-    img.hidden = true;
-    fb.hidden = false;
-  };
-  img.addEventListener("error", showFallback);
-  if (img.complete && img.naturalWidth === 0) showFallback();
-}
-
-initHero();
-
 init().catch(() => {
   $("spaceMeta").textContent = "المساحة المطلوبة: 420 ميجابايت";
   // رقم الإصدار مطبوع داخل الصفحة نفسها وقت البناء ⇒ لا نمسحه أبدًا
