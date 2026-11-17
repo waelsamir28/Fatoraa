@@ -28,28 +28,43 @@
     --muted: #5b6470;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  html { height: 100%; background: transparent; }
+  /* جسم الصفحة شفاف: النافذة نفسها شفافة من Electron،
+     والإطار المرئي هو .shell بالحواف الدائرية والإطار الأزرق. */
   body {
+    height: 100%;
     font-family: var(--font-cairo);
     font-size: 13px;
     color: var(--text);
-    background: var(--bg);
+    background: transparent;
     overflow: hidden;
     user-select: none;
+    padding: 12px;
+  }
+
+  /* ===== الإطار المرئي للمثبّت: حواف دائرية + إطار أزرق رفيع ===== */
+  .shell {
+    height: 100%;
     display: flex;
     flex-direction: column;
+    background: var(--bg);
+    border: 1.5px solid #0f6cbd;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 14px 38px rgba(6, 32, 64, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   }
 
   /* ---------- شريط العنوان (سحب + أزرار ويندوز 11) ---------- */
   .titlebar {
-    height: 36px; flex: none; display: flex; align-items: center; gap: 9px;
-    padding: 0 0 0 12px; background: transparent; -webkit-app-region: drag;
+    height: 38px; flex: none; display: flex; align-items: center; gap: 9px;
+    padding: 0 0 0 14px; background: transparent; -webkit-app-region: drag;
+    border-bottom: 1px solid rgba(15, 108, 189, 0.12);
   }
   .titlebar .app-ico { width: 16px; height: 16px; border-radius: 4px; -webkit-app-region: no-drag; }
   .titlebar .t { flex: 1; font-size: 12px; color: #2b3036; }
   .winctl { display: flex; -webkit-app-region: no-drag; }
   .winctl button {
-    width: 46px; height: 36px; border: 0; background: transparent; color: #333;
+    width: 44px; height: 36px; border: 0; background: transparent; color: #333;
     font-size: 10px; line-height: 1; cursor: pointer; font-family: "Segoe MDL2 Assets", "Segoe UI Symbol", var(--font-cairo);
   }
   .winctl button:hover { background: rgba(0,0,0,.06); }
@@ -182,21 +197,6 @@
   .check-spin.ok::after { content: "✓"; color: #fff; font-size: 9px; position: absolute; inset: 0; display: grid; place-items: center; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* صورة الترحيب أعلى صفحة اختيار المجلد */
-  .dir-hero {
-    position: relative; height: 74px; margin: -2px 0 12px; border-radius: 8px;
-    overflow: hidden; background: linear-gradient(120deg, #0a2f5c, #1268b3 55%, #0a2f5c);
-  }
-  .dir-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .dir-hero img[hidden] { display: none; }
-  .dir-hero__fb {
-    position: absolute; inset: 0; display: grid; place-items: center; gap: 2px;
-    color: #fff; text-align: center;
-  }
-  .dir-hero__fb[hidden] { display: none; }
-  .dir-hero__fb b { font-size: 20px; font-weight: 900; letter-spacing: 3px; }
-  .dir-hero__fb span { font-size: 10.5px; color: #bfe3ff; display: block; }
-
   /* صفحة الانتهاء */
   .done-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .whatsnew {
@@ -211,6 +211,7 @@
 </style>
 </head>
 <body>
+ <div class="shell">
   <div class="titlebar">
     <img class="app-ico" src="assets/icon.png" alt="" onerror="this.style.display='none'" />
     <div class="t">FATORA Setup</div>
@@ -233,13 +234,6 @@
     <section class="main">
       <!-- 1) مكان التثبيت -->
       <div class="page on" id="pgDir">
-        <!-- صورة الترحيب (START) — كانت شاشة منفصلة وأُلغيت، بقت هنا مباشرة -->
-        <div class="dir-hero" id="dirHero">
-          <img id="dirHeroImg" src="assets/start.png" alt="FATORA" />
-          <div class="dir-hero__fb" id="dirHeroFallback" hidden>
-            <b>FATORA</b><span>برنامج إدارة المحلات التجارية</span>
-          </div>
-        </div>
         <h1>اختر مكان التثبيت</h1>
         <p class="lead">سيتم تثبيت برنامج FATORA في المجلد التالي. يمكنك اختيار مجلد آخر بالضغط على «استعراض».</p>
 
@@ -315,5 +309,6 @@
   </div>
 
   <script src="installer.js"></script>
+ </div><!-- /.shell -->
 </body>
 </html>

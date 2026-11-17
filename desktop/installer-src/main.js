@@ -14,6 +14,10 @@ const UNINSTALL_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\
 const SIZE_OFFSET = 8;
 const LOGO_SIZE_OFFSET = 16;
 const HEADER_SIZE = 32;
+// مقاس نافذة المثبّت (منها 12px شفافة حول الإطار الرقيق)
+const WINDOW_W = 760;
+const WINDOW_H = 512;
+const SHELL_MARGIN = 12;
 
 let win = null;
 let installTarget = "";
@@ -194,30 +198,65 @@ function createShortcuts({ dir, desktopShortcut, startMenuShortcut }) {
   return runPowerShell(scripts.join(" "));
 }
 
+/**
+ * تسجيل البرنامج في «إضافة أو إزالة البرامج» بويندوز.
+ *
+ * كان يستخدم PowerShell (New-ItemProperty) وكان يفشل على أجهزة كثيرة بالخطأ:
+ *   «Cannot use interface. The IDynamicPropertyCmdletProvider interface is not
+ *    implemented by this provider.»
+ * السبب أن مزوّد الريجستري في PowerShell لا يدعم الأمر في هذه الحالة.
+ *
+ * الحل: reg.exe المدمج في ويندوز (موجود في كل نسخة، ولا يعتمد على PowerShell).
+ * ولا نستخدم سكربت PowerShell إطلاقًا هنا.
+ */
 function writeUninstallRegistry({ dir, sizeKb }) {
   const uninstaller = path.join(dir, UNINSTALL_EXE);
   const key = `HKCU\\${UNINSTALL_KEY}`;
-  const parts = [
-    `DisplayName=FATORA`,
-    `DisplayVersion=${app.getVersion()}`,
-    `Publisher=FATORA`,
-    `DisplayIcon=${path.join(dir, APP_EXE)}`,
-    `InstallLocation=${dir}`,
-    `UninstallString="${uninstaller}"`,
-    `NoModify=1`,
-    `NoRepair=1`,
-    `EstimatedSize=${sizeKb}`,
+
+  const strValues = [
+    ["DisplayName", `FATORA ${app.getVersion()}`],
+    ["DisplayVersion", app.getVersion()],
+    ["Publisher", "FATORA — م/ وائل الجمال"],
+    ["DisplayIcon", path.join(dir, APP_EXE)],
+    ["InstallLocation", dir],
+    ["UninstallString", `"${uninstaller}"`],
+    ["QuietUninstallString", `"${uninstaller}"`],
+    ["InstallDate", new Date().toISOString().slice(0, 10).replace(/-/g, "")],
   ];
-  const script = parts
-    .map((p) => {
-      const i = p.indexOf("=");
-      const name = p.slice(0, i);
-      const value = p.slice(i + 1);
-      return `New-ItemProperty -Path '${psEscape(key)}' -Name '${psEscape(name)}' -Value '${psEscape(value)}' -PropertyType String -Force | Out-Null;`;
-    })
-    .join(" ");
-  const ensure = `New-Item -Path '${psEscape(key)}' -Force | Out-Null;`;
-  return runPowerShell(ensure + " " + script);
+  // أرقام: لازم REG_DWORD وليس نصًا
+  const dwordValues = [
+    ["NoModify", 1],
+    ["NoRepair", 1],
+    ["EstimatedSize", Math.max(1, Math.round(sizeKb))],
+  ];
+
+  const args = ["add", key, "/f"];
+  for (const [name, value] of strValues) args.push("/v", name, "/t", "REG_SZ", "/d", String(value), "/f");
+
+  return new Promise((resolve) => {
+    const run = (list, done) => {
+      const child = spawn("reg.exe", list, { windowsHide: true });
+      let out = "";
+      child.stdout.on("data", (d) => (out += String(d)));
+      child.stderr.on("data", (d) => (out += String(d)));
+      child.on("error", (e) => {
+        console.error("[setup] reg.exe error:", e.message);
+        done(false);
+      });
+      child.on("exit", (code) => {
+        if (code !== 0) console.error(`[setup] reg.exe exit ${code}: ${out.trim()}`);
+        done(code === 0);
+      });
+    };
+
+    // 1) القيم النصية
+    run(args, (ok1) => {
+      // 2) القيم الرقمية (REG_DWORD)
+      const dargs = ["add", key, "/f"];
+      for (const [name, value] of dwordValues) dargs.push("/v", name, "/t", "REG_DWORD", "/d", String(value), "/f");
+      run(dargs, (ok2) => resolve(ok1 && ok2));
+    });
+  });
 }
 
 
@@ -356,11 +395,23 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
     writeUninstallerScript({ dir: target, file: uninstaller, appName: APP_NAME });
 
     send("setup:progress", { percent: 94, message: "إنشاء الاختصارات…" });
-    await createShortcuts({ dir: target, desktopShortcut, startMenuShortcut });
+    // الاختصارات لا توقف التثبيت لو فشلت (بعض الأجهزة تمنع PowerShell/COM)
+    try {
+      await createShortcuts({ dir: target, desktopShortcut, startMenuShortcut });
+    } catch (e) {
+      console.warn("[setup] اختصار سطح المكتب/قائمة ابدأ لم يُنشأ:", e && e.message);
+    }
 
     send("setup:progress", { percent: 97, message: "تسجيل البرنامج في ويندوز…" });
     const sizeKb = Math.round(dirSizeKb(target));
-    await writeUninstallRegistry({ dir: target, sizeKb });
+    // تسجيل البرنامج في ويندوز: مفيد لكن ليس حرجًا —
+    // لو فشل لأي سبب يكمل التثبيت بنجاح (الملفات والاختصارات خلاص جاهزة).
+    try {
+      const regOk = await writeUninstallRegistry({ dir: target, sizeKb });
+      if (!regOk) console.warn("[setup] تعذّر تسجيل البرنامج في قائمة البرامج بويندوز — التثبيت يكمل عادي.");
+    } catch (e) {
+      console.warn("[setup] registry step skipped:", e && e.message);
+    }
 
     send("setup:progress", { percent: 100, message: "تم التثبيت بنجاح", detail: "" });
     return { ok: true, dir: target };
@@ -399,15 +450,20 @@ async function closeRunningApp() {
 /* ---------------- النافذة ---------------- */
 
 function createWindow() {
+  // النافذة شفافة مع إطار كامل الحجم:
+  // النافذة نفسها مستطيلة في ويندوز، فالشفافية هي الطريقة الوحيدة
+  // لإظهار حواف دائرية حقيقية (بدون مربعات رمادية في الأركان).
   win = new BrowserWindow({
-    width: 720,
-    height: 480,
+    width: WINDOW_W,
+    height: WINDOW_H,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
     frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    hasShadow: true,
     show: false,
-    backgroundColor: "#f3f3f3",
     title: `${APP_NAME} Setup`,
     icon: path.join(__dirname, "icon.png"),
     webPreferences: {
