@@ -39,7 +39,8 @@ export const settings = pgTable("settings", {
   phone2: text("phone2").notNull().default(""),
   showBigTitle: boolean("show_big_title").notNull().default(true),
   /** إظهار شعار البرنامج في الشاشة الرئيسية */
-  showLogo: boolean("show_logo").notNull().default(true),
+  /** اللوجو مخفي افتراضيًا — صورة البانر نفسها تحتوي الشعار */
+  showLogo: boolean("show_logo").notNull().default(false),
   /** إظهار نقطة «متصل» جنب اسم المستخدم */
   showOnlineDot: boolean("show_online_dot").notNull().default(true),
   customBigTitle: text("custom_big_title").notNull().default("FATORA"),

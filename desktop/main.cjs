@@ -371,9 +371,11 @@ function createMainWindow() {
     mainWindow.setFullScreen(true);
     mainWindow.setResizable(false);
     mainWindow.setMaximizable(false);
+    // منع تحريك النافذة نهائيًا: البرنامج ثابت في مكانه على الشاشة
+    mainWindow.setMovable(false);
     mainWindow.maximize();
-    // حجم الخط الافتراضي 110% في نسخة سطح المكتب
-    mainWindow.webContents.setZoomFactor(1.1);
+    // حجم الخط الافتراضي 100% كما طُلب (كان 110%)
+    mainWindow.webContents.setZoomFactor(1.0);
     mainWindow.show();
     if (splash && !splash.isDestroyed()) splash.destroy();
   });
@@ -381,7 +383,8 @@ function createMainWindow() {
   // ثبات نسبة التكبير 110% بعد كل تنقل (Next.js client-side navigation)
   mainWindow.webContents.on("did-finish-load", () => {
     try {
-      mainWindow.webContents.setZoomFactor(1.1);
+      mainWindow.webContents.setZoomFactor(1.0);
+      mainWindow.setMovable(false);
     } catch {
       /* ignore */
     }
@@ -393,6 +396,11 @@ function createMainWindow() {
    * منع «تصغير لأسفل» نهائياً:
    * لو خرج البرنامج من ملء الشاشة بأي طريقة (F11 / سحب النافذة) يرجّعه فوراً.
    */
+  // أي محاولة تحريك للنافذة تُلغى فورًا (ثابتة على الشاشة)
+  mainWindow.on("will-move", (e) => {
+    e.preventDefault();
+  });
+
   mainWindow.on("leave-full-screen", () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     setTimeout(() => {

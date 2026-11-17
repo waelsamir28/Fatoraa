@@ -134,6 +134,7 @@ const SECTIONS: Section[] = [
       { href: "/dashboard", label: "لوحة المالك", Icon: IcChartBars },
       { href: "/stock-movements", label: "حركات المخزون", Icon: IcClipboardCheck },
       { href: "/profit", label: "تقرير الأرباح", Icon: IcTrendUp },
+      { href: "/audit", label: "سجل النشاط", Icon: IcClipboardCheck },
     ],
   },
   {
@@ -164,7 +165,6 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
   { href: "/connection", label: "ربط قاعدة البيانات", Icon: RailDatabase },
   { href: "/backup", label: "النسخ الاحتياطي", Icon: RailBackup },
   { href: "/health", label: "صحة البرنامج", Icon: IcShieldCheck as unknown as RawIcon },
-  { href: "/audit", label: "سجل النشاط", Icon: IcClipboardCheck as unknown as RawIcon },
   { href: "/support", label: "الدعم الفني", Icon: RailSupport },
   { href: "/about", label: "معلومات البرنامج", Icon: RailInfo },
   { href: null, label: "خروج", Icon: IcPower as unknown as RawIcon, danger: true, action: "exit" },
@@ -337,10 +337,13 @@ export function HomeScreen() {
             </span>
           </div>
 
-          {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
-
-          {/* اللوجو في منتصف البانر — يمكن إخفاؤه من الإعدادات */}
-          {settings?.showLogo !== false && (
+          {/*
+            اللوجو في منتصف البانر — مخفي افتراضيًا كما طُلب،
+            لأن صورة البانر نفسها بتحتوي الشعار. يظهر فقط لو فُعّل
+            من الإعدادات (settings.showLogo === true) وفي هذه الحالة
+            يُستخدم الشعار المخصّص لو موجود.
+          */}
+          {settings?.showLogo === true && (
             <div className="hs-top__brand">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={settings?.customLogoUrl || DEFAULT_LOGO} alt={APP_TITLE} className="hs-top__logo" />
@@ -404,11 +407,9 @@ export function HomeScreen() {
                     ? "النسخة مفتوحة"
                     : `نسخة تجريبية (متبقي ${lic?.daysLeft ?? 15} يوم)`}
                 </span>
-                {lic?.isActivated && lic.plan && lic.plan !== "lifetime" && lic.planDaysLeft !== null && (
-                  <span className="hs-pill hs-pill--plan">
-                    {lic.planLabel} — متبقي {lic.planDaysLeft} يوم
-                  </span>
-                )}
+                {/* شارة «اشتراك سنتين — متبقي … يوم» كانت تظهر دائمًا بعد التفعيل.
+                    بقيت مخفية بعد التفعيل بناءً على طلب المالك — تظهر فقط في
+                    «معلومات البرنامج» وفي تنبيه التجديد قبل الانتهاء. */}
                 <button
                   type="button"
                   className="hs-lock"

@@ -77,7 +77,7 @@ const toForm = (s: Settings): SForm => ({
   customLogoUrl: s.customLogoUrl || "",
   phone2: s.phone2 || "",
   showBigTitle: s.showBigTitle ?? true,
-  showLogo: s.showLogo ?? true,
+  showLogo: s.showLogo ?? false,
   showOnlineDot: s.showOnlineDot ?? true,
   customBigTitle: s.customBigTitle || "FATORA",
   customTagline: s.customTagline || "إدارة احترافية .. لمحل تجاري أكثر نجاحاً",

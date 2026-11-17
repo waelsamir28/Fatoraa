@@ -1,3 +1,12 @@
+/* ===== خط Rubik — مضمّن محليًا (النسخة العربية الكاملة، بدون إنترنت) ===== */
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/rubik-arabic-300-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/rubik-arabic-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/rubik-arabic-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/rubik-arabic-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/rubik-arabic-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 800; font-display: swap; src: url("/fonts/rubik-arabic-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Rubik"; font-style: normal; font-weight: 900; font-display: swap; src: url("/fonts/rubik-arabic-900-normal.woff2") format("woff2"); }
+
 @import "tailwindcss";
 
 @theme {
@@ -13,7 +22,7 @@
   color-scheme: light;
 
   /* الخط (يُبدّل من الإعدادات) */
-  --ui-font: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+  --ui-font: "Rubik", "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
   --ui-scale: 1;
 
   /* لوحة الألوان الأساسية */
