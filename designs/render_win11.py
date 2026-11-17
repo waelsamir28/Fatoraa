@@ -290,7 +290,7 @@ def build(out="sales-win11-blue.png"):
     r1_y0 = tb_y1+GAP; r1_y1 = r1_y0+R1
 
     # (1) العميل شمال
-    CUST_W = 258
+    CUST_W = 268
     cx0, cx1 = x_left, x_left+CUST_W
     rr(d, [cx0, r1_y0, cx1, r1_y1], 8, fill="#ffffff", outline=F["stroke"], width=1)
     fy = r1_y0+5
@@ -311,7 +311,7 @@ def build(out="sales-win11-blue.png"):
 
     # (2) الوسط: إدخال سريع + طرق دفع + ملاحظات
     MID_X0 = cx1+GAP
-    RIGHT_W = 306
+    RIGHT_W = 318
     MID_X1 = x_right-RIGHT_W-GAP
     fy = r1_y0
     # إدخال سريع
