@@ -46,7 +46,7 @@ export default async function PublicInvoicePage({ params }: { params: Promise<{ 
     <main className="mx-auto min-h-screen max-w-[520px] bg-[#eef3fa] p-3 text-[#0f172a]" dir="rtl">
       <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* الترويسة */}
-        <div className="bg-gradient-to-l from-[#0b4cc2] to-[#0b2350] px-4 py-4 text-white">
+        <div className="bg-[#0067c0] px-4 py-4 text-white">
           <div className="text-[19px] font-black">{s?.storeName || "برنامج FATORA"}</div>
           <div className="mt-0.5 text-[12px] font-bold text-blue-100">{s?.address || ""}</div>
           <div className="num mt-0.5 text-[12px] font-bold text-blue-100" dir="ltr">

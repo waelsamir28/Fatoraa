@@ -1063,9 +1063,9 @@ export function InvoiceEditor({
         </>
       }
     >
-      <div className="flex h-full w-full flex-col gap-1.5 p-2 bg-[#edf2f8]">
+      <div className="flex h-full w-full flex-col gap-1.5 p-2 bg-[#eef4fb]">
         {/* ===== إطار شريط الأدوات العلوي ===== */}
-        <div className={`shrink-0 rounded-lg border-2 border-[#a9c3e2] bg-gradient-to-b from-white to-[#eaf2fc] p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
+        <div className={`shrink-0 rounded-lg border border-[#dce7f4] bg-white p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
           <div className="flex h-[40px] items-center gap-2">
             {/* مجموعة اليمين: تراجع ← رقم الفاتورة ← حذف */}
             <div className="flex items-center gap-1.5 rounded-md border border-[#c3d6ec] bg-white/70 p-1">
@@ -1271,7 +1271,7 @@ export function InvoiceEditor({
           </div>
 
           {/* إطار أزرار الفاتورة والأسعار */}
-          <div className="panel flex min-w-0 flex-1 flex-col justify-between gap-1.5 overflow-hidden border-2 border-[#a9c3e2] p-1.5 shadow-sm">
+          <div className="panel flex min-w-0 flex-1 flex-col justify-between gap-1.5 overflow-hidden border border-[#dce7f4] p-1.5 shadow-sm">
             {/* الصف الأول: باركود وتجميع (يمين) + شريط رصيد العميل العريض (يسار) */}
             <div className="flex w-full items-stretch gap-1.5">
               <div className="flex shrink-0 items-center gap-1">
@@ -1346,8 +1346,8 @@ export function InvoiceEditor({
                       title="البيع بسعر القطاعي"
                       className={`flex flex-1 items-center justify-center rounded-[5px] border text-[12px] font-black leading-none transition ${
                         state.priceLevel === "retail"
-                          ? "border-[#0b45a6] bg-gradient-to-b from-[#6bb0ff] to-[#1f6ede] text-white shadow-sm"
-                          : "border-[#9fb4d2] bg-gradient-to-b from-white to-[#e8eef7] text-[#0f2e5a] hover:border-blue-500"
+                          ? "border-[#005a9e] bg-[#0067c0] text-white shadow-sm"
+                          : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484] hover:border-[#a9c6e4] hover:bg-white"
                       }`}
                     >
                       قطاعي
@@ -1358,8 +1358,8 @@ export function InvoiceEditor({
                       title="البيع بسعر الجملة"
                       className={`flex flex-1 items-center justify-center rounded-[5px] border text-[12px] font-black leading-none transition ${
                         state.priceLevel === "wholesale"
-                          ? "border-[#0b45a6] bg-gradient-to-b from-[#6bb0ff] to-[#1f6ede] text-white shadow-sm"
-                          : "border-[#9fb4d2] bg-gradient-to-b from-white to-[#e8eef7] text-[#0f2e5a] hover:border-blue-500"
+                          ? "border-[#005a9e] bg-[#0067c0] text-white shadow-sm"
+                          : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484] hover:border-[#a9c6e4] hover:bg-white"
                       }`}
                     >
                       جملة
@@ -1419,7 +1419,7 @@ export function InvoiceEditor({
           </div>
 
           {/* كارت صورة الصنف على اليسار كما في الصورة */}
-          <div className={`panel flex w-[11%] min-w-[130px] max-w-[158px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden bg-gradient-to-b from-[#ffffff] to-[#e4ecf7] p-2 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
+          <div className={`panel flex w-[11%] min-w-[130px] max-w-[158px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden bg-white p-2 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
             {selProduct?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[82px] max-w-full object-contain" />
@@ -1440,7 +1440,7 @@ export function InvoiceEditor({
             <div className={`relative shrink-0 ${L.categories ? "" : "hidden"}`}>
               <span className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 text-[13px]">🗂️</span>
               <select
-                className="win-input h-full w-[240px] appearance-none rounded-md border-2 border-[#8fb3e0] bg-gradient-to-b from-white to-[#e8f1fc] pr-7 pl-6 text-[13px] font-black text-[#0f2e5a] shadow-sm"
+                className="win-input h-full w-[240px] appearance-none rounded-md pr-7 pl-6 text-[13px] font-semibold text-[#12263f]"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 title="اختر المجموعة لعرض أصنافها"
@@ -1588,7 +1588,7 @@ export function InvoiceEditor({
         {/* ===== هيكل جدول الفاتورة (مطابق تماماً لهيكل جدول الأصناف) + قائمة الأصناف الكروت ===== */}
         <div className="flex min-h-0 flex-1 gap-2">
           {/* جدول الفاتورة - هيكل كحلي داكن عالي التباين وواضح تماماً مثل جدول الأصناف */}
-          <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-md border-2 border-[#15459b] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
+          <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-sm border border-[#dce7f4] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
             <table className="dgrid-invoice text-center">
               <thead>
                 <tr>
@@ -1648,7 +1648,7 @@ export function InvoiceEditor({
           </div>
 
           {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className={`w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#8ba3c4] bg-[#f0f4f9] shadow-sm ${L.productCards ? "" : "hidden"}`}>
+          <div className={`w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
             <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
               <span>الأصناف ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
@@ -1744,7 +1744,7 @@ export function InvoiceEditor({
               <span>حفظ الفاتورة</span>
             </button>
 
-            <button type="button" className="btn btn-blue btn-big" onClick={() => void goTo(cfg.listHref)}>
+            <button type="button" className="btn btn-teal btn-big" onClick={() => void goTo(cfg.listHref)}>
               <BarChart3 />
               <span>{cfg.listLabel}</span>
             </button>
@@ -1757,23 +1757,23 @@ export function InvoiceEditor({
             {/* تعليق الفاتورة كمسودة */}
             <button
               type="button"
-              className="btn btn-big"
+              className="btn btn-orange btn-big"
               onClick={() => void holdDraft()}
               disabled={saving}
               title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
             >
-              <FileClock className="text-amber-600" />
+              <FileClock />
               <span>تعليق الفاتورة</span>
             </button>
 
             {/* قائمة الفواتير المعلقة */}
             <button
               type="button"
-              className="btn btn-big"
+              className="btn btn-violet btn-big"
               onClick={() => void openDrafts()}
               title="عرض الفواتير المعلقة واستكمالها"
             >
-              <List className="text-blue-700" />
+              <List />
               <span>الفواتير المعلقة</span>
             </button>
           </div>

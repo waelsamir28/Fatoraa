@@ -100,7 +100,7 @@ export function SupportView() {
 
         {/* ===== قسم 2: التواصل ===== */}
         <div className="overflow-hidden rounded-2xl border-2 border-[#2fb3a6] bg-white shadow-sm">
-          <div className="bg-gradient-to-l from-[#0f8f82] to-[#0f6f66] px-4 py-2.5 text-white">
+          <div className="bg-[#0067c0] px-4 py-2.5 text-white">
             <div className="flex items-center gap-2 text-[16px] font-black">
               <Phone className="h-5 w-5" />
               التواصل المباشر

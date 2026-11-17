@@ -109,7 +109,7 @@ export function BranchesView() {
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((b) => (
               <div key={b.id} className="panel overflow-hidden p-0">
-                <div className="flex items-center justify-between bg-gradient-to-l from-[#0b4cc2] to-[#0b2350] px-3 py-2 text-white">
+                <div className="flex items-center justify-between bg-[#0067c0] px-3 py-2 text-white">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-amber-300" />
                     <span className="text-[14.5px] font-black">{b.name}</span>

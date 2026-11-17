@@ -110,7 +110,7 @@ export function SubscriptionView() {
       <div className="mx-auto w-full max-w-[900px] space-y-3">
         {/* كارت الحالة */}
         <div className="overflow-hidden rounded-2xl border-2 border-[#c9d8ee] bg-white shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 bg-gradient-to-l from-[#164066] to-[#0f3d73] px-4 py-3 text-white">
+          <div className="flex flex-wrap items-center gap-3 bg-[#0067c0] px-4 py-3 text-white">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-400 text-[#0f2942]">
               {isLife ? <Crown className="h-5 w-5" /> : <Timer className="h-5 w-5" />}
             </span>

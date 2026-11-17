@@ -73,7 +73,7 @@ export function DraftsPanel({
   return (
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/45 p-4 pt-10">
       <div className="flex max-h-[86vh] w-full max-w-[900px] flex-col overflow-hidden rounded-xl border-2 border-[#0f2942] bg-white shadow-2xl">
-        <div className="flex shrink-0 items-center gap-2 bg-gradient-to-l from-[#164066] to-[#0f2942] px-4 py-2.5 text-white">
+        <div className="flex shrink-0 items-center gap-2 bg-[#0067c0] px-4 py-2.5 text-white">
           <FileClock className="h-5 w-5 text-[#f5c518]" />
           <div className="flex flex-col">
             <span className="text-[16px] font-black">الفواتير المعلقة (المسودات)</span>

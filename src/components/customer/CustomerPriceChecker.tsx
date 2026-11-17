@@ -42,7 +42,7 @@ export function CustomerPriceChecker({ products }: { products: Product[] }) {
     >
       <div className="flex h-full w-full flex-col gap-3 overflow-auto bg-[#eef4fa] p-3">
         {/* الترويسة */}
-        <div className="shrink-0 rounded-xl bg-gradient-to-l from-[#164066] to-[#0f2942] px-5 py-3 text-center text-white shadow-md">
+        <div className="shrink-0 rounded-xl bg-[#0067c0] px-5 py-3 text-center text-white shadow-md">
           <div className="flex items-center justify-center gap-2 text-[13px] font-black text-[#8fd8d0]">
             <Sparkles className="h-4 w-4" />
             شاشة الاستعلام الفوري للزبائن

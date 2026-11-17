@@ -365,7 +365,7 @@ export function SettingsForm() {
       ) : (
         <div className="flex h-full w-full flex-col bg-[#eef3fa]">
           {/* ===== شريط العنوان + الأزرار الثابتة ===== */}
-          <div className="shrink-0 bg-gradient-to-l from-[#164066] to-[#0f2942] px-3 py-2 text-white">
+          <div className="shrink-0 bg-[#0067c0] px-3 py-2 text-white">
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex flex-col">
                 <span className="text-[16.5px] font-black">إعدادات البرنامج</span>

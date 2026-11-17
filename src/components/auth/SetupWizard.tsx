@@ -99,7 +99,7 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
   return (
     <div className="flex min-h-screen flex-col bg-[#eaf2fb]" dir="rtl">
       {/* ================= البانر ================= */}
-      <header className="relative shrink-0 overflow-hidden bg-gradient-to-l from-[#0a56c8] via-[#0f3d7a] to-[#071e35]">
+      <header className="relative shrink-0 overflow-hidden bg-[#0067c0]">
         {/* لمعة قطرية خفيفة زي التصميم */}
         <div
           className="pointer-events-none absolute inset-0 opacity-40"
@@ -162,7 +162,7 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
         {/* شريط التقدم أسفل البانر */}
         <div className="h-1.5 w-full bg-black/25">
           <div
-            className="h-full bg-gradient-to-l from-[#38b6ff] to-[#2fb3a6] transition-all duration-300"
+            className="h-full bg-[#0f6cbd] transition-all duration-300"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -348,7 +348,7 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
                 <button
                   type="button"
                   onClick={next}
-                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-[#1c5fc0] to-[#0d3d86] text-[14.5px] font-black text-white shadow-sm hover:brightness-110"
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-[#0067c0] text-[14.5px] font-semibold text-white shadow-sm transition hover:bg-[#1975c5] active:bg-[#005a9e]"
                 >
                   التالي
                   <ArrowLeft className="h-4 w-4" />
@@ -381,7 +381,7 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
       </main>
 
       {/* ================= الفوتر ================= */}
-      <footer className="shrink-0 border-t-2 border-[#f5a623] bg-gradient-to-l from-[#0a1f36] to-[#12304f]">
+      <footer className="shrink-0 border-t-2 border-[#f5a623] bg-[#005a9e]">
         <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center justify-between gap-1 px-5 py-2.5 text-[11.5px] font-bold text-blue-100">
           <span className="flex items-center gap-1.5">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
