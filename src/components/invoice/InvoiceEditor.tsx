@@ -1010,8 +1010,8 @@ export function InvoiceEditor({
 
   return (
     <Window
-      baseW={1620}
-      baseH={860}
+      baseW={1700}
+      baseH={900}
       title={cfg.title}
       onClose={() => void goTo("/")}
       statusBar={
@@ -1220,10 +1220,10 @@ export function InvoiceEditor({
 
 
         {/* ===== التخطيط الجديد: 3 أعمدة (عميل | فاتورة | دفع) ===== */}
-        <div className="flex min-h-0 flex-1 gap-1.5">
+        <div className="flex min-h-0 flex-1 flex-row-reverse gap-1.5">
 
-          {/* ---------- العمود الأيمن: العميل + أزرار الفاتورة ---------- */}
-          <aside className="flex w-[302px] shrink-0 flex-col gap-1.5 overflow-y-auto">
+          {/* ---------- يمين: العميل + أزرار الفاتورة ---------- */}
+          <aside className="flex w-[286px] shrink-0 flex-col gap-1.5 overflow-y-auto">
         {/* ===== بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
         <div className="flex shrink-0 flex-col gap-1.5">
           {/* بيانات العميل — بدون إطار، جزء أوسع */}
@@ -1645,7 +1645,6 @@ export function InvoiceEditor({
         </div>
 
         {/* ===== هيكل جدول الفاتورة (مطابق تماماً لهيكل جدول الأصناف) + قائمة الأصناف الكروت ===== */}
-        <div className="flex min-h-0 flex-1 gap-2">
           {/* جدول الفاتورة - هيكل كحلي داكن عالي التباين وواضح تماماً مثل جدول الأصناف */}
           <div className={`panel min-w-0 flex-1 overflow-auto p-0 shadow-md border-2 border-[#15459b] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
             <table className="dgrid-invoice text-center">
@@ -1695,7 +1694,7 @@ export function InvoiceEditor({
                     </tr>
                   );
                 })}
-                {Array.from({ length: Math.max(0, 8 - state.rows.length) }).map((_, i) => (
+                {Array.from({ length: Math.max(0, 3 - state.rows.length) }).map((_, i) => (
                   <tr key={`e${i}`} className="empty border-b border-slate-200">
                     {Array.from({ length: 8 }).map((__, j) => (
                       <td key={j}>&nbsp;</td>
@@ -1706,8 +1705,26 @@ export function InvoiceEditor({
             </table>
           </div>
 
+
+        {/* ===== شريط الإجماليات أسفل الجدول ===== */}
+        <div className="flex shrink-0 items-stretch gap-1.5">
+          <div className="panel flex min-w-0 flex-1 items-center justify-around gap-2 px-3 shadow-sm">
+            <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
+            <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
+            <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
+            <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
+          </div>
+          <div className={`due-box flex h-[62px] w-[300px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
+            <span className="text-[17px] font-black text-white">المطلوب دفعه</span>
+            <span className="due-value num text-[32px] leading-none">{fmt(totals.total)}</span>
+          </div>
+        </div>
+          </section>
+
+          {/* ---------- شمال: الدفع + الملاحظات ---------- */}
+          <aside className="flex w-[286px] shrink-0 flex-col gap-1.5 overflow-y-auto">
           {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className={`w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#8ba3c4] bg-[#f0f4f9] shadow-sm ${L.productCards ? "" : "hidden"}`}>
+          <div className={`flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg border border-[#8ba3c4] bg-[#f0f4f9] shadow-sm ${L.productCards ? "" : "hidden"}`}>
             <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
               <span>الأصناف ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
@@ -1786,39 +1803,20 @@ export function InvoiceEditor({
               )}
             </div>
           </div>
-        </div>
-
-        {/* ===== شريط الإجماليات أسفل الجدول ===== */}
-        <div className="flex shrink-0 items-stretch gap-1.5">
-          <div className="panel flex min-w-0 flex-1 items-center justify-around gap-2 px-3 shadow-sm">
-            <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
-            <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
-            <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
-            <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
-          </div>
-          <div className={`due-box flex h-[62px] w-[300px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
-            <span className="text-[17px] font-black text-white">المطلوب دفعه</span>
-            <span className="due-value num text-[32px] leading-none">{fmt(totals.total)}</span>
-          </div>
-        </div>
-          </section>
-
-          {/* ---------- العمود الأيسر: الدفع + الملاحظات ---------- */}
-          <aside className="flex w-[292px] shrink-0 flex-col gap-1.5">
           {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
           <div className={`panel flex w-full shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
             <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
-            <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
+            <div className="flex flex-col gap-1 p-1.5 bg-white/50">
               {ALLOWED_PAYMENT_METHODS.map((m) => {
                 const active = state.paymentMethod === m.key;
                 return (
                   <button
                     key={m.key}
                     type="button"
-                    className={`pay-btn flex-1 h-[38px] ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
+                    className={`pay-btn h-[30px] shrink-0 ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
                     onClick={() => selectMethod(m.key)}
                   >
-                    <span className="text-[15px] font-black">{m.label}</span>
+                    <span className="text-[13px] font-black">{m.label}</span>
                     <span className="flex items-center gap-2">
                       {METHOD_ICONS[m.key]}
                       {active && <CheckCircle2 className="h-4.5 w-4.5 fill-green-600 text-white" />}
@@ -1830,7 +1828,7 @@ export function InvoiceEditor({
           </div>
 
           {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className={`panel flex min-w-[220px] flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
+          <div className={`panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
             <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
               <PencilLine className="h-3.5 w-3.5 text-blue-600" />
               ملاحظات الفاتورة والبيان
@@ -1842,11 +1840,11 @@ export function InvoiceEditor({
               onChange={(e) => patch({ notes: e.target.value })}
             />
             {/* شريط المبالغ بحجم مكبر وبدون (ج.م) والأخير: المتبقي (آجل) */}
-            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] bg-white p-2">
-              <label className="text-[12px] font-black text-[#1e3a6a]">
+            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-1 border-t border-[#c8d8ea] bg-white p-1.5">
+              <label className="min-w-0 text-[10.5px] font-black leading-tight text-[#1e3a6a]">
                 خصم إضافي
                 <input
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[17px] font-black text-red-600"
+                  className="win-input num mt-0.5 h-[30px] w-full px-0.5 text-center text-[14px] font-black text-red-600"
                   inputMode="decimal"
                   placeholder="0"
                   value={state.extraDiscount}
@@ -1854,8 +1852,8 @@ export function InvoiceEditor({
                 />
               </label>
 
-              <label className="text-[12px] font-black text-[#1e3a6a]">
-                <span className="flex items-center justify-between gap-1">
+              <label className="min-w-0 text-[10.5px] font-black leading-tight text-[#1e3a6a]">
+                <span className="flex flex-wrap items-center justify-between gap-0.5">
                   <span>{state.paymentType === "credit" ? "المدفوع" : "المبلغ المستلم"}</span>
                   {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
                   <span className="flex items-center gap-0.5">
@@ -1880,7 +1878,7 @@ export function InvoiceEditor({
                 <input
                   type="text"
                   dir="ltr"
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[20px] font-black text-green-700 bg-green-50/60 border-green-400"
+                  className="win-input num mt-0.5 h-[30px] w-full px-0.5 text-center text-[15px] font-black text-green-700 bg-green-50/60 border-green-400"
                   inputMode="decimal"
                   autoComplete="off"
                   placeholder="0"
@@ -1890,10 +1888,10 @@ export function InvoiceEditor({
                 />
               </label>
 
-              <div className="text-[12px] font-black text-[#1e3a6a]">
+              <div className="min-w-0 text-[10.5px] font-black leading-tight text-[#1e3a6a]">
                 {state.paymentType === "credit" ? "المتبقي ( آجل )" : "الباقي للعميل"}
                 <div
-                  className={`win-input num mt-0.5 flex h-[34px] items-center justify-center text-[20px] font-black ${
+                  className={`win-input num mt-0.5 flex h-[30px] items-center justify-center px-0.5 text-[15px] font-black ${
                     change < 0 ? "text-red-600 bg-red-50/60 border-red-300" : "text-blue-800 bg-blue-50/60 border-blue-300"
                   }`}
                 >
