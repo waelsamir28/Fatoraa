@@ -30,7 +30,8 @@ export const settings = pgTable("settings", {
   /** light | dark — الوضع الليلي */
   mode: text("mode").notNull().default("light"),
   buttonStyle: text("button_style").notNull().default("glossy-3d"), // glossy-3d | modern-flat | soft-rounded | pos-tactile
-  fontFamily: text("font_family").notNull().default("cairo"), // cairo | tajawal | almarai | cairo-play
+  // الخط الافتراضي Rubik — كان "cairo" وهو اسم غير محمّل فيقع على خط النظام
+  fontFamily: text("font_family").notNull().default("rubik"), // rubik | cairo | tajawal | almarai
   tableHeaderColor: text("table_header_color").notNull().default("navy-dark"), // navy-dark | slate-deep | royal-blue | charcoal | forest
   customBgUrl: text("custom_bg_url").notNull().default(""),
   /** شعار مرفوع من الإعدادات (base64) — وإلا يُستخدم الشعار الافتراضي */

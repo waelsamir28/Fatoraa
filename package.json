@@ -1,7 +1,7 @@
 {
   "name": "fatoraa",
   "private": true,
-  "version": "1.6.7",
+  "version": "1.6.8",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
