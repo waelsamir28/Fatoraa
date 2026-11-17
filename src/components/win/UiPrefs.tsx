@@ -56,7 +56,7 @@ export interface UiPrefs {
 export const DEFAULT_PREFS: UiPrefs = {
   theme: "classic-blue",
   mode: "light",
-  fontFamily: "rubik",
+  fontFamily: "cairo",
   fontWeight: "normal",
   fontScale: 100,
   buttonStyle: "glossy-3d",

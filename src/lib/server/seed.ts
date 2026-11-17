@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS = {
   theme: "classic-blue",
   mode: "light",
   buttonStyle: "glossy-3d",
-  fontFamily: "rubik",
+  fontFamily: "cairo",
   tableHeaderColor: "navy-dark",
   customBgUrl: "",
   customLogoUrl: "",
@@ -229,15 +229,15 @@ async function migrateHideLogoOnce() {
 }
 
 /**
- * ترقية الخط لمرة واحدة: الإعداد الافتراضي القديم كان "cairo" — وهو اسم
- * لم يكن محمّلًا في التطبيق فيتجاهله المتصفح ويقع على خط النظام، فتبدو
- * النتيجة كأن الخط لم يتغيّر. نحوله إلى "rubik" مرة واحدة للأجهزة القائمة.
- * لو المستخدم اختار خطًا آخر بنفسه لاحقًا لا نلمسه.
+ * إرجاع الخط إلى Cairo مرة واحدة: كان هناك migration سابق يحوّل الخط إلى
+ * "rubik". المطلوب الآن أن يكون Cairo هو الافتراضي (وهو محمّل فعليًا عبر
+ * @font-face). نحوّل مرة واحدة فقط من "rubik" إلى "cairo"، ولا نلمس
+ * اختيار المستخدم لو غيّره بنفسه لاحقًا.
  */
-async function migrateFontToRubikOnce() {
+async function migrateFontToCairoOnce() {
   try {
-    await db.update(settings).set({ fontFamily: "rubik" }).where(eq(settings.id, 1));
-    console.info("[settings] font migration: تم تحويل الخط إلى Rubik مرة واحدة");
+    await db.update(settings).set({ fontFamily: "cairo" }).where(eq(settings.id, 1));
+    console.info("[settings] font migration: تم إرجاع الخط إلى Cairo مرة واحدة");
   } catch {
     /* الترقية اختيارية — لا تعطّل تحميل الإعدادات */
   }
@@ -252,10 +252,10 @@ export async function getSettings() {
       await migrateHideLogoOnce();
       current = { ...current, showLogo: false };
     }
-    // خط قديم غير محمّل (cairo الافتراضي القديم) ⇒ Rubik مرة واحدة
-    if (!current.fontFamily || current.fontFamily === "cairo") {
-      await migrateFontToRubikOnce();
-      current = { ...current, fontFamily: "rubik" };
+    // كان rubik بسبب migration سابق ⇒ نرجعه Cairo مرة واحدة (الافتراضي المطلوب)
+    if (!current.fontFamily || current.fontFamily === "rubik") {
+      await migrateFontToCairoOnce();
+      current = { ...current, fontFamily: "cairo" };
     }
     return current;
   }
