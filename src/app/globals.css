@@ -216,12 +216,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: var(--c-ink);
+    color: #ffffff;
     user-select: none;
     overflow: hidden;
-    border-bottom: 1px solid var(--c-line);
-    background: #f4f8fd;
-    box-shadow: none;
+    border-bottom: 1px solid #0b2b52;
+    background: linear-gradient(180deg, #123a63 0%, #0e2e50 100%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
     text-shadow: none;
   }
   .win-titlebar::before {
@@ -272,37 +272,36 @@ body {
     height: 100%;
     display: grid;
     place-items: center;
-    color: var(--c-ink-2);
+    color: #dbe8f6;
     background: transparent;
     border: 0;
     border-radius: 0;
     transition: background 0.12s ease, color 0.12s ease;
   }
   .win-ctrl:hover {
-    background: rgba(0, 0, 0, 0.045);
-    color: var(--c-ink);
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
   }
   .win-ctrl.close:hover {
     background: #c42b1c;
     color: #ffffff;
   }
   .win-ctrl:active {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.18);
   }
   /* زر الرجوع للرئيسية في الترويسة الفاتحة */
   .win-back {
-    color: var(--c-ink) !important;
-    border: 1px solid var(--c-line-2) !important;
-    background: #ffffff !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
     box-shadow: none !important;
   }
   .win-back:hover {
-    background: #f2f8fe !important;
-    border-color: var(--c-field-border-hover) !important;
-    box-shadow: 0 0 0 2px rgba(0, 103, 192, 0.12) !important;
+    background: rgba(255, 255, 255, 0.24) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
   }
   .win-back:active {
-    background: #e5f1fb !important;
+    background: rgba(255, 255, 255, 0.3) !important;
   }
 
   .win-body {
@@ -322,9 +321,9 @@ body {
     padding: 0 12px;
     font-size: 12.5px;
     font-weight: 700;
-    color: var(--c-ink-2);
-    background: #f4f8fd;
-    border-top: 1px solid var(--c-line);
+    color: #3d5c7d;
+    background: #eaf1f9;
+    border-top: 1px solid var(--c-line-2);
     white-space: nowrap;
     overflow: hidden;
   }
@@ -487,9 +486,9 @@ body {
     box-shadow: var(--sh-sm);
   }
   .panel-head {
-    background: #f4f8fd;
-    border-bottom: 1px solid var(--c-line);
-    color: var(--c-ink);
+    background: linear-gradient(180deg, #16375c 0%, #0f2a47 100%);
+    border-bottom: 1px solid #0b2138;
+    color: #ffffff;
     font-weight: 700;
   }
   /* ترويسة ملونة — Fluent accent (مسطّحة، بدون لمعان) */
@@ -580,10 +579,10 @@ body {
     height: 34px;
     padding: 0 8px;
     font-weight: 700;
-    color: var(--c-ink-2);
-    background: #f4f8fd;
-    border-bottom: 1px solid var(--c-line-2);
-    border-left: 1px solid #eaf1fa;
+    color: #ffffff;
+    background: linear-gradient(180deg, #16375c 0%, #0f2a47 100%);
+    border-bottom: 1px solid #0b2138;
+    border-left: 1px solid rgba(255, 255, 255, 0.13);
     box-shadow: none;
     white-space: nowrap;
   }
@@ -662,10 +661,10 @@ body {
     padding: 0 8px;
     font-weight: 700;
     font-size: 13px;
-    color: var(--c-ink-2) !important;
-    background: #f4f8fd !important;
-    border-bottom: 1px solid var(--c-line-2) !important;
-    border-left: 1px solid #eaf1fa !important;
+    color: #ffffff !important;
+    background: linear-gradient(180deg, #16375c 0%, #0f2a47 100%) !important;
+    border-bottom: 1px solid #0b2138 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.13) !important;
     text-shadow: none;
     box-shadow: none;
     white-space: nowrap;

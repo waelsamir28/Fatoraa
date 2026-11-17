@@ -238,8 +238,9 @@ def build(out="sales-win11-blue.png"):
 
     # ============ شريط العنوان ============
     TB = 34
-    rr(d, [AX0 + 1, AY0 + 1, AX1 - 1, AY0 + TB], 8, fill="#f4f8fd")
-    d.rectangle([S(AX0 + 2), S(AY0 + TB - 9), S(AX1 - 2), S(AY0 + TB)], fill=F["mica"])
+    grad_box(img, [AX0 + 1, AY0 + 1, AX1 - 1, AY0 + TB], 8, "#123a63", "#0e2e50")
+    d = ImageDraw.Draw(img)
+    d.rectangle([S(AX0 + 2), S(AY0 + TB - 9), S(AX1 - 2), S(AY0 + TB)], fill="#0e2e50")
     d.line([(S(AX0 + 1), S(AY0 + TB)), (S(AX1 - 1), S(AY0 + TB))],
            fill=F["stroke"], width=1)
 
@@ -247,7 +248,7 @@ def build(out="sales-win11-blue.png"):
     ax = AX1 - 26
     rr(d, [ax - 8, AY0 + 9, ax + 8, AY0 + 25], 4, fill=F["accent"])
     icon(d, "cart", ax, AY0 + 17, 10, "#ffffff", 1.4)
-    T(img, (ax - 18, AY0 + TB / 2), "فواتير مبيعات", size=11, w=600, fill=F["text"])
+    T(img, (ax - 18, AY0 + TB / 2), "فواتير مبيعات", size=11, w=600, fill="#ffffff")
 
     # أزرار النافذة على اليسار (Windows 11)
     for i, (nm, hov) in enumerate([("minus", 0), ("square", 0), ("close", 1)]):
@@ -256,7 +257,7 @@ def build(out="sales-win11-blue.png"):
             rr(d, [bx, AY0 + 1, bx + 44, AY0 + TB - 1], 0, fill="#c42b1c")
             col = "#ffffff"
         else:
-            col = F["text_2"]
+            col = "#dbe8f6"
         icon(d, nm, bx + 22, AY0 + TB / 2, 7.5 if nm != "square" else 8.5, col, 1.4)
 
     BY0 = AY0 + TB + 1
@@ -434,19 +435,21 @@ def build(out="sales-win11-blue.png"):
     r3_h = 190
     r2_y1 = BOT - PAD - r3_h - GAP
 
+    # RTL: الجدول على اليمين (المحتوى الأساسي) وكروت الأصناف على الشمال
     cards_w = 268
-    grid_x0, grid_x1 = x_left, x_right - cards_w - GAP
-    cards_x0, cards_x1 = grid_x1 + GAP, x_right
+    cards_x0, cards_x1 = x_left, x_left + cards_w
+    grid_x0, grid_x1 = cards_x1 + GAP, x_right
 
     # --- الجدول ---
     rr(d, [grid_x0, r2_y0, grid_x1, r2_y1], 8, fill="#ffffff",
        outline=F["stroke"], width=1)
     TH = 32
-    rr(d, [grid_x0 + 1, r2_y0 + 1, grid_x1 - 1, r2_y0 + TH], 7, fill="#f4f8fd")
+    grad_box(img, [grid_x0 + 1, r2_y0 + 1, grid_x1 - 1, r2_y0 + TH], 7, "#16375c", "#0f2a47")
+    d = ImageDraw.Draw(img)
     d.rectangle([S(grid_x0 + 1), S(r2_y0 + TH - 7), S(grid_x1 - 1), S(r2_y0 + TH)],
-                fill="#f4f8fd")
+                fill="#0f2a47")
     d.line([(S(grid_x0 + 1), S(r2_y0 + TH)), (S(grid_x1 - 1), S(r2_y0 + TH))],
-           fill=F["stroke_2"], width=1)
+           fill="#0b2138", width=1)
     cols = [("اسم الصنف والبيان", 0.32), ("العبوة", 0.09), ("الكمية", 0.09),
             ("سعر الوحدة", 0.12), ("الخصم", 0.10), ("الإجمالي", 0.12),
             ("حذف", 0.10)]
@@ -455,7 +458,7 @@ def build(out="sales-win11-blue.png"):
     for nm, frac in cols:
         wc = avail * frac
         T(img, (xx - wc / 2, r2_y0 + TH / 2), nm, size=9.5, w=700,
-          fill=F["text_2"], anchor="mm")
+          fill="#ffffff", anchor="mm")
         xx -= wc
     ry = r2_y0 + TH
     RH = 29
@@ -476,9 +479,10 @@ def build(out="sales-win11-blue.png"):
     rr(d, [cards_x0, r2_y0, cards_x1, r2_y1], 8, fill="#ffffff",
        outline=F["stroke"], width=1)
     hh = 30
-    rr(d, [cards_x0 + 1, r2_y0 + 1, cards_x1 - 1, r2_y0 + hh], 7, fill=F["accent"])
+    grad_box(img, [cards_x0 + 1, r2_y0 + 1, cards_x1 - 1, r2_y0 + hh], 7, "#16375c", "#0f2a47")
+    d = ImageDraw.Draw(img)
     d.rectangle([S(cards_x0 + 1), S(r2_y0 + hh - 8), S(cards_x1 - 1), S(r2_y0 + hh)],
-                fill=F["accent"])
+                fill="#0f2a47")
     T(img, (cards_x1 - 10, r2_y0 + hh / 2), "الأصناف (90)", size=10.5, w=700,
       fill="#ffffff")
     # شرائح جدول | كروت
@@ -505,15 +509,15 @@ def build(out="sales-win11-blue.png"):
     r3_y0 = r2_y1 + GAP
     r3_y1 = BOT - PAD
 
-    ACT_W, PAY_W, TOT_W = 296, 236, 300
+    ACT_W, TOT_W, PAY_W = 292, 282, 232
     act_x1 = x_right
     act_x0 = act_x1 - ACT_W
-    tot_x0 = x_left
-    tot_x1 = tot_x0 + TOT_W
-    pay_x1 = tot_x1 + GAP + PAY_W
-    pay_x0 = tot_x1 + GAP
+    tot_x1 = act_x0 - GAP
+    tot_x0 = tot_x1 - TOT_W
+    notes_x1 = tot_x0 - GAP
+    pay_x1 = x_left + PAY_W
+    pay_x0 = x_left
     notes_x0 = pay_x1 + GAP
-    notes_x1 = act_x0 - GAP
 
     # --- الأزرار الستة (شبكة 2×3) — كل زر بلونه ---
     bh = (r3_y1 - r3_y0 - 2 * 5) / 3

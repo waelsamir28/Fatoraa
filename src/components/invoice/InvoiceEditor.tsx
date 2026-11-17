@@ -1647,8 +1647,163 @@ export function InvoiceEditor({
             </table>
           </div>
 
+
+        {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
+        <div className="flex h-[196px] shrink-0 gap-2">
+          {/* أزرار العمليات */}
+          <div className={`grid w-[292px] min-w-[292px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5 ${L.actions ? "" : "hidden"}`}>
+            <button type="button" className="btn btn-blue btn-big"
+              style={{ background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" }}
+              onClick={() => void newInvoice()}
+            >
+              <FilePlus2 className="text-white" color="#ffffff" stroke="#ffffff" />
+              <span>فاتورة جديدة</span>
+            </button>
+
+            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
+            <button type="button" className="btn btn-green btn-big"
+              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
+              onClick={() => void save()}
+              disabled={saving}
+            >
+              <Save color="#ffffff" stroke="#ffffff" />
+              <span>حفظ الفاتورة</span>
+            </button>
+
+            <button type="button" className="btn btn-teal btn-big"
+              style={{ background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }}
+              onClick={() => void goTo(cfg.listHref)}
+            >
+              <BarChart3 color="#ffffff" stroke="#ffffff" />
+              <span>{cfg.listLabel}</span>
+            </button>
+
+            <button type="button" className="btn btn-red btn-big"
+              style={{ background: "#c42b1c", borderColor: "#9e2015", color: "#ffffff" }}
+              onClick={() => void cancelInvoice()}
+            >
+              <X strokeWidth={4} color="#ffffff" stroke="#ffffff" />
+              <span>إلغاء الفاتورة</span>
+            </button>
+
+            {/* تعليق الفاتورة كمسودة */}
+            <button
+              type="button"
+              className="btn btn-orange btn-big"
+              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
+              onClick={() => void holdDraft()}
+              disabled={saving}
+              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
+            >
+              <FileClock color="#ffffff" stroke="#ffffff" />
+              <span>تعليق الفاتورة</span>
+            </button>
+
+            {/* قائمة الفواتير المعلقة */}
+            <button
+              type="button"
+              className="btn btn-violet btn-big"
+              style={{ background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }}
+              onClick={() => void openDrafts()}
+              title="عرض الفواتير المعلقة واستكمالها"
+            >
+              <List color="#ffffff" stroke="#ffffff" />
+              <span>الفواتير المعلقة</span>
+            </button>
+          </div>
+
+
+          {/* الإجماليات والمطلوب دفعه */}
+          <div className="flex w-[282px] min-w-[270px] shrink-0 flex-col gap-1.5">
+            <div className="panel flex flex-1 flex-col justify-around overflow-hidden shadow-sm">
+              <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
+              <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
+              <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
+              <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
+            </div>
+            <div className={`due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
+              <span className="text-[19px] font-black text-white">المطلوب دفعه</span>
+              <span className="due-value num text-[36px] leading-none">{fmt(totals.total)}</span>
+            </div>
+          </div>
+        </div>
+
+          {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
+          <div className={`panel flex min-w-0 flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
+            <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
+              <PencilLine className="h-3.5 w-3.5 text-blue-600" />
+              ملاحظات الفاتورة والبيان
+            </div>
+            <textarea
+              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
+              placeholder="اكتب أية ملاحظات للعميل هنا ..."
+              value={state.notes}
+              onChange={(e) => patch({ notes: e.target.value })}
+            />
+            {/* شريط المبالغ بحجم مكبر وبدون (ج.م) والأخير: المتبقي (آجل) */}
+            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] bg-white p-2">
+              <label className="text-[12px] font-black text-[#1e3a6a]">
+                خصم إضافي
+                <input
+                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[17px] font-black text-red-600"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={state.extraDiscount}
+                  onChange={(e) => patch({ extraDiscount: e.target.value })}
+                />
+              </label>
+
+              <label className="text-[12px] font-black text-[#1e3a6a]">
+                <span className="flex items-center justify-between gap-1">
+                  <span>{state.paymentType === "credit" ? "المدفوع" : "المبلغ المستلم"}</span>
+                  {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
+                  <span className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      title="دفع المبلغ كاملاً"
+                      onClick={() => patch({ paid: String(totals.total) })}
+                      className="rounded bg-[#2fb3a6] px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-[#25938a]"
+                    >
+                      الكل
+                    </button>
+                    <button
+                      type="button"
+                      title="مسح المبلغ"
+                      onClick={() => patch({ paid: "" })}
+                      className="rounded bg-slate-400 px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-slate-500"
+                    >
+                      مسح
+                    </button>
+                  </span>
+                </span>
+                <input
+                  type="text"
+                  dir="ltr"
+                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[20px] font-black text-green-700 bg-green-50/60 border-green-400"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder="0"
+                  value={state.paid}
+                  onChange={(e) => patch({ paid: e.target.value.replace(/[^\d.]/g, "") })}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+              </label>
+
+              <div className="text-[12px] font-black text-[#1e3a6a]">
+                {state.paymentType === "credit" ? "المتبقي ( آجل )" : "الباقي للعميل"}
+                <div
+                  className={`win-input num mt-0.5 flex h-[34px] items-center justify-center text-[20px] font-black ${
+                    change < 0 ? "text-red-600 bg-red-50/60 border-red-300" : "text-blue-800 bg-blue-50/60 border-blue-300"
+                  }`}
+                >
+                  {fmt(change)}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className={`w-[33%] min-w-[290px] max-w-[480px] shrink-0 flex flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
+          <div className={`flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
             <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
               <span>الأصناف ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
@@ -1727,133 +1882,10 @@ export function InvoiceEditor({
               )}
             </div>
           </div>
-        </div>
 
-        {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
-        <div className="flex h-[196px] shrink-0 gap-2">
-          {/* أزرار العمليات */}
-          <div className={`grid w-[26%] min-w-[260px] max-w-[340px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5 ${L.actions ? "" : "hidden"}`}>
-            <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
-              <FilePlus2 />
-              <span>فاتورة جديدة</span>
-            </button>
-
-            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
-            <button type="button" className="btn btn-green btn-big" onClick={() => void save()} disabled={saving}>
-              <Save />
-              <span>حفظ الفاتورة</span>
-            </button>
-
-            <button type="button" className="btn btn-teal btn-big" onClick={() => void goTo(cfg.listHref)}>
-              <BarChart3 />
-              <span>{cfg.listLabel}</span>
-            </button>
-
-            <button type="button" className="btn btn-red btn-big" onClick={() => void cancelInvoice()}>
-              <X strokeWidth={4} />
-              <span>إلغاء الفاتورة</span>
-            </button>
-
-            {/* تعليق الفاتورة كمسودة */}
-            <button
-              type="button"
-              className="btn btn-orange btn-big"
-              onClick={() => void holdDraft()}
-              disabled={saving}
-              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
-            >
-              <FileClock />
-              <span>تعليق الفاتورة</span>
-            </button>
-
-            {/* قائمة الفواتير المعلقة */}
-            <button
-              type="button"
-              className="btn btn-violet btn-big"
-              onClick={() => void openDrafts()}
-              title="عرض الفواتير المعلقة واستكمالها"
-            >
-              <List />
-              <span>الفواتير المعلقة</span>
-            </button>
           </div>
-
-          {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className={`panel flex min-w-[220px] flex-1 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
-            <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
-              <PencilLine className="h-3.5 w-3.5 text-blue-600" />
-              ملاحظات الفاتورة والبيان
-            </div>
-            <textarea
-              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
-              placeholder="اكتب أية ملاحظات للعميل هنا ..."
-              value={state.notes}
-              onChange={(e) => patch({ notes: e.target.value })}
-            />
-            {/* شريط المبالغ بحجم مكبر وبدون (ج.م) والأخير: المتبقي (آجل) */}
-            <div className="relative z-20 grid shrink-0 grid-cols-3 gap-2 border-t border-[#c8d8ea] bg-white p-2">
-              <label className="text-[12px] font-black text-[#1e3a6a]">
-                خصم إضافي
-                <input
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[17px] font-black text-red-600"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={state.extraDiscount}
-                  onChange={(e) => patch({ extraDiscount: e.target.value })}
-                />
-              </label>
-
-              <label className="text-[12px] font-black text-[#1e3a6a]">
-                <span className="flex items-center justify-between gap-1">
-                  <span>{state.paymentType === "credit" ? "المدفوع" : "المبلغ المستلم"}</span>
-                  {/* أزرار سريعة: لازم المبلغ يتكتب بسهولة حتى في حالة الآجل */}
-                  <span className="flex items-center gap-0.5">
-                    <button
-                      type="button"
-                      title="دفع المبلغ كاملاً"
-                      onClick={() => patch({ paid: String(totals.total) })}
-                      className="rounded bg-[#2fb3a6] px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-[#25938a]"
-                    >
-                      الكل
-                    </button>
-                    <button
-                      type="button"
-                      title="مسح المبلغ"
-                      onClick={() => patch({ paid: "" })}
-                      className="rounded bg-slate-400 px-1.5 py-[1px] text-[10px] font-black text-white hover:bg-slate-500"
-                    >
-                      مسح
-                    </button>
-                  </span>
-                </span>
-                <input
-                  type="text"
-                  dir="ltr"
-                  className="win-input num mt-0.5 h-[34px] w-full text-center text-[20px] font-black text-green-700 bg-green-50/60 border-green-400"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="0"
-                  value={state.paid}
-                  onChange={(e) => patch({ paid: e.target.value.replace(/[^\d.]/g, "") })}
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-              </label>
-
-              <div className="text-[12px] font-black text-[#1e3a6a]">
-                {state.paymentType === "credit" ? "المتبقي ( آجل )" : "الباقي للعميل"}
-                <div
-                  className={`win-input num mt-0.5 flex h-[34px] items-center justify-center text-[20px] font-black ${
-                    change < 0 ? "text-red-600 bg-red-50/60 border-red-300" : "text-blue-800 bg-blue-50/60 border-blue-300"
-                  }`}
-                >
-                  {fmt(change)}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
-          <div className={`panel flex w-[28%] min-w-[290px] max-w-[390px] shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
+          <div className={`panel flex w-[232px] min-w-[228px] shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
             <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
             <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
               {ALLOWED_PAYMENT_METHODS.map((m) => {
@@ -1876,20 +1908,6 @@ export function InvoiceEditor({
             </div>
           </div>
 
-          {/* الإجماليات والمطلوب دفعه */}
-          <div className="flex w-[23%] min-w-[260px] max-w-[380px] shrink-0 flex-col gap-1.5">
-            <div className="panel flex flex-1 flex-col justify-around overflow-hidden shadow-sm">
-              <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
-              <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
-              <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
-              <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
-            </div>
-            <div className={`due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
-              <span className="text-[19px] font-black text-white">المطلوب دفعه</span>
-              <span className="due-value num text-[36px] leading-none">{fmt(totals.total)}</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* النوافذ العائمة الذكية */}
