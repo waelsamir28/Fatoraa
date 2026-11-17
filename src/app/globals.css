@@ -1,17 +1,39 @@
-/* ===== خط Rubik — مضمّن محليًا (النسخة العربية الكاملة، بدون إنترنت) ===== */
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/rubik-arabic-300-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/rubik-arabic-400-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/rubik-arabic-500-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/rubik-arabic-600-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/rubik-arabic-700-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 800; font-display: swap; src: url("/fonts/rubik-arabic-800-normal.woff2") format("woff2"); }
-@font-face { font-family: "Rubik"; font-style: normal; font-weight: 900; font-display: swap; src: url("/fonts/rubik-arabic-900-normal.woff2") format("woff2"); }
+/* ===== خط Cairo (متغيّر الوزن) — مطلوب لأن اختيار «كايرو» في الإعدادات
+   كان اسمًا غير محمّل، فيتجاهله المتصفح ويقع على خط النظام. ===== */
+@font-face {
+  font-family: "Cairo";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("/fonts/cairo-variable.ttf") format("truetype-variations"), url("/fonts/cairo-variable.ttf") format("truetype");
+}
+
+/* ===== خط Rubik — مضمّن محليًا (عربي + لاتيني/أرقام)، بدون إنترنت =====
+   ملاحظة مهمة: ملف Rubik العربي لا يحتوي أرقامًا لاتينية (0-9)،
+   لذلك نستخدم ملفين لكل وزن مع unicode-range: العربي للعربي،
+   واللاتيني للأرقام والحروف الإنجليزية. بدون هذا كانت الأرقام
+   تسقط على خط آخر وتظهر غير متناسقة. */
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:300; font-display:swap; src:url("/fonts/rubik-arabic-300-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:300; font-display:swap; src:url("/fonts/rubik-latin-300-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:400; font-display:swap; src:url("/fonts/rubik-arabic-400-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:400; font-display:swap; src:url("/fonts/rubik-latin-400-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:500; font-display:swap; src:url("/fonts/rubik-arabic-500-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:500; font-display:swap; src:url("/fonts/rubik-latin-500-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:600; font-display:swap; src:url("/fonts/rubik-arabic-600-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:600; font-display:swap; src:url("/fonts/rubik-latin-600-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:700; font-display:swap; src:url("/fonts/rubik-arabic-700-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:700; font-display:swap; src:url("/fonts/rubik-latin-700-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:800; font-display:swap; src:url("/fonts/rubik-arabic-800-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:800; font-display:swap; src:url("/fonts/rubik-latin-800-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:900; font-display:swap; src:url("/fonts/rubik-arabic-900-normal.woff2") format("woff2"); unicode-range:U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF; }
+@font-face { font-family:"Rubik"; font-style:normal; font-weight:900; font-display:swap; src:url("/fonts/rubik-latin-900-normal.woff2") format("woff2"); unicode-range:U+0000-00FF, U+2000-206F, U+2070-209F, U+20AC, U+2122, U+2190-21BB; }
 
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
-  --font-display: "Lalezar", "Cairo", sans-serif;
+  /* Rubik أولًا — كان Cairo وهو اسم غير محمّل سابقًا فيقع على خط النظام */
+  --font-sans: "Rubik", "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-display: "Rubik", "Lalezar", "Cairo", sans-serif;
 }
 
 /* ==================================================================

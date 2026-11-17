@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS = {
   theme: "classic-blue",
   mode: "light",
   buttonStyle: "glossy-3d",
-  fontFamily: "cairo",
+  fontFamily: "rubik",
   tableHeaderColor: "navy-dark",
   customBgUrl: "",
   customLogoUrl: "",
@@ -228,12 +228,36 @@ async function migrateHideLogoOnce() {
   }
 }
 
+/**
+ * ترقية الخط لمرة واحدة: الإعداد الافتراضي القديم كان "cairo" — وهو اسم
+ * لم يكن محمّلًا في التطبيق فيتجاهله المتصفح ويقع على خط النظام، فتبدو
+ * النتيجة كأن الخط لم يتغيّر. نحوله إلى "rubik" مرة واحدة للأجهزة القائمة.
+ * لو المستخدم اختار خطًا آخر بنفسه لاحقًا لا نلمسه.
+ */
+async function migrateFontToRubikOnce() {
+  try {
+    await db.update(settings).set({ fontFamily: "rubik" }).where(eq(settings.id, 1));
+    console.info("[settings] font migration: تم تحويل الخط إلى Rubik مرة واحدة");
+  } catch {
+    /* الترقية اختيارية — لا تعطّل تحميل الإعدادات */
+  }
+}
+
 export async function getSettings() {
   await ensureSchema();
   const [row] = await db.select().from(settings).where(eq(settings.id, 1));
   if (row) {
-    if (row.showLogo) await migrateHideLogoOnce();
-    return row;
+    let current = row;
+    if (current.showLogo) {
+      await migrateHideLogoOnce();
+      current = { ...current, showLogo: false };
+    }
+    // خط قديم غير محمّل (cairo الافتراضي القديم) ⇒ Rubik مرة واحدة
+    if (!current.fontFamily || current.fontFamily === "cairo") {
+      await migrateFontToRubikOnce();
+      current = { ...current, fontFamily: "rubik" };
+    }
+    return current;
   }
   await db.insert(settings).values({ id: 1, ...DEFAULT_SETTINGS }).onConflictDoNothing();
   const [created] = await db.select().from(settings).where(eq(settings.id, 1));
