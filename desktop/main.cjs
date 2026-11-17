@@ -536,8 +536,13 @@ try {
   // electron-updater اختياري: لو غير متاح يعمل البرنامج عادي بدون تحديث تلقائي
   updater = require("electron-updater").autoUpdater;
   // تنزيل التحديث في الخلفية تلقائياً، والقرار النهائي للتثبيت يبقى للمستخدم
-  updater.autoDownload = true;
-  updater.autoInstallOnAppQuit = true;
+  // ===== التحديث التلقائي الصامت (الاقتراح 1) =====
+  updater.autoDownload = true; // ينزّل الإصدار الجديد في الخلفية بدون سؤال
+  updater.autoInstallOnAppQuit = true; // يثبّته لحظة إغلاق البرنامج — المستخدم لا يفعل شيئًا
+  updater.autoRunAppAfterInstall = true; // ويعيد فتح البرنامج تلقائيًا بعد التثبيت
+  // لا نُظهر أي مربع حوار أو إشعار نظام مزعج أثناء العمل
+  updater.allowPrerelease = false;
+  updater.allowDowngrade = false;
   updater.logger = { info: log, warn: log, error: log, debug: () => undefined };
 } catch (e) {
   log(`electron-updater not available: ${e}`);
@@ -577,26 +582,11 @@ function wireUpdater() {
   updater.on("download-progress", (p) => setUpdateState({ status: "downloading", progress: Math.round(p?.percent || 0) }));
   updater.on("update-downloaded", (info) => {
     setUpdateState({ status: "downloaded", latestVersion: info?.version || updateState.latestVersion, progress: 100 });
-    // إشعار المستخدم بعد تنزيل التحديث في الخلفية
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      dialog
-        .showMessageBox(mainWindow, {
-          type: "info",
-          title: "تحديث جديد جاهز",
-          message: `تم تنزيل الإصدار ${info?.version || ""} من برنامج FATORA`,
-          detail: "هل تريد إعادة تشغيل البرنامج الآن لتثبيت التحديث؟ (لن تفقد أي بيانات — التثبيت يستغرق ثوانٍ)",
-          buttons: ["إعادة التشغيل والتثبيت", "لاحقاً"],
-          defaultId: 0,
-          cancelId: 1,
-        })
-        .then((r) => {
-          if (r.response === 0) {
-            quitting = true;
-            setImmediate(() => updater.quitAndInstall(false, true));
-          }
-        })
-        .catch(() => undefined);
-    }
+    // تحديث صامت: ننزّل في الخلفية ويثبّت نفسه عند إغلاق البرنامج التالي
+    // (autoInstallOnAppQuit = true). لا نُقاطع المستخدم بأي نافذة إطلاقًا —
+    // تظهر له شارة صغيرة «التحديث جاهز — هيتثبت لما تقفل البرنامج» في شاشة المعلومات فقط.
+    log(`update downloaded silently: ${info?.version || ""}`);
+    // لو البرنامج بيقفل أصلاً ما نعملش أي حاجة، وإلا نترك التثبيت لوقت الإغلاق
   });
   updater.on("error", (e) =>
     setUpdateState({ status: "error", error: e?.message ? String(e.message) : "تعذر التحقق من التحديثات" }),

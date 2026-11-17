@@ -325,7 +325,7 @@ async function install({ dir, desktopShortcut, startMenuShortcut }) {
     try {
       // مهم: الحرف "x" هو أمر الاستخراج — كان ساقطًا تمامًا،
       // فكان 7za يرد بـ «command line error» (كود خروج 7) ويفشل التثبيت.
-      const args = ["x", "-y", "-bsp1", "-bso1", "-bsp2", `-o${target}`, archive];
+      const args = ["x", "-y", "-bso1", "-bsp1", `-o${target}`, archive];
       await run7z(args, (line) => {
         const m = /(\d{1,3})%/.exec(line);
         if (m) {

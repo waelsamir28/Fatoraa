@@ -21,6 +21,12 @@ export function InvoiceSheet({
 }) {
   const isSale = inv.type === "sale" || inv.type === "sale_return";
   const remaining = Math.max(0, inv.total - inv.paid);
+  // رصيد العميل قبل/بعد الفاتورة (يأتي من API؛ لو غير متاح نحسب تقديرًا محليًا)
+  const balanceBeforeRaw = typeof inv.partyBalanceBefore === "number" ? inv.partyBalanceBefore : null;
+  const balanceAfterRaw = typeof inv.partyBalanceAfter === "number" ? inv.partyBalanceAfter : null;
+  const balanceBefore = balanceBeforeRaw ?? 0;
+  const balanceAfter = balanceAfterRaw ?? (balanceBefore + remaining);
+  const showBalances = !!inv.partyId && (balanceBeforeRaw !== null || balanceAfterRaw !== null);
   const itemsDiscount = inv.items.reduce((a, b) => a + b.discount, 0);
   const thermal = layout.paper === "thermal";
   const accent = layout.accent || "#1e3a6a";
@@ -293,6 +299,22 @@ export function InvoiceSheet({
                 <div className="flex justify-between px-2 py-0.5 text-red-600">
                   <span>المتبقي (آجل):</span>
                   <span className="num">{fmt(remaining)}</span>
+                </div>
+              </>
+            )}
+
+            {/* ===== رصيد العميل قبل وبعد الفاتورة ===== */}
+            {showBalances && (
+              <>
+                <div className="flex justify-between border-t border-dashed border-slate-400 px-2 py-0.5 text-slate-700">
+                  <span>رصيد سابق:</span>
+                  <span className="num">{fmt(balanceBefore)}</span>
+                </div>
+                <div className="flex justify-between px-2 py-0.5 font-black" style={{ color: accent }}>
+                  <span>الرصيد الحالي:</span>
+                  <span className="num">
+                    {fmt(balanceAfter)} {s.currency}
+                  </span>
                 </div>
               </>
             )}

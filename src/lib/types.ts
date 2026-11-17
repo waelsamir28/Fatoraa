@@ -113,6 +113,10 @@ export interface Invoice {
   itemsCount?: number;
   /** رقم تليفون العميل — يُرجَع من /api/invoices/[id] لشاشة المشاركة */
   partyPhone?: string;
+  /** رصيد العميل قبل هذه الفاتورة — يظهر في الفاتورة المطبوعة */
+  partyBalanceBefore?: number | null;
+  /** رصيد العميل بعد هذه الفاتورة (الحالي) — يظهر في الفاتورة المطبوعة */
+  partyBalanceAfter?: number | null;
 }
 
 export interface StatementRow {
