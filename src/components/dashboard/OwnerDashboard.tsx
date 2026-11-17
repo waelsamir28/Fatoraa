@@ -70,7 +70,7 @@ export function OwnerDashboard() {
         ) : (
           <div className="mx-auto max-w-[900px] space-y-2.5">
             {/* بطاقة اليوم */}
-            <div className="overflow-hidden rounded-2xl bg-gradient-to-l from-[#0b4cc2] to-[#061c46] p-4 text-white shadow-lg">
+            <div className="overflow-hidden rounded-2xl bg-[#0067c0] p-4 text-white shadow-lg">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-[12px] font-bold text-blue-200">مبيعات اليوم</div>

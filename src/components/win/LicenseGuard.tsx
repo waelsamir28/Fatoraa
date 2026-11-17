@@ -140,7 +140,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
       {activated && (
         <div className="fixed inset-0 z-[120] grid place-items-center bg-black/60 p-4 backdrop-blur-sm" dir="rtl">
           <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="bg-gradient-to-l from-[#164066] to-[#0f2942] px-5 pb-5 pt-6 text-center">
+            <div className="bg-[#0067c0] px-5 pb-5 pt-6 text-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={resolveLogo()}

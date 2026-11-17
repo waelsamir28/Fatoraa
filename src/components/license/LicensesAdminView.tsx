@@ -117,7 +117,7 @@ export function LicensesAdminView() {
     <div className="h-full overflow-auto bg-[#eef3fa] p-3" dir="rtl">
       <div className="mx-auto w-full max-w-[1100px] space-y-3">
         {/* الهيدر */}
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-gradient-to-l from-[#164066] to-[#0f3d73] px-4 py-3 text-white shadow">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-[#0067c0] px-4 py-3 text-white shadow">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-400 text-[#0f2942]">
             <Crown className="h-5 w-5" />
           </span>

@@ -72,7 +72,7 @@ export function ActivationPlans({
     >
       <div className="mx-auto w-full max-w-[1000px] overflow-hidden rounded-2xl bg-white shadow-2xl">
         {/* ترويسة */}
-        <div className="relative overflow-hidden bg-gradient-to-l from-[#164066] via-[#0f3d73] to-[#12508f] px-5 pb-4 pt-5 text-white">
+        <div className="relative overflow-hidden bg-[#0067c0] px-5 pb-4 pt-5 text-white">
           <span className="pointer-events-none absolute -left-10 -top-16 h-40 w-40 rounded-full bg-cyan-400/25 blur-2xl" />
           <span className="pointer-events-none absolute -bottom-20 right-10 h-44 w-44 rounded-full bg-amber-300/20 blur-2xl" />
           {!standalone && onClose && (

@@ -201,7 +201,7 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[80] flex flex-col bg-[#eaf1f9]">
       {/* شريط العنوان */}
-      <div className="flex shrink-0 items-center gap-3 bg-gradient-to-l from-[#164066] to-[#0f2942] px-4 py-2.5 text-white shadow-lg">
+      <div className="flex shrink-0 items-center gap-3 bg-[#0067c0] px-4 py-2.5 text-white shadow-lg">
         <LayoutTemplate className="h-6 w-6 text-[#f5c518]" />
         <div className="flex flex-col">
           <span className="text-[16px] font-black">محرّر قوالب الفواتير — معاينة حية</span>
