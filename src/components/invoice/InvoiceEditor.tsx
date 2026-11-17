@@ -1010,6 +1010,8 @@ export function InvoiceEditor({
 
   return (
     <Window
+      baseW={1620}
+      baseH={860}
       title={cfg.title}
       onClose={() => void goTo("/")}
       statusBar={
@@ -1063,7 +1065,7 @@ export function InvoiceEditor({
         </>
       }
     >
-      <div className="flex h-full w-full flex-col gap-1.5 p-2 bg-[#edf2f8]">
+      <div className="flex h-full w-full flex-col gap-1.5 bg-[#edf2f8] p-1.5">
         {/* ===== إطار شريط الأدوات العلوي ===== */}
         <div className={`shrink-0 rounded-lg border-2 border-[#a9c3e2] bg-gradient-to-b from-white to-[#eaf2fc] p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
           <div className="flex h-[40px] items-center gap-2">
@@ -1216,10 +1218,16 @@ export function InvoiceEditor({
           </div>
         </div>
 
+
+        {/* ===== التخطيط الجديد: 3 أعمدة (عميل | فاتورة | دفع) ===== */}
+        <div className="flex min-h-0 flex-1 gap-1.5">
+
+          {/* ---------- العمود الأيمن: العميل + أزرار الفاتورة ---------- */}
+          <aside className="flex w-[302px] shrink-0 flex-col gap-1.5 overflow-y-auto">
         {/* ===== بيانات العميل + إطار أزرار الفاتورة + كارت الصنف ===== */}
-        <div className="flex h-[178px] shrink-0 gap-2">
+        <div className="flex shrink-0 flex-col gap-1.5">
           {/* بيانات العميل — بدون إطار، جزء أوسع */}
-          <div className={`flex w-[36%] min-w-[360px] max-w-[430px] shrink-0 flex-col justify-between gap-1 rounded-lg bg-white/70 p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
+          <div className={`flex w-full shrink-0 flex-col justify-between gap-1 rounded-lg border border-[#cfe0f2] bg-white p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
               <FRow label={`رقم ${cfg.partyLabel}`}>
                 <input
                   className="win-input num h-full flex-1 text-center text-[16px] font-black text-[#d0190f]"
@@ -1271,7 +1279,7 @@ export function InvoiceEditor({
           </div>
 
           {/* إطار أزرار الفاتورة والأسعار */}
-          <div className="panel flex min-w-0 flex-1 flex-col justify-between gap-1.5 overflow-hidden border-2 border-[#a9c3e2] p-1.5 shadow-sm">
+          <div className="panel flex w-full min-w-0 flex-col justify-between gap-1.5 overflow-hidden border-2 border-[#a9c3e2] p-1.5 shadow-sm">
             {/* الصف الأول: باركود وتجميع (يمين) + شريط رصيد العميل العريض (يسار) */}
             <div className="flex w-full items-stretch gap-1.5">
               <div className="flex shrink-0 items-center gap-1">
@@ -1433,6 +1441,57 @@ export function InvoiceEditor({
           </div>
         </div>
 
+          {/* أزرار العمليات */}
+          <div className={`grid w-full shrink-0 grid-cols-2 gap-1.5 ${L.actions ? "" : "hidden"}`}>
+            <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
+              <FilePlus2 />
+              <span>فاتورة جديدة</span>
+            </button>
+
+            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
+            <button type="button" className="btn btn-green btn-big" onClick={() => void save()} disabled={saving}>
+              <Save />
+              <span>حفظ الفاتورة</span>
+            </button>
+
+            <button type="button" className="btn btn-blue btn-big" onClick={() => void goTo(cfg.listHref)}>
+              <BarChart3 />
+              <span>{cfg.listLabel}</span>
+            </button>
+
+            <button type="button" className="btn btn-red btn-big" onClick={() => void cancelInvoice()}>
+              <X strokeWidth={4} />
+              <span>إلغاء الفاتورة</span>
+            </button>
+
+            {/* تعليق الفاتورة كمسودة */}
+            <button
+              type="button"
+              className="btn btn-big"
+              onClick={() => void holdDraft()}
+              disabled={saving}
+              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
+            >
+              <FileClock className="text-amber-600" />
+              <span>تعليق الفاتورة</span>
+            </button>
+
+            {/* قائمة الفواتير المعلقة */}
+            <button
+              type="button"
+              className="btn btn-big"
+              onClick={() => void openDrafts()}
+              title="عرض الفواتير المعلقة واستكمالها"
+            >
+              <List className="text-blue-700" />
+              <span>الفواتير المعلقة</span>
+            </button>
+          </div>
+
+          </aside>
+
+          {/* ---------- العمود الأوسط: الإدخال + الجدول + الإجماليات ---------- */}
+          <section className="flex min-w-0 flex-1 flex-col gap-1.5">
         {/* ===== سطر الإدخال السريع للأصناف مع زر إضافة مجموعة جديدة ➕ المضاف بجانب المجموعات ===== */}
         <div className={`flex h-[50px] shrink-0 items-end gap-1.5 ${L.quickAdd ? "" : "hidden"}`}>
           <div className="flex h-[38px] items-center gap-1.5">
@@ -1729,53 +1788,45 @@ export function InvoiceEditor({
           </div>
         </div>
 
-        {/* ===== الجزء السفلي: أزرار العمليات + الملاحظات والحسابات + طرق الدفع + الإجماليات ===== */}
-        <div className="flex h-[196px] shrink-0 gap-2">
-          {/* أزرار العمليات */}
-          <div className={`grid w-[26%] min-w-[260px] max-w-[340px] shrink-0 grid-cols-2 grid-rows-3 gap-1.5 ${L.actions ? "" : "hidden"}`}>
-            <button type="button" className="btn btn-blue btn-big" onClick={() => void newInvoice()}>
-              <FilePlus2 />
-              <span>فاتورة جديدة</span>
-            </button>
+        {/* ===== شريط الإجماليات أسفل الجدول ===== */}
+        <div className="flex shrink-0 items-stretch gap-1.5">
+          <div className="panel flex min-w-0 flex-1 items-center justify-around gap-2 px-3 shadow-sm">
+            <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
+            <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
+            <TotRow label="الضريبة" value={fmt(totals.tax)} color="text-slate-600" last />
+            <TotRow label="عدد الأصناف" value={String(state.rows.length)} color="text-[#0f2e5a]" last />
+          </div>
+          <div className={`due-box flex h-[62px] w-[300px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
+            <span className="text-[17px] font-black text-white">المطلوب دفعه</span>
+            <span className="due-value num text-[32px] leading-none">{fmt(totals.total)}</span>
+          </div>
+        </div>
+          </section>
 
-            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
-            <button type="button" className="btn btn-green btn-big" onClick={() => void save()} disabled={saving}>
-              <Save />
-              <span>حفظ الفاتورة</span>
-            </button>
-
-            <button type="button" className="btn btn-blue btn-big" onClick={() => void goTo(cfg.listHref)}>
-              <BarChart3 />
-              <span>{cfg.listLabel}</span>
-            </button>
-
-            <button type="button" className="btn btn-red btn-big" onClick={() => void cancelInvoice()}>
-              <X strokeWidth={4} />
-              <span>إلغاء الفاتورة</span>
-            </button>
-
-            {/* تعليق الفاتورة كمسودة */}
-            <button
-              type="button"
-              className="btn btn-big"
-              onClick={() => void holdDraft()}
-              disabled={saving}
-              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
-            >
-              <FileClock className="text-amber-600" />
-              <span>تعليق الفاتورة</span>
-            </button>
-
-            {/* قائمة الفواتير المعلقة */}
-            <button
-              type="button"
-              className="btn btn-big"
-              onClick={() => void openDrafts()}
-              title="عرض الفواتير المعلقة واستكمالها"
-            >
-              <List className="text-blue-700" />
-              <span>الفواتير المعلقة</span>
-            </button>
+          {/* ---------- العمود الأيسر: الدفع + الملاحظات ---------- */}
+          <aside className="flex w-[292px] shrink-0 flex-col gap-1.5">
+          {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
+          <div className={`panel flex w-full shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
+            <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
+            <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
+              {ALLOWED_PAYMENT_METHODS.map((m) => {
+                const active = state.paymentMethod === m.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    className={`pay-btn flex-1 h-[38px] ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
+                    onClick={() => selectMethod(m.key)}
+                  >
+                    <span className="text-[15px] font-black">{m.label}</span>
+                    <span className="flex items-center gap-2">
+                      {METHOD_ICONS[m.key]}
+                      {active && <CheckCircle2 className="h-4.5 w-4.5 fill-green-600 text-white" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
@@ -1852,41 +1903,7 @@ export function InvoiceEditor({
             </div>
           </div>
 
-          {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
-          <div className={`panel flex w-[28%] min-w-[290px] max-w-[390px] shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
-            <div className="navy-head flex h-[32px] shrink-0 items-center justify-center text-[16px]">طريقة الدفع</div>
-            <div className="flex flex-1 flex-col justify-around gap-1.5 p-2 bg-white/50">
-              {ALLOWED_PAYMENT_METHODS.map((m) => {
-                const active = state.paymentMethod === m.key;
-                return (
-                  <button
-                    key={m.key}
-                    type="button"
-                    className={`pay-btn flex-1 h-[38px] ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
-                    onClick={() => selectMethod(m.key)}
-                  >
-                    <span className="text-[15px] font-black">{m.label}</span>
-                    <span className="flex items-center gap-2">
-                      {METHOD_ICONS[m.key]}
-                      {active && <CheckCircle2 className="h-4.5 w-4.5 fill-green-600 text-white" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* الإجماليات والمطلوب دفعه */}
-          <div className="flex w-[23%] min-w-[260px] max-w-[380px] shrink-0 flex-col gap-1.5">
-            <div className="panel flex flex-1 flex-col justify-around overflow-hidden shadow-sm">
-              <TotRow label="إجمالي الأصناف" value={fmt(totals.gross)} color="text-blue-700" />
-              <TotRow label="الخصم الكلي" value={fmt(totals.discount)} color="text-red-600" last />
-            </div>
-            <div className={`due-box flex h-[62px] shrink-0 items-center justify-between gap-2 px-3.5 ${L.grandTotal ? "" : "hidden"}`}>
-              <span className="text-[19px] font-black text-white">المطلوب دفعه</span>
-              <span className="due-value num text-[36px] leading-none">{fmt(totals.total)}</span>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
 

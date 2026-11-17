@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { branches, settings, users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
@@ -17,8 +17,13 @@ export const dynamic = "force-dynamic";
  */
 export function POST(req: Request) {
   return handle(async () => {
-    const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
-    if (Number(row?.count ?? 0) > 0) {
+    // الشرط: مفيش «مالك» بعد. مجرد وجود حسابات كاشير/مدير لا يمنع الإعداد،
+    // وإلا البرنامج يعلق على شاشة دخول بلا أي حساب مالك يُنشئ منها.
+    const [own] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(users)
+      .where(and(eq(users.role, "owner"), eq(users.active, true)));
+    if (Number(own?.count ?? 0) > 0) {
       return NextResponse.json(
         { error: "تم إعداد البرنامج بالفعل — سجّل الدخول بحسابك" },
         { status: 409 },

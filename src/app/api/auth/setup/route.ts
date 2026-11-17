@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { handle, readJson, str } from "@/lib/server/http";
@@ -13,7 +13,11 @@ export function POST(req: Request) {
   return handle(async () => {
     let count = 0;
     try {
-      const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+      // نعدّ المالكين فقط — وجود كاشير/مدير لا يعطّل شاشة إنشاء حساب المالك
+      const [row] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(users)
+        .where(and(eq(users.role, "owner"), eq(users.active, true)));
       count = Number(row?.count ?? 0);
     } catch (e) {
       const { dbErrorMessage } = await import("@/lib/server/session");

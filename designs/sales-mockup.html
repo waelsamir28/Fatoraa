@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>FATORA — شاشة المبيعات (تصميم مقترح)</title>
+<style>
+  @font-face {
+    font-family: "Cairo"; font-style: normal; font-weight: 200 1000; font-display: swap;
+    src: url("../public/fonts/cairo-variable.ttf") format("truetype-variations");
+  }
+  :root {
+    --blue: #1d6ff2;
+    --blue-d: #0e4494;
+    --navy: #0b2545;
+    --navy-2: #08243d;
+    --line: #dbe7f5;
+    --line-2: #c7dbf0;
+    --surface: #ffffff;
+    --surface-2: #f7fafd;
+    --page: #eaf1f9;
+    --amber: #f5b301;
+    --amber-bg: #fff6dd;
+    --amber-line: #e8c25a;
+    --green: #0f8a4d;
+    --red: #c8382f;
+    --ink-2: #274b74;
+    --ink-3: #6b82a3;
+    --r: 12px;
+    --shadow: 0 1px 2px rgba(11,37,69,.06), 0 6px 18px rgba(11,37,69,.07);
+    --shadow-sm: 0 1px 2px rgba(11,37,69,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Cairo", "Segoe UI", Tahoma, sans-serif;
+    background: #cdd9e8;
+    padding: 20px;
+    display: grid;
+    place-items: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ نافذة البرنامج ============ */
+  .app {
+    width: min(1560px, 100%);
+    height: min(940px, calc(100vh - 40px));
+    background: var(--page);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(6, 28, 56, .38), 0 2px 8px rgba(6,28,56,.2);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #b7c9de;
+  }
+
+  /* ---------- شريط العنوان ---------- */
+  .titlebar {
+    height: 40px; flex: none; display: flex; align-items: center; gap: 10px;
+    padding: 0 14px; background: linear-gradient(180deg, #0f3d6e, #08243d);
+    color: #e8f2ff; font-size: 12.5px; font-weight: 700;
+  }
+  .titlebar .logo { width: 22px; height: 22px; object-fit: contain; }
+  .titlebar .name { letter-spacing: .3px; }
+  .titlebar .spacer { flex: 1; }
+  .winctl { display: flex; gap: 2px; }
+  .winctl i {
+    width: 34px; height: 26px; border-radius: 5px; display: grid; place-items: center;
+    font-style: normal; font-size: 12px; color: #cfe4ff; background: rgba(255,255,255,.06);
+  }
+  .winctl i.x { background: rgba(200,56,47,.85); color: #fff; }
+
+  /* ---------- الجسم: 3 أعمدة ---------- */
+  .body { flex: 1; min-height: 0; display: grid; grid-template-columns: 72px 296px 1fr 300px; }
+
+  /* ===== الشريط الأيقوني ===== */
+  .rail {
+    grid-column: 1; grid-row: 1;
+    background: linear-gradient(180deg, #10508f, #08243d);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0;
+  }
+  .rail .logo { width: 40px; height: 40px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+  .rail .ico {
+    width: 46px; height: 42px; border-radius: 9px; display: grid; place-items: center;
+    color: #a9caee; font-size: 15px; background: rgba(255,255,255,.05);
+  }
+  .rail .ico.on { background: #2f8bff; color: #fff; box-shadow: 0 3px 10px rgba(47,139,255,.5); }
+
+  /* ===== عمود العميل (يمين) ===== */
+  .col-cust {
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
+    border-right: 1px solid var(--line); background: var(--surface-2); overflow: hidden;
+    grid-column: 4; grid-row: 1;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+    box-shadow: var(--shadow-sm); padding: 11px 12px;
+  }
+  .card-h {
+    font-size: 11px; font-weight: 800; color: var(--ink-3); letter-spacing: .3px;
+    margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
+  }
+  .card-h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .cust-row { display: flex; align-items: center; gap: 9px; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex: none;
+    background: linear-gradient(140deg, #2f8bff, #0e4494); color: #fff;
+    display: grid; place-items: center; font-size: 15px; font-weight: 900;
+  }
+  .cust-name { font-size: 13.5px; font-weight: 900; color: var(--navy); }
+  .cust-sub { font-size: 10.5px; font-weight: 700; color: var(--ink-3); direction: ltr; text-align: right; }
+
+  /* رصيد العميل */
+  .balance {
+    border-radius: var(--r); padding: 10px 14px; text-align: center;
+    background: linear-gradient(180deg, #ffe97a, #ffd83d);
+    border: 2px solid var(--amber-line); box-shadow: inset 0 1px 5px rgba(150,110,0,.18);
+  }
+  .balance .lbl { font-size: 11.5px; font-weight: 900; color: #3d2c00; }
+  .balance .val { font-size: 27px; font-weight: 900; color: var(--navy); line-height: 1.15; font-variant-numeric: tabular-nums; }
+
+  /* أزرار الدفع */
+  .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .btn {
+    border: 1px solid var(--line-2); background: #fff; border-radius: 9px;
+    font-family: inherit; font-size: 12.5px; font-weight: 900; color: var(--navy);
+    padding: 11px 8px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn.cash { grid-column: span 2; background: linear-gradient(180deg, #16a762, #0d7f48); color: #fff; border-color: #0a6b3c; font-size: 14px; padding: 13px; }
+  .btn.credit { background: linear-gradient(180deg, #ffe9a8, #ffd970); border-color: var(--amber-line); color: #4a3600; }
+  .btn.seg { border-radius: 0; }
+  .btn.seg.first { border-radius: 0 9px 9px 0; }
+  .btn.seg.last { border-radius: 9px 0 0 9px; }
+  .btn.on { background: linear-gradient(180deg, #3a8ef7, #1d6ff2); color: #fff; border-color: #1450b8; }
+  .btn.ghost { grid-column: span 2; background: #fff; color: var(--ink-2); }
+  .btn.add { grid-column: span 2; background: linear-gradient(180deg, #2f8bff, #1d6ff2); color: #fff; border-color: #1450b8; font-size: 13px; padding: 12px; }
+
+  /* ===== العمود الأوسط ===== */
+  .col-mid { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 10px; overflow: hidden; grid-column: 3; grid-row: 1; }
+
+  /* شريط البحث */
+  .searchbar {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+    box-shadow: var(--shadow-sm); padding: 9px; display: flex; gap: 8px; align-items: center;
+  }
+  .search {
+    flex: 1; display: flex; align-items: center; gap: 8px; background: #f4f8fd;
+    border: 1.5px solid var(--line-2); border-radius: 9px; padding: 0 12px; height: 42px;
+  }
+  .search input {
+    border: 0; background: transparent; outline: none; flex: 1; height: 100%;
+    font-family: inherit; font-size: 13.5px; font-weight: 700; color: var(--navy);
+  }
+  .search input::placeholder { color: #9db3cd; font-weight: 700; }
+  .chip {
+    height: 42px; padding: 0 13px; border-radius: 9px; border: 1px solid var(--line-2);
+    background: #fff; font-family: inherit; font-size: 12px; font-weight: 900; color: var(--ink-2);
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .chip.on { background: #eaf2fe; border-color: var(--blue); color: var(--blue-d); }
+  .sq {
+    width: 42px; height: 42px; border-radius: 9px; border: 1px solid #1450b8;
+    background: linear-gradient(180deg, #2f8bff, #1d6ff2); color: #fff;
+    font-size: 20px; font-weight: 900; display: grid; place-items: center;
+  }
+
+  /* الجدول */
+  .table-wrap {
+    flex: 1; min-height: 0; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .tbl-head {
+    background: linear-gradient(180deg, #1d6ff2, #0e4494); color: #fff;
+    display: grid; grid-template-columns: 1fr 82px 92px 112px 92px 122px 44px;
+    font-size: 12.5px; font-weight: 900; flex: none;
+  }
+  .tbl-head span { padding: 12px 8px; text-align: center; border-left: 1px solid rgba(255,255,255,.16); }
+  .tbl-head span:first-child { text-align: right; padding-right: 14px; }
+  .tbl-head span:last-child { border-left: 0; }
+  .tbl-body { flex: 1; overflow: hidden; }
+  .row {
+    display: grid; grid-template-columns: 1fr 82px 92px 112px 92px 122px 44px;
+    font-size: 12.5px; font-weight: 700; color: var(--ink-2); align-items: center;
+    border-bottom: 1px solid #eef4fb; min-height: 41px;
+  }
+  .row:nth-child(odd) { background: #f8fbff; }
+  .row > div { padding: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+  .row > div:first-child { text-align: right; padding-right: 14px; color: var(--navy); font-weight: 800; }
+  .row > div:last-child { text-align: center; color: #c8382f; font-size: 13px; }
+  .row .pkg { color: var(--ink-3); font-size: 11.5px; }
+  .row .tot { color: var(--navy); font-weight: 900; }
+
+  /* شريط الإجماليات */
+  .totals {
+    flex: none; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r); box-shadow: var(--shadow-sm); padding: 9px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .tot-item { display: flex; flex-direction: column; gap: 1px; min-width: 96px; }
+  .tot-item .k { font-size: 10.5px; font-weight: 800; color: var(--ink-3); }
+  .tot-item .v { font-size: 16px; font-weight: 900; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .tot-item .v.red { color: var(--red); }
+  .totals .grow { flex: 1; }
+  .grand {
+    background: linear-gradient(180deg, #12406f, #08243d); color: #fff;
+    border-radius: 10px; padding: 7px 20px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 10px rgba(8,36,61,.35);
+  }
+  .grand .k { font-size: 12px; font-weight: 800; color: #a9caee; }
+  .grand .v { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+  /* ===== العمود الأيسر: الدفع ===== */
+  .col-left {
+    padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+    border-left: 1px solid var(--line); background: var(--surface-2);
+    grid-column: 2; grid-row: 1;
+  }
+  .due {
+    background: linear-gradient(180deg, #f2f8ff, #e6f1fd); border: 2px solid #bcd7f5;
+    border-radius: var(--r); padding: 10px 12px; text-align: center;
+  }
+  .due .k { font-size: 11px; font-weight: 900; color: var(--ink-2); }
+  .due .v { font-size: 30px; font-weight: 900; color: var(--blue-d); line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pad b {
+    height: 40px; border-radius: 8px; background: #f4f8fd; border: 1px solid var(--line);
+    display: grid; place-items: center; font-size: 15px; font-weight: 900; color: var(--navy);
+  }
+  .pad b.fn { background: #eaf2fe; color: var(--blue-d); font-size: 12px; }
+  .pad b.ok { background: linear-gradient(180deg, #16a762, #0d7f48); color: #fff; border-color: #0a6b3c; font-size: 12.5px; }
+  .quick { display: flex; gap: 6px; }
+  .quick .btn { flex: 1; padding: 9px 4px; font-size: 11.5px; }
+  .notes {
+    width: 100%; min-height: 62px; resize: none; font-family: inherit; font-size: 12px;
+    font-weight: 700; color: var(--navy); border: 1px solid var(--line-2);
+    border-radius: 9px; padding: 9px 11px; background: #f9fcff; outline: none;
+  }
+  .notes::placeholder { color: #9db3cd; }
+  .disc-row { display: flex; gap: 7px; align-items: center; }
+  .disc-row input {
+    flex: 1; height: 38px; border: 1px solid var(--line-2); border-radius: 9px;
+    font-family: inherit; font-size: 13px; font-weight: 900; color: var(--navy);
+    padding: 0 11px; background: #f9fcff; outline: none;
+  }
+  .save-big {
+    width: 100%; height: 46px; border-radius: 10px; border: 1px solid #0a6b3c;
+    background: linear-gradient(180deg, #17ae66, #0d7f48); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 12px rgba(13,127,72,.35);
+  }
+
+  /* ===== شريط الأدوات العلوي (عائم أعلى المنتصف) ===== */
+  .topbar {
+    display: flex; align-items: center; gap: 6px; padding: 0 2px;
+  }
+  .tb {
+    height: 34px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--line-2);
+    background: #fff; font-family: inherit; font-size: 11.5px; font-weight: 900;
+    color: var(--ink-2); display: flex; align-items: center; gap: 5px; box-shadow: var(--shadow-sm);
+  }
+  .tb.blue { background: linear-gradient(180deg, #2f8bff, #1d6ff2); color: #fff; border-color: #1450b8; }
+  .tb.danger { color: var(--red); }
+  .tb .sp { font-size: 13px; }
+
+  .docinfo {
+    margin-inline-start: auto; display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    padding: 0 12px; height: 34px; box-shadow: var(--shadow-sm);
+    font-size: 11.5px; font-weight: 900; color: var(--navy);
+  }
+  .docinfo span.sep { width: 1px; height: 16px; background: var(--line-2); }
+  .docinfo b { color: var(--blue-d); }
+
+  /* شارات صغيرة */
+  .tag { font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 99px; }
+  .tag.g { background: #dff5e9; color: #0a6b3c; }
+  .tag.b { background: #e3efff; color: var(--blue-d); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- شريط العنوان -->
+  <div class="titlebar">
+    <img class="logo" src="../public/images/mock-logo.png" alt="" />
+    <span class="name">FATORA — فاتورة مبيعات</span>
+    <span class="spacer"></span>
+    <div class="winctl"><i>—</i><i>▢</i><i class="x">✕</i></div>
+  </div>
+
+  <div class="body">
+
+    <!-- ===== الشريط الأيقوني ===== -->
+    <div class="rail">
+      <img class="logo" src="../public/images/mock-logo.png" alt="" />
+      <div class="ico on">🏠</div>
+      <div class="ico">👥</div>
+      <div class="ico">🛒</div>
+      <div class="ico">📦</div>
+      <div class="ico">📊</div>
+      <div class="ico">⚙</div>
+    </div>
+
+    <!-- ===== عمود العميل ===== -->
+    <div class="col-cust">
+
+      <div class="card">
+        <div class="card-h">العميل</div>
+        <div class="cust-row">
+          <div class="avatar">ع</div>
+          <div>
+            <div class="cust-name">عميل نقدي</div>
+            <div class="cust-sub">01000000000</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="balance">
+        <div class="lbl">رصيد العميل</div>
+        <div class="val">1,250.00</div>
+      </div>
+
+      <div class="card">
+        <div class="card-h">طريقة البيع</div>
+        <div class="pay-grid">
+          <button class="btn cash">نقدي</button>
+          <button class="btn credit">أجل</button>
+          <button class="btn seg first on">قطاعي</button>
+          <button class="btn seg last">جملة</button>
+          <button class="btn ghost">كشف حساب</button>
+          <button class="btn add">+ إضافة صنف</button>
+        </div>
+      </div>
+
+      <div class="card" style="flex:1;">
+        <div class="card-h">آخر العمليات</div>
+        <div style="font-size:11.5px;font-weight:700;color:var(--ink-3);line-height:2.1">
+          <div style="display:flex;justify-content:space-between"><span>فاتورة #1042</span><b style="color:var(--navy)">320.00</b></div>
+          <div style="display:flex;justify-content:space-between"><span>فاتورة #1041</span><b style="color:var(--navy)">185.50</b></div>
+          <div style="display:flex;justify-content:space-between"><span>فاتورة #1040</span><b style="color:var(--navy)">90.00</b></div>
+          <div style="display:flex;justify-content:space-between"><span>مرتجع #1038</span><b style="color:var(--red)">-45.00</b></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== العمود الأوسط ===== -->
+    <div class="col-mid">
+
+      <!-- شريط الأدوات -->
+      <div class="topbar">
+        <button class="tb"><span class="sp">↶</span> تراجع</button>
+        <button class="tb"><span class="sp">⟲</span> مسح الأصل</button>
+        <button class="tb danger"><span class="sp">🗑</span> حذف</button>
+        <button class="tb blue"><span class="sp">🖨</span> طباعة الفاتورة</button>
+        <button class="tb"><span class="sp">✆</span> واتساب</button>
+        <div class="docinfo">
+          <span>فاتورة رقم <b>#1043</b></span>
+          <span class="sep"></span>
+          <span>2026/11/17</span>
+          <span class="sep"></span>
+          <span>02:41 م</span>
+          <span class="tag g">جديدة</span>
+        </div>
+      </div>
+
+      <!-- البحث -->
+      <div class="searchbar">
+        <div class="search">
+          <span style="font-size:15px;color:#8aa6c6">🔍</span>
+          <input placeholder="اكتب اسم الصنف أو الباركود (F3 للبحث)..." />
+        </div>
+        <button class="chip on">كل المجموعات والأقسام ▾</button>
+        <button class="chip on">بالاسم</button>
+        <button class="chip">بالكود</button>
+        <button class="sq">+</button>
+      </div>
+
+      <!-- الجدول -->
+      <div class="table-wrap">
+        <div class="tbl-head">
+          <span>اسم الصنف والبيان</span>
+          <span>العبوة</span>
+          <span>الكمية</span>
+          <span>سعر الوحدة</span>
+          <span>الخصم</span>
+          <span>الإجمالي</span>
+          <span>حذف</span>
+        </div>
+        <div class="tbl-body">
+          <div class="row"><div>شاي العروسة 250 جرام</div><div class="pkg">علبة</div><div>2</div><div>48.00</div><div>0.00</div><div class="tot">96.00</div><div>🗑</div></div>
+          <div class="row"><div>سكر الأسرة 1 كجم</div><div class="pkg">كيس</div><div>3</div><div>32.50</div><div>5.00</div><div class="tot">92.50</div><div>🗑</div></div>
+          <div class="row"><div>زيت عافية 1 لتر</div><div class="pkg">زجاجة</div><div>1</div><div>89.00</div><div>0.00</div><div class="tot">89.00</div><div>🗑</div></div>
+          <div class="row"><div>أرز مصري فاخر 5 كجم</div><div class="pkg">شيكارة</div><div>1</div><div>210.00</div><div>10.00</div><div class="tot">200.00</div><div>🗑</div></div>
+          <div class="row"><div>لبن جهينة 1 لتر</div><div class="pkg">كرتونة</div><div>6</div><div>38.00</div><div>0.00</div><div class="tot">228.00</div><div>🗑</div></div>
+          <div class="row"><div>مكرونة الملكة 400 جم</div><div class="pkg">كيس</div><div>4</div><div>14.00</div><div>0.00</div><div class="tot">56.00</div><div>🗑</div></div>
+          <div class="row"><div>جبنة بيضاء كيلو</div><div class="pkg">كيلو</div><div>1</div><div>120.00</div><div>0.00</div><div class="tot">120.00</div><div>🗑</div></div>
+          <div class="row"><div>صابون سائل 1 لتر</div><div class="pkg">زجاجة</div><div>2</div><div>45.00</div><div>5.00</div><div class="tot">85.00</div><div>🗑</div></div>
+          <div class="row"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="row"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+          <div class="row"><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
+
+      <!-- الإجماليات -->
+      <div class="totals">
+        <div class="tot-item"><span class="k">عدد الأصناف</span><span class="v">8</span></div>
+        <div class="tot-item"><span class="k">إجمالي الأصناف</span><span class="v">966.50</span></div>
+        <div class="tot-item"><span class="k">الخصومات</span><span class="v red">-20.00</span></div>
+        <div class="tot-item"><span class="k">خصم إضافي</span><span class="v red">-0.00</span></div>
+        <div class="tot-item"><span class="k">الضريبة (0%)</span><span class="v">0.00</span></div>
+        <div class="grow"></div>
+        <div class="grand"><span class="k">الصافي المطلوب</span><span class="v">946.50</span></div>
+      </div>
+
+    </div>
+
+    <!-- ===== عمود الدفع ===== -->
+    <div class="col-left">
+
+      <div class="card" style="padding:11px 12px">
+        <div class="card-h">طريقة الدفع</div>
+        <div class="due">
+          <div class="k">المطلوب دفعه</div>
+          <div class="v">946.50</div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:11px 12px">
+        <div class="pad">
+          <b>7</b><b>8</b><b>9</b><b class="fn">مسح</b>
+          <b>4</b><b>5</b><b>6</b><b class="fn">الكل</b>
+          <b>1</b><b>2</b><b>3</b><b class="fn">0</b>
+          <b class="ok" style="grid-column:span 4">دفع المبلغ كاملاً</b>
+        </div>
+      </div>
+
+      <div class="card" style="padding:11px 12px">
+        <div class="card-h">خصم إضافي</div>
+        <div class="disc-row">
+          <input placeholder="0" />
+          <button class="btn" style="padding:9px 14px;font-size:12px">تطبيق</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:11px 12px;flex:1;display:flex;flex-direction:column">
+        <div class="card-h">ملاحظات الفاتورة والبيان</div>
+        <textarea class="notes" placeholder="اكتب أية ملاحظات للعميل هنا ..."></textarea>
+      </div>
+
+      <div style="display:grid;gap:6px">
+        <button class="save-big">💾 حفظ الفاتورة</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn ghost" style="flex:1">فاتورة جديدة</button>
+          <button class="btn ghost" style="flex:1">تعليق الفاتورة</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn ghost" style="flex:1">الفواتير المعلقة</button>
+          <button class="btn ghost" style="flex:1;color:var(--red)">إلغاء الفاتورة</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
