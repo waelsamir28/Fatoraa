@@ -182,35 +182,20 @@
   .check-spin.ok::after { content: "✓"; color: #fff; font-size: 9px; position: absolute; inset: 0; display: grid; place-items: center; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ---------- صفحة الترحيب (شاشة الدخول) ---------- */
-  .welcome {
-    position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column;
-    background: #f3f6fb; border-radius: 8px; overflow: hidden;
-    transition: opacity .28s ease, transform .28s ease;
+  /* صورة الترحيب أعلى صفحة اختيار المجلد */
+  .dir-hero {
+    position: relative; height: 74px; margin: -2px 0 12px; border-radius: 8px;
+    overflow: hidden; background: linear-gradient(120deg, #0a2f5c, #1268b3 55%, #0a2f5c);
   }
-  .welcome.off { opacity: 0; transform: scale(.985); pointer-events: none; }
-  .welcome__art {
-    flex: 1; min-height: 0; position: relative; overflow: hidden;
-    background: linear-gradient(120deg, #0a2f5c 0%, #1268b3 55%, #0a2f5c 100%);
+  .dir-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dir-hero img[hidden] { display: none; }
+  .dir-hero__fb {
+    position: absolute; inset: 0; display: grid; place-items: center; gap: 2px;
+    color: #fff; text-align: center;
   }
-  .welcome__art img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .welcome__body {
-    flex: none; padding: 16px 22px 18px; background: #fff;
-    border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 4px;
-  }
-  .welcome__title { font-size: 17px; font-weight: 800; color: #0b2350; }
-  .welcome__sub { font-size: 11.5px; color: #5b6470; line-height: 1.8; }
-  .welcome__actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-  .welcome__actions .spacer { flex: 1; }
-  .welcome__ver { font-size: 11px; color: #6b7684; }
-  /* لو الصورة مش موجودة تظهر خلفية متدرجة بدل مربع مكسور */
-  .welcome__art .fb {
-    position: absolute; inset: 0; z-index: 2; color: #fff; text-align: center;
-    display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
-  }
-  .welcome__art .fb[hidden] { display: none; }
-  .welcome__art .fb b { font-size: 30px; font-weight: 900; letter-spacing: 3px; }
-  .welcome__art .fb span { font-size: 12px; color: #bfe3ff; }
+  .dir-hero__fb[hidden] { display: none; }
+  .dir-hero__fb b { font-size: 20px; font-weight: 900; letter-spacing: 3px; }
+  .dir-hero__fb span { font-size: 10.5px; color: #bfe3ff; display: block; }
 
   /* صفحة الانتهاء */
   .done-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -236,30 +221,6 @@
   </div>
 
   <div class="content">
-    <!-- 0) شاشة الدخول / الترحيب -->
-    <div class="welcome" id="pgWelcome">
-      <div class="welcome__art" id="welcomeArt">
-        <img id="welcomeImg" src="assets/start.png" alt="FATORA" />
-        <div class="fb" id="welcomeFallback" hidden>
-          <b>FATORA</b>
-          <span>برنامج إدارة المحلات التجارية</span>
-        </div>
-      </div>
-      <div class="welcome__body">
-        <div class="welcome__title">أهلاً بك في مثبّت FATORA</div>
-        <div class="welcome__sub">
-          هيتم تثبيت البرنامج على جهازك في خطوات بسيطة. اضغط «التالي» للبدء،
-          أو «إلغاء» للخروج بدون أي تغيير.
-        </div>
-        <div class="welcome__actions">
-          <span class="welcome__ver">الإصدار __APP_VERSION__</span>
-          <span class="spacer"></span>
-          <button class="btn ghost" id="btnWelcomeCancel">إلغاء</button>
-          <button class="btn primary" id="btnWelcomeNext">التالي</button>
-        </div>
-      </div>
-    </div>
-
     <aside class="side">
       <div class="logo"><img src="assets/logo-fatora.png" alt="FATORA" onerror="this.replaceWith(document.createTextNode('F'))" /></div>
       <div class="brand">FATORA</div>
@@ -272,6 +233,13 @@
     <section class="main">
       <!-- 1) مكان التثبيت -->
       <div class="page on" id="pgDir">
+        <!-- صورة الترحيب (START) — كانت شاشة منفصلة وأُلغيت، بقت هنا مباشرة -->
+        <div class="dir-hero" id="dirHero">
+          <img id="dirHeroImg" src="assets/start.png" alt="FATORA" />
+          <div class="dir-hero__fb" id="dirHeroFallback" hidden>
+            <b>FATORA</b><span>برنامج إدارة المحلات التجارية</span>
+          </div>
+        </div>
         <h1>اختر مكان التثبيت</h1>
         <p class="lead">سيتم تثبيت برنامج FATORA في المجلد التالي. يمكنك اختيار مجلد آخر بالضغط على «استعراض».</p>
 

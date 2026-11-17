@@ -17,19 +17,38 @@ import { audit } from "@/lib/server/audit";
 
 export const dynamic = "force-dynamic";
 
+/** إشارة تأثير كل نوع فاتورة على رصيد الطرف (نفس منطق lib/server/invoices) */
+const BALANCE_SIGN: Record<string, number> = { sale: 1, purchase: 1, sale_return: -1, purchase_return: -1 };
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 type Ctx = { params: Promise<{ id: string }> };
 
 export function GET(_req: Request, { params }: Ctx) {
   return handle(async () => {
     const inv = await getInvoice(parseId((await params).id));
     if (!inv) throw new HttpError(404, "الفاتورة غير موجودة");
-    // رقم تليفون العميل — تحتاجه شاشة مشاركة الفاتورة على واتساب
+    // رقم تليفون العميل + رصيده قبل وبعد هذه الفاتورة (تظهر في الفاتورة المطبوعة)
     let partyPhone = "";
+    let partyBalanceAfter: number | null = null;
+    let partyBalanceBefore: number | null = null;
     if (inv.partyId) {
-      const [p] = await db.select({ phone: parties.phone }).from(parties).where(eq(parties.id, inv.partyId));
+      const [p] = await db
+        .select({ phone: parties.phone, balance: parties.balance })
+        .from(parties)
+        .where(eq(parties.id, inv.partyId));
       partyPhone = p?.phone || "";
+      if (p && typeof p.balance === "number") {
+        // الرصيد المسجّل في الفاتورة هو المتبقي (total - paid) × إشارة نوع الفاتورة.
+        // الرصيد الحالي للعميل يشمل هذه الفاتورة ⇒ نطرح تأثيرها للحصول على رصيد ما قبلها.
+        const due = round2(inv.total - inv.paid);
+        const effect = round2(due * (BALANCE_SIGN[inv.type] ?? 1) * (inv.deletedAt ? 0 : 1));
+        partyBalanceAfter = round2(p.balance);
+        partyBalanceBefore = round2(p.balance - effect);
+        // فاتورة محذوفة: رصيدها غير محسوب ⇒ الاثنان نفس القيمة
+        if (inv.deletedAt) partyBalanceBefore = partyBalanceAfter;
+      }
     }
-    return { ...inv, partyPhone };
+    return { ...inv, partyPhone, partyBalanceBefore, partyBalanceAfter };
   });
 }
 
