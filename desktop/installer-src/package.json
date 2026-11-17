@@ -1,7 +1,7 @@
 {
   "name": "fatora-setup",
   "productName": "FATORA Setup",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "مثبّت FATORA — نمط Windows 11 (Electron)",
   "main": "main.js",
   "author": "FATORA - 01222355769",
