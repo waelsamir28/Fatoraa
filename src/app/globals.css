@@ -3096,7 +3096,7 @@ html[data-fweight="black"] body { font-weight: 800; }
 }
 
 .animate-modal-enter {
-  animation: modalEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: modalEnter 0.11s ease-out both;
 }
 
 /* 2) شريط تقدم متحرك أثناء حفظ الفاتورة */
