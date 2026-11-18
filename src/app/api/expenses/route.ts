@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, ilike, lt, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { expenses } from "@/db/schema";
+import { cashMoves, expenses } from "@/db/schema";
 import { handle, parseDate, readJson, str } from "@/lib/server/http";
 import { parseExpense } from "@/lib/server/parsers";
 
@@ -40,7 +40,19 @@ export function GET(req: Request) {
 
 export function POST(req: Request) {
   return handle(async () => {
-    const [row] = await db.insert(expenses).values(parseExpense(await readJson(req))).returning();
+    const data = parseExpense(await readJson(req));
+    const [row] = await db.insert(expenses).values(data).returning();
+    if (row && row.amount > 0) {
+      await db
+        .insert(cashMoves)
+        .values({
+          kind: "out",
+          amount: row.amount,
+          notes: `مصروف (${row.category}): ${row.notes || ""}`,
+          date: row.date,
+        })
+        .catch(() => undefined);
+    }
     return row;
   });
 }

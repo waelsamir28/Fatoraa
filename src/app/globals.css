@@ -3066,3 +3066,52 @@ html[data-fweight="black"] body { font-weight: 800; }
 .del-row-btn:active {
   transform: scale(0.9) !important;
 }
+
+/* 1) أنيميشن دخول ناعم للشاشات عند الانتقال بينها */
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-screen-enter {
+  animation: screenEnter 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* أنيميشن دخول ناعم للنوافذ العائمة */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-modal-enter {
+  animation: modalEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 2) شريط تقدم متحرك أثناء حفظ الفاتورة */
+@keyframes progressSlide {
+  0% {
+    transform: translateX(100%);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(-120%);
+  }
+}
+
+.animate-progress-slide {
+  animation: progressSlide 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
