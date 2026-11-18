@@ -43,6 +43,22 @@ export function SetupWizard({ onDone }: { onDone: () => void | Promise<void> }) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [logo, setLogo] = useState(resolveLogo());
+  const [currency, setCurrency] = useState("ج.م");
+  const [taxRate, setTaxRate] = useState(0);
+  const [printFormat, setPrintFormat] = useState<"80mm" | "A4">("80mm");
+  const [backupName, setBackupName] = useState("");
+
+  const passStrength = (() => {
+    if (!password) return { label: "", pct: 0, color: "#cbd5e1" };
+    let s = 0;
+    if (password.length >= 6) s++;
+    if (password.length >= 10) s++;
+    if (/[A-Z]/.test(password) || /\d/.test(password)) s++;
+    if (/[^A-Za-z0-9]/.test(password)) s++;
+    if (s <= 1) return { label: "ضعيفة", pct: 33, color: "#dc2626" };
+    if (s === 2) return { label: "متوسطة", pct: 66, color: "#d97706" };
+    return { label: "قوية", pct: 100, color: "#0f7b0f" };
+  })();
 
   useEffect(() => {
     api<{ customLogoUrl?: string }>("/api/settings")
