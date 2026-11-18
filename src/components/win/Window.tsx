@@ -119,9 +119,20 @@ export function Window({
 
   return (
     <div
-      className={`win-window ${maximized ? "win-max" : "win-normal"}`}
+      className={
+        maximized
+          ? "fixed inset-0 z-40"
+          : "fixed inset-0 z-40 flex items-center justify-center bg-[#081a2b]/50 p-4 backdrop-blur-md"
+      }
       style={minimized ? { display: "none" } : undefined}
     >
+      <div
+        className={`win-window animate-modal-enter ${
+          maximized
+            ? "win-max h-full w-full"
+            : "h-[660px] max-h-[90vh] w-[1080px] max-w-[95vw] rounded-[16px] overflow-hidden shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
+        }`}
+      >
       <div className="win-titlebar app-drag" dir="ltr" onDoubleClick={native ? undefined : toggleMaximized}>
         <div className="flex min-w-0 items-center gap-2 px-2.5">
           {/* زر رجوع صغير ومضغوط للعودة السريعة للرئيسية */}
@@ -190,6 +201,7 @@ export function Window({
       </div>
       {statusBar && <div className="win-status">{statusBar}</div>}
       {calc && <CalculatorDialog onClose={() => setCalc(false)} />}
+      </div>
     </div>
   );
 }

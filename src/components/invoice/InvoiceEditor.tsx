@@ -1759,6 +1759,32 @@ export function InvoiceEditor({
                 onChange={(e) => patch({ paid: e.target.value })}
                 title="اكتب المبلغ المدفوع هنا"
               />
+              {state.party.balance > 0 && paidNum > totals.total && (
+                <div className="mt-1 flex items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setExcessAction("deduct")}
+                    className={`rounded px-1.5 py-0.5 text-[9.5px] font-black transition ${
+                      excessAction === "deduct"
+                        ? "bg-emerald-700 text-white"
+                        : "bg-white/80 text-emerald-900 border border-emerald-300"
+                    }`}
+                  >
+                    تنزيل من الحساب
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExcessAction("refund")}
+                    className={`rounded px-1.5 py-0.5 text-[9.5px] font-black transition ${
+                      excessAction === "refund"
+                        ? "bg-amber-600 text-white"
+                        : "bg-white/80 text-amber-900 border border-amber-300"
+                    }`}
+                  >
+                    يستلم الباقي
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
