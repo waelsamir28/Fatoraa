@@ -180,10 +180,10 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* شريط عائم صغير للنسخة التجريبية — يختفي نهائيًا بعد التفعيل */}
+      {/* شريط عائم صغير للنسخة التجريبية — يختفي نهائيًا بعد التفعيل — في أعلى الشاشة لتفادي تغطية أزرار الفاتورة */}
       {info && !info.isActivated && !info.isExpired && (
-        <div className="fixed bottom-8 left-3 z-40 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-1.5 text-[12px] font-bold text-amber-950 shadow-lg">
-          <KeyRound className="h-4 w-4 text-amber-600" />
+        <div className="fixed top-12 left-4 z-40 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-1 text-[12px] font-bold text-amber-950 shadow-md backdrop-blur-xs transition-all hover:shadow-lg">
+          <KeyRound className="h-4 w-4 text-amber-600 shrink-0" />
           <span>نسخة تجريبية (متبقي {info.daysLeft} يوم)</span>
           <button
             type="button"
@@ -191,7 +191,7 @@ export function LicenseGuard({ children }: { children: React.ReactNode }) {
               setShowPlans(false);
               setModalOpen(true);
             }}
-            className="rounded bg-blue-700 px-2 py-0.5 text-[11px] font-black text-white hover:bg-blue-800"
+            className="rounded bg-blue-700 px-2.5 py-0.5 text-[11px] font-black text-white hover:bg-blue-800 transition-colors"
           >
             تفعيل الآن
           </button>

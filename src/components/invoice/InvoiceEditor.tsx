@@ -1226,573 +1226,693 @@ export function InvoiceEditor({
           </div>
         </div>
 
-        {/* ===== البيانات الأساسية: العميل (3 خانات + الرصيد) | الإدخال السريع | الأسعار والتحكم ===== */}
-        <div className="flex h-[204px] shrink-0 items-stretch gap-2">
-          <div className="flex w-[268px] min-w-[252px] shrink-0 flex-col gap-2">
-          <div className={`flex w-full flex-col gap-[3px] rounded-lg bg-white/70 p-1.5 shadow-sm ${L.partyBox ? "" : "hidden"}`}>
-              <FRow label={`رقم ${cfg.partyLabel}`}>
-                <input
-                  className="win-input num h-full flex-1 text-center text-[16px] font-black text-[#d0190f]"
-                  dir="ltr"
-                  placeholder="نقدي"
-                  value={partyCodeInput || (state.party.code ? String(state.party.code) : "")}
-                  onChange={(e) => setPartyCodeInput(e.target.value.replace(/\D/g, ""))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") lookupPartyCode();
-                  }}
-                  title="اكتب رقم الحساب واضغط Enter"
-                />
-                <button type="button" className="btn btn-blue h-full w-[32px] shrink-0 p-0" title={`بحث عن ${cfg.partyLabel} (F4)`} onClick={() => setShowPartySearch(true)}>
-                  <Search className="h-3.5 w-3.5" strokeWidth={3} />
-                </button>
-                <button type="button" className="btn h-full w-[32px] shrink-0 p-0" title={`إضافة ${cfg.partyLabel} جديد`} onClick={() => setShowAddParty(true)}>
-                  <AddUserIcon className="h-5 w-5" />
-                </button>
-              </FRow>
+        {/* ===== البيانات الأساسية: 3 كروت رئيسية متناسقة ومريحة للعين ===== */}
+        <div className="flex shrink-0 items-stretch gap-2">
+          
+          {/* كارت 1 (اليمين): العميل ورصيده */}
+          <div className={`flex w-[390px] min-w-[360px] shrink-0 rounded-xl border border-[#cfdff0] bg-white p-2.5 shadow-sm transition-all hover:shadow ${L.partyBox ? "" : "hidden"}`}>
+            <div className="flex flex-1 flex-col justify-between gap-1.5 pe-2 border-l border-slate-200">
+              {/* رقم العميل */}
+              <div className="flex h-[32px] items-center gap-1.5">
+                <span className="w-[68px] shrink-0 text-[12px] font-black text-[#274b74]">رقم {cfg.partyLabel}</span>
+                <div className="flex flex-1 items-center gap-1">
+                  <input
+                    className="win-input num h-[32px] flex-1 text-center text-[15px] font-black text-[#d0190f] rounded-md border-[#cfdff0] focus:border-blue-500"
+                    dir="ltr"
+                    placeholder="نقدي"
+                    value={partyCodeInput || (state.party.code ? String(state.party.code) : "")}
+                    onChange={(e) => setPartyCodeInput(e.target.value.replace(/\D/g, ""))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") lookupPartyCode();
+                    }}
+                    title="اكتب رقم الحساب واضغط Enter"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-blue h-[32px] w-[32px] shrink-0 p-0 rounded-md shadow-xs hover:brightness-110 active:scale-95 transition-all"
+                    title={`بحث عن ${cfg.partyLabel} (F4)`}
+                    onClick={() => setShowPartySearch(true)}
+                  >
+                    <Search className="h-3.5 w-3.5" strokeWidth={3} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn h-[32px] w-[32px] shrink-0 p-0 rounded-md border-[#cfdff0] bg-slate-50 shadow-xs hover:bg-slate-100 active:scale-95 transition-all"
+                    title={`إضافة ${cfg.partyLabel} جديد`}
+                    onClick={() => setShowAddParty(true)}
+                  >
+                    <AddUserIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
 
-              <FRow label={`اسم ${cfg.partyLabel}`}>
-                <div className="win-input flex h-full flex-1 items-center justify-center truncate text-[15.5px] font-black text-amber-950 bg-[#fffbeb] border-amber-300 shadow-xs">
+              {/* اسم العميل — خانة عريضة ومريحة وواضحة جداً */}
+              <div className="flex h-[34px] items-center gap-1.5">
+                <span className="w-[68px] shrink-0 text-[12px] font-black text-[#274b74]">اسم {cfg.partyLabel}</span>
+                <div className="win-input flex h-[34px] flex-1 items-center justify-center truncate rounded-md text-[15px] font-black text-amber-950 bg-[#fffbeb] border-amber-300 shadow-inner px-2">
                   {state.party.name}
                 </div>
-              </FRow>
+              </div>
 
-              {/* تليفون العميل — يظهر تلقائياً عند اختيار العميل */}
-              <FRow label="تليفون">
-                <input
-                  className="win-input num h-full flex-1 text-center text-[15px] font-black text-[#0f2e5a]"
-                  dir="ltr"
-                  inputMode="tel"
-                  placeholder="01xxxxxxxxx"
-                  value={partyPhone}
-                  onChange={(e) => setPartyPhone(e.target.value)}
-                  readOnly={!state.party.id}
-                  title={state.party.id ? "تليفون العميل — يمكن تعديله" : "اختر عميلاً أولاً"}
-                />
+              {/* تليفون العميل */}
+              <div className="flex h-[32px] items-center gap-1.5">
+                <span className="w-[68px] shrink-0 text-[12px] font-black text-[#274b74]">تليفون</span>
+                <div className="flex flex-1 items-center gap-1">
+                  <input
+                    className="win-input num h-[32px] flex-1 text-center text-[14px] font-black text-[#0f2e5a] rounded-md border-[#cfdff0] focus:border-blue-500"
+                    dir="ltr"
+                    inputMode="tel"
+                    placeholder="01xxxxxxxxx"
+                    value={partyPhone}
+                    onChange={(e) => setPartyPhone(e.target.value)}
+                    readOnly={!state.party.id}
+                    title={state.party.id ? "تليفون العميل — يمكن تعديله" : "اختر عميلاً أولاً"}
+                  />
+                  {state.party.id && (
+                    <button
+                      type="button"
+                      className="btn h-[32px] w-[32px] shrink-0 p-0 rounded-md border-[#cfdff0] hover:bg-red-50 text-red-600 transition-all"
+                      title="مسح رقم التليفون"
+                      onClick={() => setPartyPhone("")}
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={3} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* رصيد العميل — كارت ذهبي فخم بكامل الارتفاع بجانب بيانات العميل مباشرة */}
+            <div className="flex w-[118px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 border-[#e6bf3a] bg-gradient-to-b from-[#ffe97a] via-[#ffd83d] to-[#f5b301] p-1.5 text-center shadow-inner">
+              <span className="flex items-center gap-1 text-[12px] font-black text-[#3b2503]">
+                <Wallet className="h-3.5 w-3.5" strokeWidth={2.6} />
+                رصيد {cfg.partyLabel}
+              </span>
+              <span className="num text-[24px] font-black leading-none text-[#291a03] truncate max-w-full px-1" title={fmt(state.party.balance)}>
+                {fmt(state.party.balance)}
+              </span>
+              <span className="text-[10px] font-bold text-[#6b4701]">
+                {state.party.balance > 0 ? "له رصيد" : state.party.balance < 0 ? "عليه متبقي" : "خالص"}
+              </span>
+            </div>
+          </div>
+
+          {/* كارت 2 (الوسط): المجموعات والأقسام + طريقة الدفع + ملاحظات الفاتورة */}
+          <div className="flex flex-1 min-w-0 flex-col justify-between gap-1.5 rounded-xl border border-[#cfdff0] bg-white p-2.5 shadow-sm transition-all hover:shadow">
+            
+            {/* الصف 1: المجموعات والأقسام والبحث */}
+            <div className="flex items-center gap-2">
+              <span className="w-[85px] shrink-0 text-[12.5px] font-black text-[#274b74] whitespace-nowrap">المجموعة والقسم</span>
+              
+              <div className="relative flex-1 min-w-0">
+                <select
+                  className="win-input h-[32px] w-full appearance-none rounded-md pr-7 pl-6 text-[13px] font-bold text-[#12263f] border-[#cfdff0] bg-[#f8fbff] focus:border-blue-500"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  title="اختر المجموعة لعرض أصنافها"
+                >
+                  <option value="">كل المجموعات والأقسام</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[12px]">🗂️</span>
+                <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-blue-700">▼</span>
+              </div>
+
+              <button
+                type="button"
+                className={`grid h-8 w-8 place-items-center rounded-lg bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition-all shrink-0 ${L.addCategory ? "" : "hidden"}`}
+                title="إضافة مجموعة جديدة"
+                onClick={() => setShowAddCategoryModal(true)}
+              >
+                <Plus className="h-4 w-4 stroke-[3]" />
+              </button>
+
+              <div className="flex items-center gap-1.5 rounded-md border border-[#cfdff0] bg-[#f8fbff] px-2 py-1 text-[12px] font-black text-[#274b74] shrink-0">
+                <span className="text-slate-400">بحث:</span>
+                <label className="flex cursor-pointer items-center gap-1 text-blue-900">
+                  <input type="radio" checked={searchMode === "name"} onChange={() => setSearchMode("name")} />
+                  بالاسم
+                </label>
+                <label className="flex cursor-pointer items-center gap-1 text-blue-900">
+                  <input type="radio" checked={searchMode === "code"} onChange={() => setSearchMode("code")} />
+                  بالكود
+                </label>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-900 border border-blue-200">
+                  <span>أصناف:</span>
+                  <span className="num font-black text-[13px] text-blue-700">{state.rows.length}</span>
+                </div>
+                <div className="flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-900 border border-emerald-200">
+                  <span>كمية:</span>
+                  <span className="num font-black text-[13px] text-emerald-700">{fmtQty(totals.qty)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* الصف 2: طريقة الدفع (أزرار أنيقة ومباشرة) */}
+            <div className={`flex items-center gap-2 ${L.payment ? "" : "hidden"}`}>
+              <span className="w-[85px] shrink-0 text-[12.5px] font-black text-[#274b74] whitespace-nowrap">طريقة الدفع</span>
+              <div className="flex flex-1 items-center gap-1.5">
+                {ALLOWED_PAYMENT_METHODS.map((m) => {
+                  const active = state.paymentMethod === m.key;
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      className={`flex h-[32px] flex-1 items-center justify-center gap-1.5 rounded-md border text-[12.5px] font-black transition-all ${
+                        active
+                          ? "border-emerald-600 bg-emerald-50 text-emerald-900 shadow-xs ring-1 ring-emerald-500 font-black"
+                          : "border-[#cfdff0] bg-[#f8fbff] text-[#4a6484] hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                      onClick={() => selectMethod(m.key)}
+                    >
+                      <span className="shrink-0">{METHOD_ICONS[m.key]}</span>
+                      <span>{m.label}</span>
+                      {active && <CheckCircle2 className="h-3.5 w-3.5 fill-emerald-600 text-white" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* الصف 3: ملاحظات الفاتورة */}
+            <div className={`flex items-center gap-2 ${L.notes ? "" : "hidden"}`}>
+              <span className="w-[85px] shrink-0 text-[12.5px] font-black text-[#274b74] whitespace-nowrap">ملاحظات الفاتورة</span>
+              <input
+                className="win-input h-[32px] flex-1 rounded-md border-[#cfdff0] bg-[#f8fbff] text-[12.5px] text-[#0f2e5a] placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+                placeholder="اكتب أية ملاحظات للعميل هنا ..."
+                value={state.notes}
+                onChange={(e) => patch({ notes: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* كارت 3 (اليسار): مفاتيح التحكم والأزرار السريعة */}
+          <div className="flex w-[320px] min-w-[300px] shrink-0 flex-col justify-between gap-1.5 rounded-xl border border-[#cfdff0] bg-white p-2.5 shadow-sm transition-all hover:shadow">
+            
+            {/* أزرار السويتشات (مصفوفة 2x2 أنيقة جداً) */}
+            <div className="grid grid-cols-2 gap-1.5">
+              
+              {/* نقدي / أجل */}
+              <div className="flex h-[30px] rounded-md border border-[#cfdff0] bg-[#f4f8fd] p-0.5">
                 <button
                   type="button"
-                  className="btn h-full w-[32px] shrink-0 p-0"
-                  title="مسح رقم التليفون"
-                  onClick={() => setPartyPhone("")}
-                  disabled={!state.party.id}
+                  className={`flex flex-1 items-center justify-center rounded text-[12px] font-black transition-all ${
+                    state.paymentType === "cash"
+                      ? "bg-[#0067c0] text-white shadow-xs"
+                      : "text-[#4a6484] hover:text-slate-900"
+                  }`}
+                  onClick={() => patch({ paymentType: "cash" })}
                 >
-                  <X className="h-3.5 w-3.5 text-red-600" strokeWidth={3} />
+                  نقدي
                 </button>
-              </FRow>
-              {/* رصيد العميل — بنفس عرض بيانات العميل ورقم كبير واضح */}
-              <div className={`mt-0.5 flex h-[46px] w-full shrink-0 items-center justify-between gap-2 rounded-md border-2 border-[#e6bf3a] bg-gradient-to-b from-[#ffe97a] to-[#ffd83d] px-2.5 shadow-inner ${L.partyBox ? "" : "hidden"}`}>
-                <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[12.5px] font-black text-[#0f2942]">
-                  <Wallet className="h-4 w-4" strokeWidth={2.6} />
-                  رصيد العميل
-                </span>
-                <span className="num flex-1 text-center text-[26px] font-black leading-none text-[#0f2942]">
-                  {fmt(state.party.balance)}
-                </span>
+                <button
+                  type="button"
+                  className={`flex flex-1 items-center justify-center rounded text-[12px] font-black transition-all ${
+                    state.paymentType === "credit"
+                      ? "bg-[#0067c0] text-white shadow-xs"
+                      : "text-[#4a6484] hover:text-slate-900"
+                  }`}
+                  onClick={setCredit}
+                >
+                  أجل
+                </button>
               </div>
-          </div>
-          </div>
-          <div className="flex w-[762px] min-w-[762px] shrink-0 flex-col gap-2">
-        <div className={`flex h-[50px] shrink-0 items-end gap-1.5 ${L.quickAdd ? "" : "hidden"}`}>
-          <div className="flex h-[38px] items-center gap-1.5">
-            {/* القائمة المنسدلة الاحترافية للمجموعات */}
-            <div className={`relative shrink-0 ${L.categories ? "" : "hidden"}`}>
-              <span className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 text-[13px]">🗂️</span>
-              <select
-                className="win-input h-full w-[240px] appearance-none rounded-md pr-7 pl-6 text-[13px] font-semibold text-[#12263f]"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                title="اختر المجموعة لعرض أصنافها"
-              >
-                <option value="">كل المجموعات والأقسام</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-blue-700">▼</span>
-            </div>
 
-            {/* الأيقونة الخضراء لإضافة مجموعة جديدة بجانب المجموعات مباشرة */}
-            <button
-              type="button"
-              className={`grid h-8 w-8 place-items-center rounded-full bg-gradient-to-b from-[#22c55e] to-[#15803d] text-white shadow-sm hover:brightness-110 shrink-0 ${L.addCategory ? "" : "hidden"}`}
-              title="إضافة مجموعة جديدة"
-              onClick={() => setShowAddCategoryModal(true)}
-            >
-              <Plus className="h-5 w-5 stroke-[3]" />
-            </button>
-
-            <div className="panel flex h-full items-center gap-2 px-2 text-[12.5px] font-extrabold shadow-sm">
-              <label className="flex cursor-pointer items-center gap-1">
-                <input type="radio" checked={searchMode === "name"} onChange={() => setSearchMode("name")} />
-                بالاسم
-              </label>
-              <label className="flex cursor-pointer items-center gap-1">
-                <input type="radio" checked={searchMode === "code"} onChange={() => setSearchMode("code")} />
-                بالكود
-              </label>
-            </div>
-            <div className="pill-blue h-[34px] px-3">
-              <span className="text-[12px]">أصناف</span>
-              <span className="num text-[17px]">{state.rows.length}</span>
-            </div>
-            <div className="pill-blue h-[34px] px-3">
-              <span className="text-[12px]">كمية</span>
-              <span className="num text-[17px]">{fmtQty(totals.qty)}</span>
-            </div>
-          </div>
-
-          <div className="flex w-[762px] shrink-0 items-end gap-1">
-            <div className="etab relative w-[353px] shrink-0">
-              <span>الصنف</span>
-              <input
-                ref={productRef}
-                className="win-input h-[30px] !text-right font-extrabold"
-                placeholder="اكتب اسم الصنف أو الباركود (F3 للبحث)..."
-                value={entry.text}
-                onChange={(e) => {
-                  setEntry({ ...entry, product: null, text: e.target.value });
-                  setShowSuggest(true);
-                  setHi(0);
-                }}
-                onFocus={() => setShowSuggest(true)}
-                onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
-                onKeyDown={onProductKey}
-              />
-              {showSuggest && entry.text && !entry.product && suggestions.length > 0 && (
-                <div className="suggest">
-                  {suggestions.map((p, i) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        pickProduct(p);
-                      }}
-                      className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-right ${i === hi ? "bg-blue-600 text-white" : "hover:bg-blue-50"}`}
-                    >
-                      <span className="truncate font-extrabold text-[13.5px]">{p.name}</span>
-                      <span className="num shrink-0 text-[11.5px] font-bold">
-                        {fmt(priceFor(p, type, state.priceLevel))} | رصيد {fmtQty(p.stock)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="etab w-[86px]">
-              <span>سعر الوحدة</span>
-              <input
-                className="win-input num h-[30px] font-black"
-                inputMode="decimal"
-                value={entry.price}
-                onChange={(e) => setEntry({ ...entry, price: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    qtyRef.current?.focus();
-                    qtyRef.current?.select();
-                  }
-                }}
-              />
-            </div>
-
-            <div className="etab w-[78px]">
-              <span>الكمية</span>
-              <input
-                ref={qtyRef}
-                className="win-input num h-[30px] font-black"
-                inputMode="decimal"
-                value={entry.qty}
-                onChange={(e) => setEntry({ ...entry, qty: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitEntry();
-                  }
-                }}
-              />
-            </div>
-
-            <div className="etab red w-[75px]">
-              <span>الخصم</span>
-              <input
-                className="win-input num h-[30px] font-black text-red-600"
-                inputMode="decimal"
-                value={entry.discount}
-                onChange={(e) => setEntry({ ...entry, discount: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    commitEntry();
-                  }
-                }}
-              />
-            </div>
-
-            <div className="etab w-[88px]">
-              <span>القيمة</span>
-              <input readOnly tabIndex={-1} className="win-input num h-[30px] font-black text-blue-800" value={fmt(entryValue)} />
-            </div>
-
-            <button type="button" className="btn btn-blue h-[30px] w-[36px] shrink-0 p-0" title="إضافة للفاتورة (Enter)" onClick={commitEntry}>
-              <Plus className="h-5 w-5" strokeWidth={3} />
-            </button>
-          </div>
-        </div>
-          {/* طرق الدفع (نقدي وأقساط ومحفظة إلكترونية فقط) */}
-          <div className={`panel flex w-full shrink-0 flex-col overflow-hidden shadow-sm ${L.payment ? "" : "hidden"}`}>
-            <div className="navy-head flex h-[26px] shrink-0 items-center justify-center text-[12.5px]">طريقة الدفع</div>
-            <div className="flex flex-row items-stretch gap-1.5 p-1.5 bg-white/50">
-              {ALLOWED_PAYMENT_METHODS.map((m) => {
-                const active = state.paymentMethod === m.key;
-                return (
-                  <button
-                    key={m.key}
-                    type="button"
-                    className={`pay-btn h-[34px] w-[250px] shrink-0 flex-col gap-0 ${active ? "active !border-green-600 !bg-amber-50" : ""}`}
-                    onClick={() => selectMethod(m.key)}
-                  >
-                    <span className="text-[11px] font-black leading-none">{m.label}</span>
-                    <span className="flex items-center gap-1">
-                      {METHOD_ICONS[m.key]}
-                      {active && <CheckCircle2 className="h-3 w-3 fill-green-600 text-white" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {/* الملاحظات مع نصوص الحسابات بدون (ج.م) والمتبقي (آجل) بدون على العميل */}
-          <div className={`panel flex w-[762px] shrink-0 flex-col overflow-hidden shadow-sm ${L.notes ? "" : "hidden"}`}>
-            <div className="panel-head flex h-[32px] shrink-0 items-center justify-center gap-1.5 text-[14px]">
-              <PencilLine className="h-3.5 w-3.5 text-blue-600" />
-              ملاحظات الفاتورة والبيان
-            </div>
-            <textarea
-              className="win-input relative z-0 m-1.5 mb-1 min-h-0 flex-1 text-[13px]"
-              placeholder="اكتب أية ملاحظات للعميل هنا ..."
-              value={state.notes}
-              onChange={(e) => patch({ notes: e.target.value })}
-            />
-          </div>
-
-          </div>
-          {/* ===== يمين: نوع الدفع والأسعار + كشف حساب + كشف الأسعار + إضافة صنف + صورة الصنف ===== */}
-          <div className="flex w-[318px] min-w-[300px] shrink-0 flex-col gap-1.5">
-
-            {/* نقدي / أجل */}
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                className={`btn h-[32px] justify-center text-[13px] font-black ${state.paymentType === "cash" ? "btn-blue" : ""}`}
-                style={state.paymentType === "cash" ? { background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" } : undefined}
-                onClick={() => patch({ paymentType: "cash" })}
-              >
-                نقدي
-              </button>
-              <button
-                type="button"
-                className={`btn h-[32px] justify-center text-[13px] font-black ${state.paymentType === "credit" ? "btn-blue" : ""}`}
-                style={state.paymentType === "credit" ? { background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" } : undefined}
-                onClick={setCredit}
-              >
-                أجل
-              </button>
-            </div>
-
-            {/* قطاعي / جملة */}
-            <div className="grid grid-cols-2 gap-1.5">
+              {/* قطاعي / جملة */}
               {type === "sale" ? (
-                <>
+                <div className="flex h-[30px] rounded-md border border-[#cfdff0] bg-[#f4f8fd] p-0.5">
                   <button
                     type="button"
                     onClick={() => changePriceLevel("retail")}
-                    title="البيع بسعر القطاعي"
-                    className="flex h-[30px] items-center justify-center rounded-[5px] border text-[12.5px] font-black transition"
-                    style={
+                    className={`flex flex-1 items-center justify-center rounded text-[12px] font-black transition-all ${
                       state.priceLevel === "retail"
-                        ? { background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }
-                        : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
-                    }
+                        ? "bg-[#5c2e91] text-white shadow-xs"
+                        : "text-[#4a6484] hover:text-slate-900"
+                    }`}
                   >
                     قطاعي
                   </button>
                   <button
                     type="button"
                     onClick={() => changePriceLevel("wholesale")}
-                    title="البيع بسعر الجملة"
-                    className="flex h-[30px] items-center justify-center rounded-[5px] border text-[12.5px] font-black transition"
-                    style={
+                    className={`flex flex-1 items-center justify-center rounded text-[12px] font-black transition-all ${
                       state.priceLevel === "wholesale"
-                        ? { background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }
-                        : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
-                    }
+                        ? "bg-[#5c2e91] text-white shadow-xs"
+                        : "text-[#4a6484] hover:text-slate-900"
+                    }`}
                   >
                     جملة
                   </button>
-                </>
+                </div>
               ) : (
-                <div className="col-span-2 win-input flex h-[30px] items-center justify-center text-[12px] font-black text-slate-500">
+                <div className="flex h-[30px] items-center justify-center rounded-md border border-[#cfdff0] bg-slate-50 text-[12px] font-black text-slate-500">
                   شراء
                 </div>
               )}
+
+              {/* باركود Switch */}
+              <button
+                type="button"
+                onClick={() => setBarcodeMode(!barcodeMode)}
+                className={`flex h-[30px] items-center justify-between px-2 rounded-md border text-[12px] font-black transition-all ${
+                  barcodeMode
+                    ? "border-blue-600 bg-blue-50 text-blue-900"
+                    : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484]"
+                }`}
+              >
+                <span>باركود</span>
+                <span className={`relative inline-flex h-[16px] w-[28px] items-center rounded-full transition-colors ${barcodeMode ? "bg-blue-600" : "bg-slate-300"}`}>
+                  <span className={`inline-block h-[12px] w-[12px] transform rounded-full bg-white transition-transform ${barcodeMode ? "translate-x-[-14px]" : "translate-x-[-2px]"}`} />
+                </span>
+              </button>
+
+              {/* تجميع Switch */}
+              <button
+                type="button"
+                onClick={() => setMergeSame(!mergeSame)}
+                className={`flex h-[30px] items-center justify-between px-2 rounded-md border text-[12px] font-black transition-all ${
+                  mergeSame
+                    ? "border-blue-600 bg-blue-50 text-blue-900"
+                    : "border-[#cfdff0] bg-[#f4f8fd] text-[#4a6484]"
+                }`}
+              >
+                <span>تجميع</span>
+                <span className={`relative inline-flex h-[16px] w-[28px] items-center rounded-full transition-colors ${mergeSame ? "bg-blue-600" : "bg-slate-300"}`}>
+                  <span className={`inline-block h-[12px] w-[12px] transform rounded-full bg-white transition-transform ${mergeSame ? "translate-x-[-14px]" : "translate-x-[-2px]"}`} />
+                </span>
+              </button>
             </div>
 
-            {/* باركود / تجميع */}
+            {/* الأزرار الكبيرة: إضافة صنف + كشف حساب */}
             <div className="grid grid-cols-2 gap-1.5">
-              {(
-                [
-                  ["باركود", barcodeMode, setBarcodeMode, "إضافة الصنف المباشرة عند مسح الباركود"],
-                  ["تجميع", mergeSame, setMergeSame, "تجميع الصنف المكرر في نفس السطر"],
-                ] as Array<[string, boolean, (v: boolean) => void, string]>
-              ).map(([label, on, setter, title]) => (
-                <button
-                  key={label}
-                  type="button"
-                  title={title}
-                  onClick={() => setter(!on)}
-                  className="flex h-[30px] items-center justify-center gap-1.5 rounded-[5px] border text-[12px] font-black transition"
-                  style={
-                    on
-                      ? { background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }
-                      : { background: "#f4f8fd", borderColor: "#cfdff0", color: "#4a6484" }
-                  }
-                >
-                  <span className="whitespace-nowrap">{label}</span>
-                  <span
-                    className="relative inline-flex h-[16px] w-[30px] shrink-0 items-center rounded-full border transition"
-                    style={on ? { borderColor: "#0b5596", background: "#ffffff" } : { borderColor: "#b8c8dc", background: "#dfe8f3" }}
-                  >
-                    <span
-                      className="absolute top-[1px] h-[12px] w-[12px] rounded-full bg-white shadow transition-all"
-                      style={on ? { left: "16px", background: "#0b5596" } : { left: "1px" }}
-                    />
-                  </span>
-                </button>
-              ))}
-            </div>
+              <button
+                type="button"
+                className="flex h-[36px] items-center justify-center gap-1.5 rounded-lg bg-emerald-700 text-white text-[13px] font-black shadow-xs hover:bg-emerald-800 hover:-translate-y-0.5 active:scale-95 transition-all"
+                onClick={() => setShowFloatingProduct(true)}
+                title="إضافة صنف جديد سريعاً للفاتورة والمخزن (F8)"
+              >
+                <Plus className="h-4 w-4" strokeWidth={3} />
+                <span>إضافة صنف</span>
+              </button>
 
-            {/* كشف حساب — أصفر ذهبي */}
-            <button
-              type="button"
-              className="btn h-[32px] justify-center gap-2 text-[13px] font-black"
-              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
-              onClick={() => void goTo(cfg.partiesHref)}
-              title="كشف حساب العميل"
-            >
-              <Search className="h-4 w-4" strokeWidth={3} color="#ffffff" stroke="#ffffff" />
-              <span>كشف حساب</span>
-            </button>
-
-            {/* كشف الأسعار — الشريط الوردي (5 خانات) */}
-            <div className="pink-bar grid h-[38px] shrink-0 grid-cols-5 items-center text-center shadow-inner px-1">
-              {(
-                [
-                  ["الرصيد", selProduct ? fmtQty(selProduct.stock) : "0.0"],
-                  ["سعر الشراء", selProduct ? fmt(selProduct.costPrice) : "0.0"],
-                  ["سعر الجملة", selProduct ? fmt(selProduct.wholesalePrice) : "0.0"],
-                  ["سعر البيع", selProduct ? fmt(selProduct.salePrice) : "0.0"],
-                  ["ربح الوحدة", selProduct ? fmt(selProduct.salePrice - selProduct.costPrice) : "0.0"],
-                ] as const
-              ).map(([l, v]) => (
-                <div key={l} className="leading-tight px-0.5">
-                  <div className="text-[9px] font-bold text-[#8a2a2a]">{l}</div>
-                  <div className="num text-[11.5px] font-black text-[#c0170e] truncate">{v}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* إضافة صنف — أخضر */}
-            <button
-              type="button"
-              className="btn h-[32px] shrink-0 justify-center gap-1.5 text-[13px] font-black"
-              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
-              onClick={() => setShowFloatingProduct(true)}
-              title="إضافة صنف جديد سريعاً للفاتورة والمخزن (F8)"
-            >
-              <Plus className="h-4 w-4" strokeWidth={3} color="#ffffff" stroke="#ffffff" />
-              <span>إضافة صنف</span>
-            </button>
-
-            {/* صورة الصنف */}
-            <div className={`panel flex h-[58px] shrink-0 items-center justify-center gap-1 overflow-hidden bg-white p-1.5 text-center shadow-sm ${L.itemImage ? "" : "hidden"}`}>
-              {selProduct?.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={selProduct.imageUrl} alt={selProduct.name} className="max-h-[52px] max-w-full object-contain" />
-              ) : (
-                <Camera className="h-7 w-7 text-[#8094ae]" strokeWidth={1.8} />
-              )}
-              <div className="line-clamp-2 text-[11px] font-extrabold text-[#0b2350] leading-tight">
-                {selProduct ? selProduct.name : "صورة الصنف"}
-              </div>
+              <button
+                type="button"
+                className="flex h-[36px] items-center justify-center gap-1.5 rounded-lg bg-amber-700 text-white text-[13px] font-black shadow-xs hover:bg-amber-800 hover:-translate-y-0.5 active:scale-95 transition-all"
+                onClick={() => void goTo(cfg.partiesHref)}
+                title="كشف حساب العميل"
+              >
+                <Search className="h-3.5 w-3.5" strokeWidth={3} />
+                <span>كشف حساب</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* ===== شريط المال الموحّد: الإجمالي | المدفوع | المتبقي | المطلوب دفعه ===== */}
-        <div className={`flex h-[96px] shrink-0 items-stretch gap-2 ${L.totals ? "" : "hidden"}`}>
-          {[
-            { key: "gross", label: "إجمالي الأصناف", value: fmt(totals.gross), icon: BarChart3 },
-            { key: "paid", label: "المدفوع", value: fmt(paidValue), icon: Banknote },
-            { key: "remain", label: "المتبقي", value: fmt(Math.abs(change)), icon: CreditCard },
-            { key: "due", label: "المطلوب دفعه", value: fmt(totals.total), icon: Wallet },
-          ].map(({ key, label, value, icon: Icon }) => {
-            const c = MONEY_COLORS[key];
-            return (
-              <div
-                key={key}
-                className="flex w-[335px] shrink-0 flex-col justify-between overflow-hidden rounded-xl px-3 py-2 shadow-sm"
-                style={{ background: c.bg, border: `2px solid ${c.border}` }}
-              >
-                <span className="flex items-center gap-1.5 whitespace-nowrap text-[13.5px] font-black" style={{ color: c.ink }}>
-                  <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2.6} style={{ color: c.ink }} />
-                  {label}
-                </span>
-                <span className="num truncate text-center text-[30px] font-black leading-none" style={{ color: c.ink }}>
-                  {value}
-                </span>
+        {/* ===== شريط إدخال الصنف السريع + كشف أسعار الصنف المحدد ===== */}
+        <div className={`flex shrink-0 items-center gap-2 rounded-xl border border-[#cfdff0] bg-white p-1.5 shadow-sm ${L.quickAdd ? "" : "hidden"}`}>
+          {/* إدخال الصنف */}
+          <div className="relative flex-1 min-w-[260px]">
+            <input
+              ref={productRef}
+              className="win-input h-[34px] w-full rounded-md border-[#cfdff0] !text-right font-black text-[#0f2e5a] placeholder:text-slate-400 focus:border-blue-500"
+              placeholder="اكتب اسم الصنف أو الباركود (F3 للبحث)..."
+              value={entry.text}
+              onChange={(e) => {
+                setEntry({ ...entry, product: null, text: e.target.value });
+                setShowSuggest(true);
+                setHi(0);
+              }}
+              onFocus={() => setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              onKeyDown={onProductKey}
+            />
+            {showSuggest && entry.text && !entry.product && suggestions.length > 0 && (
+              <div className="suggest">
+                {suggestions.map((p, i) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickProduct(p);
+                    }}
+                    className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-right ${i === hi ? "bg-blue-600 text-white" : "hover:bg-blue-50"}`}
+                  >
+                    <span className="truncate font-extrabold text-[13.5px]">{p.name}</span>
+                    <span className="num shrink-0 text-[11.5px] font-bold">
+                      {fmt(priceFor(p, type, state.priceLevel))} | رصيد {fmtQty(p.stock)}
+                    </span>
+                  </button>
+                ))}
               </div>
-            );
-          })}
+            )}
+          </div>
+
+          {/* سعر الوحدة */}
+          <div className="flex h-[34px] w-[95px] items-center rounded-md border border-[#cfdff0] bg-[#f8fbff] px-1.5 focus-within:border-blue-500">
+            <span className="text-[10.5px] font-bold text-slate-500 shrink-0 ms-1">سعر:</span>
+            <input
+              className="num h-full w-full border-0 bg-transparent text-center text-[13.5px] font-black text-blue-900 outline-none"
+              inputMode="decimal"
+              value={entry.price}
+              onChange={(e) => setEntry({ ...entry, price: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  qtyRef.current?.focus();
+                  qtyRef.current?.select();
+                }
+              }}
+            />
+          </div>
+
+          {/* الكمية */}
+          <div className="flex h-[34px] w-[85px] items-center rounded-md border border-[#cfdff0] bg-[#f8fbff] px-1.5 focus-within:border-blue-500">
+            <span className="text-[10.5px] font-bold text-slate-500 shrink-0 ms-1">كمية:</span>
+            <input
+              ref={qtyRef}
+              className="num h-full w-full border-0 bg-transparent text-center text-[13.5px] font-black text-blue-900 outline-none"
+              inputMode="decimal"
+              value={entry.qty}
+              onChange={(e) => setEntry({ ...entry, qty: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitEntry();
+                }
+              }}
+            />
+          </div>
+
+          {/* الخصم */}
+          <div className="flex h-[34px] w-[85px] items-center rounded-md border border-[#cfdff0] bg-[#f8fbff] px-1.5 focus-within:border-red-500">
+            <span className="text-[10.5px] font-bold text-red-500 shrink-0 ms-1">خصم:</span>
+            <input
+              className="num h-full w-full border-0 bg-transparent text-center text-[13.5px] font-black text-red-600 outline-none"
+              inputMode="decimal"
+              value={entry.discount}
+              onChange={(e) => setEntry({ ...entry, discount: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitEntry();
+                }
+              }}
+            />
+          </div>
+
+          {/* القيمة */}
+          <div className="flex h-[34px] w-[95px] items-center justify-center rounded-md bg-blue-50 border border-blue-200 px-1.5">
+            <span className="num text-[14px] font-black text-blue-900">{fmt(entryValue)}</span>
+          </div>
+
+          {/* زر إضافة للفاتورة + */}
+          <button
+            type="button"
+            className="flex h-[34px] w-[38px] shrink-0 items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-xs transition-all"
+            title="إضافة للفاتورة (Enter)"
+            onClick={commitEntry}
+          >
+            <Plus className="h-5 w-5 stroke-[3]" />
+          </button>
+
+          {/* فاصل */}
+          <span className="h-[24px] w-[1px] bg-slate-200 shrink-0 mx-1" />
+
+          {/* شريط الأسعار والربحية للصنف المحدد */}
+          <div className="flex h-[34px] items-center gap-1 rounded-md bg-amber-50/60 border border-amber-200 px-2 shrink-0">
+            {[
+              ["الرصيد", selProduct ? fmtQty(selProduct.stock) : "0.0"],
+              ["سعر الشراء", selProduct ? fmt(selProduct.costPrice) : "0.0"],
+              ["سعر الجملة", selProduct ? fmt(selProduct.wholesalePrice) : "0.0"],
+              ["سعر البيع", selProduct ? fmt(selProduct.salePrice) : "0.0"],
+              ["ربح الوحدة", selProduct ? fmt(selProduct.salePrice - selProduct.costPrice) : "0.0"],
+            ].map(([l, v]) => (
+              <div key={l} className="flex items-center gap-1 px-1.5 border-l border-amber-200 last:border-0 leading-tight">
+                <span className="text-[10px] font-bold text-slate-500">{l}:</span>
+                <span className="num text-[11.5px] font-black text-[#8a2a2a]">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* صورة الصنف إن وجدت */}
+          {L.itemImage && (
+            <div className="flex h-[34px] items-center gap-1 rounded-md border border-[#cfdff0] bg-[#f8fbff] px-2 shrink-0">
+              {selProduct?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={selProduct.imageUrl} alt={selProduct.name} className="h-6 w-6 rounded object-cover" />
+              ) : (
+                <Camera className="h-4 w-4 text-slate-400" />
+              )}
+              <span className="truncate max-w-[80px] text-[10px] font-bold text-slate-600">
+                {selProduct ? selProduct.name : "صورة"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* ===== شريط المال الموحّد: 4 كروت إجماليات فخمة وعصرية ===== */}
+        <div className={`grid grid-cols-4 gap-2 shrink-0 ${L.totals ? "" : "hidden"}`}>
+          
+          {/* كارت 1: المطلوب دفعه */}
+          <div className="pos-money-card flex h-[88px] flex-col justify-between rounded-xl bg-gradient-to-l from-[#004b87] to-[#0067c0] p-2.5 text-white shadow-sm border border-[#003e73]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[13px] font-black text-blue-100">
+                <Wallet className="h-4 w-4 text-blue-200" strokeWidth={2.5} />
+                المطلوب دفعه
+              </span>
+              <span className="text-[10px] font-bold text-blue-200 bg-white/10 px-2 py-0.5 rounded-full">صافي الفاتورة</span>
+            </div>
+            <div className="num truncate text-center text-[32px] font-black leading-none text-white drop-shadow-xs">
+              {fmt(totals.total)}
+            </div>
+          </div>
+
+          {/* كارت 2: المتبقي */}
+          <div className="pos-money-card flex h-[88px] flex-col justify-between rounded-xl bg-[#fee2e2] p-2.5 shadow-sm border-2 border-[#fca5a5]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[13px] font-black text-red-950">
+                <CreditCard className="h-4 w-4 text-red-600" strokeWidth={2.5} />
+                المتبقي
+              </span>
+              <span className="text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                {change < 0 ? "باقي للعميل" : change > 0 ? "آجل على العميل" : "خالص"}
+              </span>
+            </div>
+            <div className="num truncate text-center text-[32px] font-black leading-none text-[#dc2626]">
+              {fmt(Math.abs(change))}
+            </div>
+          </div>
+
+          {/* كارت 3: المدفوع (مع خانة إدخال مباشرة بالداخل!) */}
+          <div className="pos-money-card flex h-[88px] flex-col justify-between rounded-xl bg-gradient-to-l from-[#15803d] to-[#16a34a] p-2 text-white shadow-sm border border-[#166534]">
+            <div className="flex items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[13px] font-black text-emerald-100">
+                <Banknote className="h-4 w-4 text-emerald-200" strokeWidth={2.5} />
+                المدفوع
+              </span>
+              <button
+                type="button"
+                className="text-[10px] font-black bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded transition-colors"
+                onClick={() => patch({ paid: String(totals.total) })}
+                title="دفع المبلغ كاملاً"
+              >
+                دفع كامل
+              </button>
+            </div>
+            <div className="relative w-full">
+              <input
+                className="num h-[40px] w-full rounded-lg bg-white text-center text-[26px] font-black text-emerald-950 shadow-inner outline-none focus:ring-2 focus:ring-yellow-400"
+                inputMode="decimal"
+                placeholder={fmt(totals.total)}
+                value={state.paid}
+                onChange={(e) => patch({ paid: e.target.value })}
+                title="اكتب المبلغ المدفوع هنا"
+              />
+            </div>
+          </div>
+
+          {/* كارت 4: إجمالي الأصناف */}
+          <div className="pos-money-card flex h-[88px] flex-col justify-between rounded-xl bg-[#e0f2fe] p-2.5 shadow-sm border-2 border-[#bae6fd]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-[13px] font-black text-sky-950">
+                <BarChart3 className="h-4 w-4 text-sky-700" strokeWidth={2.5} />
+                إجمالي الأصناف
+              </span>
+              <span className="text-[10px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">قبل الخصم</span>
+            </div>
+            <div className="num truncate text-center text-[32px] font-black leading-none text-[#0369a1]">
+              {fmt(totals.gross)}
+            </div>
+          </div>
         </div>
 
         {/* ===== الإضافات الثانوية: خصم إضافي + الضريبة + الخصم الكلي + عدد الأصناف ===== */}
-        <div className={`flex h-[44px] shrink-0 items-stretch gap-2 ${L.totals ? "" : "hidden"}`}>
-          <label className="panel flex w-[335px] shrink-0 items-center gap-2 px-2.5 shadow-sm">
-            <span className="whitespace-nowrap text-[12px] font-black text-[#9d5d00]">خصم إضافي</span>
+        <div className={`grid grid-cols-4 gap-2 shrink-0 ${L.totals ? "" : "hidden"}`}>
+          <div className="flex h-[36px] items-center gap-2 rounded-lg border border-[#cfdff0] bg-white px-2.5 shadow-2xs">
+            <span className="whitespace-nowrap text-[12px] font-black text-[#9d5d00]">خصم إضافي:</span>
             <input
-              className="win-input num h-[30px] w-full min-w-0 text-center text-[15px] font-black text-red-600"
+              className="win-input num h-[28px] w-full min-w-0 text-center text-[14px] font-black text-red-600 rounded border-slate-200"
               inputMode="decimal"
               placeholder="0"
               value={state.extraDiscount}
               onChange={(e) => patch({ extraDiscount: e.target.value })}
             />
-          </label>
-          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
-            <span className="text-[12px] font-bold text-[#4a6484]">الخصم الكلي</span>
-            <span className="num text-[15px] font-black text-red-600">{fmt(totals.discount)}</span>
           </div>
-          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
-            <span className="text-[12px] font-bold text-[#4a6484]">الضريبة</span>
-            <span className="num text-[15px] font-black text-[#4a6484]">{fmt(totals.tax)}</span>
+          <div className="flex h-[36px] items-center justify-between rounded-lg border border-[#cfdff0] bg-white px-3 shadow-2xs">
+            <span className="text-[12px] font-bold text-slate-500">الخصم الكلي</span>
+            <span className="num text-[14px] font-black text-red-600">{fmt(totals.discount)}</span>
           </div>
-          <div className="panel flex w-[335px] shrink-0 items-center justify-between gap-2 px-2.5 shadow-sm">
-            <span className="text-[12px] font-bold text-[#4a6484]">عدد الأصناف</span>
-            <span className="num text-[15px] font-black text-[#12263f]">{state.rows.length}</span>
+          <div className="flex h-[36px] items-center justify-between rounded-lg border border-[#cfdff0] bg-white px-3 shadow-2xs">
+            <span className="text-[12px] font-bold text-slate-500">الضريبة</span>
+            <span className="num text-[14px] font-black text-slate-700">{fmt(totals.tax)}</span>
+          </div>
+          <div className="flex h-[36px] items-center justify-between rounded-lg border border-[#cfdff0] bg-white px-3 shadow-2xs">
+            <span className="text-[12px] font-bold text-slate-500">عدد الأصناف</span>
+            <span className="num text-[14px] font-black text-[#0f2e5a]">{state.rows.length}</span>
           </div>
         </div>
 
-
-        {/* ===== جدول الفاتورة + الأصناف السريعة ===== */}
-        <div className="flex min-h-0 w-full gap-2">
-          <div className={`panel w-[1064px] min-w-[1064px] shrink-0 overflow-auto p-0 shadow-sm border border-[#dce7f4] bg-[#ffffff] ${L.grid ? "" : "hidden"}`}>
-            <table className="dgrid-invoice text-center">
-              <thead>
-                <tr>
-                  <th className="w-[40px]">م</th>
-                  <th className="text-right">اسم الصنف والبيان</th>
-                  <th className="w-[80px]">العبوة</th>
-                  <th className="w-[85px]">الكمية</th>
-                  <th className="w-[100px]">سعر الوحدة</th>
-                  <th className="w-[85px]">الخصم</th>
-                  <th className="w-[110px]">الإجمالي</th>
-                  <th className="w-[48px]">حذف</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.rows.map((r, i) => {
-                  const sel = i === selected;
-                  return (
-                    <tr key={r.key} className={`clickable ${sel ? "sel !bg-blue-600 text-white" : "border-b border-[#c2d3e8]"}`} onClick={() => setSelected(i)}>
-                      <td className={`num font-black ${sel ? "text-white" : "text-blue-900"}`}>{i + 1}</td>
-                      <td className="max-w-[190px] truncate text-right font-black text-slate-900">{r.productName}</td>
-                      <td>{r.unit}</td>
-                      <td className="p-0.5">
-                        <NumCell value={r.qty} onCommit={(v) => (v > 0 ? updateRow(i, { qty: round3(v) }) : removeRow(i))} />
-                      </td>
-                      <td className="p-0.5">
-                        <NumCell value={r.price} digits={2} onCommit={(v) => updateRow(i, { price: round2(v) })} />
-                      </td>
-                      <td className="p-0.5">
-                        <NumCell value={r.discount} digits={2} onCommit={(v) => updateRow(i, { discount: round2(v) })} />
-                      </td>
-                      <td className="num font-black">{fmt(r.qty * r.price - r.discount)}</td>
-                      <td className="p-0">
-                        <button
-                          type="button"
-                          className="mx-auto grid place-items-center"
-                          title="حذف السطر"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRow(i);
-                          }}
-                        >
-                          <XCircle className="h-5 w-5 fill-red-600 text-white" strokeWidth={2.4} />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {Array.from({ length: Math.max(0, 8 - state.rows.length) }).map((_, i) => (
-                  <tr key={`e${i}`} className="empty border-b border-slate-200">
-                    {Array.from({ length: 8 }).map((__, j) => (
-                      <td key={j}>&nbsp;</td>
-                    ))}
+        {/* ===== جدول الفاتورة + قائمة الأصناف السريعة ===== */}
+        <div className="flex min-h-0 flex-1 w-full gap-2">
+          
+          {/* جدول الفاتورة (اليمين) */}
+          <div className={`flex flex-1 min-w-0 flex-col overflow-hidden rounded-xl border border-[#cfdff0] bg-white shadow-sm ${L.grid ? "" : "hidden"}`}>
+            <div className="overflow-auto flex-1">
+              <table className="dgrid-invoice w-full text-center">
+                <thead className="sticky top-0 z-10 bg-[#0f2e5a] text-white">
+                  <tr className="h-[38px] text-[13px] font-black">
+                    <th className="w-[45px] text-center border-l border-white/20">م</th>
+                    <th className="text-right px-3 border-l border-white/20">اسم الصنف والبيان</th>
+                    <th className="w-[85px] border-l border-white/20">العبوة</th>
+                    <th className="w-[90px] border-l border-white/20">الكمية</th>
+                    <th className="w-[105px] border-l border-white/20">سعر الوحدة</th>
+                    <th className="w-[90px] border-l border-white/20">الخصم</th>
+                    <th className="w-[115px] border-l border-white/20">الإجمالي</th>
+                    <th className="w-[50px] text-center">حذف</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.rows.map((r, i) => {
+                    const sel = i === selected;
+                    return (
+                      <tr
+                        key={r.key}
+                        className={`clickable h-[36px] transition-colors ${
+                          sel ? "sel !bg-blue-600 text-white" : "border-b border-[#e2edf8] hover:bg-blue-50/50"
+                        }`}
+                        onClick={() => setSelected(i)}
+                      >
+                        <td className={`num font-black ${sel ? "text-white" : "text-blue-900"}`}>{i + 1}</td>
+                        <td className={`truncate text-right font-black px-3 ${sel ? "text-white" : "text-slate-900"}`}>
+                          {r.productName}
+                        </td>
+                        <td className={sel ? "text-white" : "text-slate-600"}>{r.unit}</td>
+                        <td className="p-0.5">
+                          <NumCell value={r.qty} onCommit={(v) => (v > 0 ? updateRow(i, { qty: round3(v) }) : removeRow(i))} />
+                        </td>
+                        <td className="p-0.5">
+                          <NumCell value={r.price} digits={2} onCommit={(v) => updateRow(i, { price: round2(v) })} />
+                        </td>
+                        <td className="p-0.5">
+                          <NumCell value={r.discount} digits={2} onCommit={(v) => updateRow(i, { discount: round2(v) })} />
+                        </td>
+                        <td className={`num font-black ${sel ? "text-white" : "text-[#0f2e5a]"}`}>
+                          {fmt(r.qty * r.price - r.discount)}
+                        </td>
+                        <td className="p-0 text-center">
+                          <button
+                            type="button"
+                            className="del-row-btn mx-auto grid h-7 w-7 place-items-center rounded-full text-red-500 hover:bg-red-50 hover:text-red-700 active:scale-90 transition-all"
+                            title="حذف السطر"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRow(i);
+                            }}
+                          >
+                            <XCircle className="h-5 w-5 fill-red-600 text-white" strokeWidth={2.4} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {Array.from({ length: Math.max(0, 8 - state.rows.length) }).map((_, i) => (
+                    <tr key={`e${i}`} className="empty h-[34px] border-b border-slate-100">
+                      {Array.from({ length: 8 }).map((__, j) => (
+                        <td key={j}>&nbsp;</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-          {/* قائمة الأصناف الجانبية (كروت مربعة أو جدول) */}
-          <div className={`flex min-h-0 w-[300px] min-w-[280px] shrink-0 flex-col overflow-hidden rounded-lg border border-[#dce7f4] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
-            <div className="navy-head flex items-center justify-between px-3 py-1.5 text-[13px]">
-              <span>الأصناف ({filtered.length})</span>
+
+          {/* قائمة الأصناف السريعة (اليسار) */}
+          <div className={`flex w-[320px] min-w-[290px] shrink-0 flex-col overflow-hidden rounded-xl border border-[#cfdff0] bg-white shadow-sm ${L.productCards ? "" : "hidden"}`}>
+            <div className="flex h-[38px] items-center justify-between bg-[#0f2e5a] px-3 text-white">
+              <span className="text-[13px] font-black">الأصناف السريعة ({filtered.length})</span>
               <div className="flex gap-1" dir="rtl">
                 <button
                   type="button"
-                  className={`px-2 py-0.5 rounded text-[11.5px] font-black transition ${
-                    viewMode === "table"
-                      ? "bg-[#0f2e5a] text-white border border-white/50 shadow-xs"
-                      : "bg-[#2563eb]/60 text-white hover:bg-[#2563eb]/80"
-                  }`}
-                  onClick={() => setViewMode("table")}
-                >
-                  جدول
-                </button>
-                <button
-                  type="button"
-                  className={`px-2 py-0.5 rounded text-[11.5px] font-black transition ${
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-black transition-all ${
                     viewMode === "cards"
-                      ? "bg-[#0f2e5a] text-white border border-white/50 shadow-xs"
-                      : "bg-[#2563eb]/60 text-white hover:bg-[#2563eb]/80"
+                      ? "bg-white text-[#0f2e5a] shadow-xs"
+                      : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                   onClick={() => setViewMode("cards")}
                 >
                   كروت
                 </button>
+                <button
+                  type="button"
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-black transition-all ${
+                    viewMode === "table"
+                      ? "bg-white text-[#0f2e5a] shadow-xs"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                  onClick={() => setViewMode("table")}
+                >
+                  جدول
+                </button>
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-auto p-1.5">
+            <div className="min-h-0 flex-1 overflow-auto p-2 bg-[#f8fbff]">
               {viewMode === "cards" ? (
-                <div className="grid grid-cols-2 gap-1.5 content-start overflow-hidden p-0.5">
+                <div className="grid grid-cols-2 gap-2">
                   {filtered.map((p) => (
                     <button
                       key={p.id}
                       type="button"
-                      className="group flex w-full flex-col justify-between h-[74px] overflow-hidden rounded-md border border-[#c5d7ed] bg-white p-1.5 text-right shadow-2xs hover:border-blue-500 hover:shadow-xs transition"
+                      className="pos-product-card group flex flex-col justify-between rounded-lg border border-[#cfdff0] bg-white p-2 text-right shadow-2xs hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer overflow-hidden h-[96px]"
                       onClick={() => addProduct(p)}
                     >
-                      <div className="min-w-0 w-full overflow-hidden">
-                        {/* line-clamp بيمنع الكلام يخرج بره الكارت مهما كان طويل */}
-                        <div className="line-clamp-2 w-full break-words text-[12px] font-black text-[#0f2e5a] group-hover:text-blue-700 leading-[1.15]">
-                          {p.name}
+                      <div className="flex items-start gap-1.5 w-full">
+                        {p.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.imageUrl} alt={p.name} className="h-8 w-8 rounded object-cover shrink-0 border border-slate-200" />
+                        ) : (
+                          <div className="grid h-8 w-8 place-items-center rounded bg-blue-50 text-blue-600 shrink-0 text-[12px] font-black">
+                            📦
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="line-clamp-2 text-[12px] font-black text-[#0f2e5a] group-hover:text-blue-700 leading-tight">
+                            {p.name}
+                          </div>
+                          <div className="truncate text-[10px] font-bold text-slate-400">{p.category}</div>
                         </div>
-                        <div className="w-full truncate text-[10px] font-bold text-sky-600">{p.category}</div>
                       </div>
-                      <div className="flex items-baseline justify-between w-full pt-0.5 border-t border-slate-100">
+
+                      <div className="flex items-baseline justify-between w-full pt-1 border-t border-slate-100">
                         <span className={`num text-[11px] font-bold ${p.stock <= p.minStock ? "text-red-600" : "text-slate-500"}`}>
                           رصيد: {fmtQty(p.stock)}
                         </span>
@@ -1804,20 +1924,22 @@ export function InvoiceEditor({
                   ))}
                 </div>
               ) : (
-                <table className="dgrid text-center text-[13px] bg-white">
-                  <thead>
+                <table className="dgrid w-full text-center text-[12.5px] bg-white rounded-lg overflow-hidden border border-[#cfdff0]">
+                  <thead className="bg-slate-100 text-slate-700">
                     <tr>
-                      <th className="text-right">الصنف</th>
-                      <th className="w-16">السعر</th>
-                      <th className="w-14">الرصيد</th>
+                      <th className="text-right px-2 py-1">الصنف</th>
+                      <th className="w-16 py-1">السعر</th>
+                      <th className="w-14 py-1">الرصيد</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((p) => (
-                      <tr key={p.id} className="clickable" onClick={() => addProduct(p)}>
-                        <td className="max-w-[190px] truncate text-right font-black text-slate-800">{p.name}</td>
-                        <td className="num font-bold text-green-700">{fmt(priceFor(p, type, state.priceLevel))}</td>
-                        <td className={`num ${p.stock <= p.minStock ? "text-red-600 font-black" : ""}`}>{fmtQty(p.stock)}</td>
+                      <tr key={p.id} className="clickable hover:bg-blue-50 border-b border-slate-100" onClick={() => addProduct(p)}>
+                        <td className="truncate text-right font-black text-slate-800 px-2 py-1">{p.name}</td>
+                        <td className="num font-black text-emerald-700">{fmt(priceFor(p, type, state.priceLevel))}</td>
+                        <td className={`num ${p.stock <= p.minStock ? "text-red-600 font-black" : "text-slate-600"}`}>
+                          {fmtQty(p.stock)}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1825,70 +1947,75 @@ export function InvoiceEditor({
               )}
             </div>
           </div>
-
         </div>
 
-          {/* الأزرار الستة — جنب بعض في صف واحد، كل زر بلونه */}
-          <div className={`grid w-full shrink-0 grid-cols-6 grid-rows-1 gap-2 ${L.actions ? "" : "hidden"}`}>
-            <button type="button" className="btn btn-blue btn-big"
-              style={{ background: "#0067c0", borderColor: "#005a9e", color: "#ffffff" }}
-              onClick={() => void newInvoice()}
-            >
-              <FilePlus2 className="text-white" color="#ffffff" stroke="#ffffff" />
-              <span>فاتورة جديدة</span>
-            </button>
+        {/* ===== الأزرار الستة: أزرار العمليات الرئيسية السريعة ===== */}
+        <div className={`grid w-full shrink-0 grid-cols-6 gap-2 ${L.actions ? "" : "hidden"}`}>
+          
+          {/* فاتورة جديدة */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0067c0] text-white text-[15px] font-black shadow-sm hover:bg-[#005a9e] cursor-pointer"
+            onClick={() => void newInvoice()}
+          >
+            <FilePlus2 className="h-5 w-5" strokeWidth={2.5} />
+            <span>فاتورة جديدة</span>
+          </button>
 
-            {/* تم وضع زر حفظ الفاتورة هنا مكان زر طباعة الفاتورة */}
-            <button type="button" className="btn btn-green btn-big"
-              style={{ background: "#0f7b0f", borderColor: "#0c5f0c", color: "#ffffff" }}
-              onClick={() => void save()}
-              disabled={saving}
-            >
-              <Save color="#ffffff" stroke="#ffffff" />
-              <span>حفظ الفاتورة</span>
-            </button>
+          {/* حفظ الفاتورة */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f7b0f] text-white text-[15px] font-black shadow-sm hover:bg-[#0c660c] disabled:opacity-50 cursor-pointer"
+            onClick={() => void save()}
+            disabled={saving}
+          >
+            <Save className="h-5 w-5" strokeWidth={2.5} />
+            <span>حفظ الفاتورة</span>
+          </button>
 
-            <button type="button" className="btn btn-teal btn-big"
-              style={{ background: "#0f6cbd", borderColor: "#0b5596", color: "#ffffff" }}
-              onClick={() => void goTo(cfg.listHref)}
-            >
-              <BarChart3 color="#ffffff" stroke="#ffffff" />
-              <span>{cfg.listLabel}</span>
-            </button>
+          {/* عرض المبيعات */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f6cbd] text-white text-[15px] font-black shadow-sm hover:bg-[#0d599b] cursor-pointer"
+            onClick={() => void goTo(cfg.listHref)}
+          >
+            <BarChart3 className="h-5 w-5" strokeWidth={2.5} />
+            <span>{cfg.listLabel}</span>
+          </button>
 
-            <button type="button" className="btn btn-red btn-big"
-              style={{ background: "#c42b1c", borderColor: "#9e2015", color: "#ffffff" }}
-              onClick={() => void cancelInvoice()}
-            >
-              <X strokeWidth={4} color="#ffffff" stroke="#ffffff" />
-              <span>إلغاء الفاتورة</span>
-            </button>
+          {/* إلغاء الفاتورة */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#c42b1c] text-white text-[15px] font-black shadow-sm hover:bg-[#a52417] cursor-pointer"
+            onClick={() => void cancelInvoice()}
+          >
+            <X className="h-5 w-5" strokeWidth={3} />
+            <span>إلغاء الفاتورة</span>
+          </button>
 
-            {/* تعليق الفاتورة كمسودة */}
-            <button
-              type="button"
-              className="btn btn-orange btn-big"
-              style={{ background: "#9d5d00", borderColor: "#7a4600", color: "#ffffff" }}
-              onClick={() => void holdDraft()}
-              disabled={saving}
-              title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
-            >
-              <FileClock color="#ffffff" stroke="#ffffff" />
-              <span>تعليق الفاتورة</span>
-            </button>
+          {/* تعليق الفاتورة */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#b45309] text-white text-[15px] font-black shadow-sm hover:bg-[#92400e] disabled:opacity-50 cursor-pointer"
+            onClick={() => void holdDraft()}
+            disabled={saving}
+            title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
+          >
+            <FileClock className="h-5 w-5" strokeWidth={2.5} />
+            <span>تعليق الفاتورة</span>
+          </button>
 
-            {/* قائمة الفواتير المعلقة */}
-            <button
-              type="button"
-              className="btn btn-violet btn-big"
-              style={{ background: "#5c2e91", borderColor: "#47216f", color: "#ffffff" }}
-              onClick={() => void openDrafts()}
-              title="عرض الفواتير المعلقة واستكمالها"
-            >
-              <List color="#ffffff" stroke="#ffffff" />
-              <span>الفواتير المعلقة</span>
-            </button>
-          </div>
+          {/* الفواتير المعلقة */}
+          <button
+            type="button"
+            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#5c2e91] text-white text-[15px] font-black shadow-sm hover:bg-[#4a2475] cursor-pointer"
+            onClick={() => void openDrafts()}
+            title="عرض الفواتير المعلقة واستكمالها"
+          >
+            <List className="h-5 w-5" strokeWidth={2.5} />
+            <span>الفواتير المعلقة</span>
+          </button>
+        </div>
       </div>
 
       {/* النوافذ العائمة الذكية */}
