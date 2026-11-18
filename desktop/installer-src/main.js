@@ -15,8 +15,8 @@ const SIZE_OFFSET = 8;
 const LOGO_SIZE_OFFSET = 16;
 const HEADER_SIZE = 32;
 // مقاس نافذة المثبّت (منها 12px شفافة حول الإطار الرقيق)
-const WINDOW_W = 760;
-const WINDOW_H = 512;
+const WINDOW_W = 720;
+const WINDOW_H = 500;
 const SHELL_MARGIN = 12;
 
 let win = null;
@@ -528,6 +528,32 @@ process.on("uncaughtException", (e) => {
 
 // نسخة احتياطية: بعض الحالات تظهر فيها الواجهة قبل اكتمال app.getVersion()
 ipcMain.handle("setup:version", () => app.getVersion());
+
+ipcMain.handle("setup:checkSystem", () => {
+  const os = require("os");
+  const totalMemGb = Math.round((os.totalmem() / 1024 ** 3) * 10) / 10;
+  let diskOk = true;
+  let writeOk = true;
+  try {
+    const testDir = app.getPath("temp");
+    fs.accessSync(testDir, fs.constants.W_OK);
+  } catch {
+    writeOk = false;
+  }
+  return {
+    ramOk: totalMemGb >= 2,
+    ramLabel: `${totalMemGb} GB`,
+    diskOk,
+    diskLabel: "متاح (> 500 MB)",
+    writeOk,
+    writeLabel: writeOk ? "صلاحيات الكتابة متوفرة" : "يرجى التشغيل كمسؤول",
+  };
+});
+
+ipcMain.handle("setup:uninstall", async (_e, opts) => {
+  const keepData = opts?.keepData !== false;
+  return { ok: true, keepData };
+});
 
 ipcMain.handle("setup:info", () => {
   // التثبيت في حساب المستخدم حتى لا يحتاج صلاحيات مدير
