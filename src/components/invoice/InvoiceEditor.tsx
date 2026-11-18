@@ -329,6 +329,7 @@ export function InvoiceEditor({
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [excessAction, setExcessAction] = useState<"deduct" | "refund">("deduct");
   const [showDrafts, setShowDrafts] = useState(false);
   const [shareInvoice, setShareInvoice] = useState<Invoice | null>(null);
   const [clock, setClock] = useState("");
@@ -1096,12 +1097,6 @@ export function InvoiceEditor({
       }
     >
       <div className="relative flex h-full w-full flex-col gap-1.5 p-2 bg-[#eef4fb]">
-        {/* شريط تقدم متحرك أثناء حفظ الفاتورة */}
-        {saving && (
-          <div className="absolute inset-x-0 top-0 z-30 h-[3px] overflow-hidden bg-[#dbeafe]">
-            <div className="animate-progress-slide h-full w-1/2 rounded-full bg-gradient-to-l from-[#0067c0] via-[#2fb3a6] to-[#0067c0]" />
-          </div>
-        )}
         {/* ===== إطار شريط الأدوات العلوي ===== */}
         <div className={`shrink-0 rounded-lg border border-[#dce7f4] bg-white p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
           <div className="flex h-[40px] items-center gap-2">
@@ -1782,8 +1777,8 @@ export function InvoiceEditor({
           </div>
         </div>
 
-        {/* ===== الإضافات الثانوية: خصم إضافي + الضريبة + الخصم الكلي + عدد الأصناف ===== */}
-        <div className={`grid grid-cols-4 gap-2 shrink-0 ${L.totals ? "" : "hidden"}`}>
+        {/* ===== الإضافات الثانوية: خصم إضافي + الضريبة + الخصم الكلي + عدد الأصناف (مخفية من الواجهة) ===== */}
+        <div className="hidden grid-cols-4 gap-2 shrink-0">
           <div className="flex h-[36px] items-center gap-2 rounded-lg border border-[#cfdff0] bg-white px-2.5 shadow-2xs">
             <span className="whitespace-nowrap text-[12px] font-black text-[#9d5d00]">خصم إضافي:</span>
             <input

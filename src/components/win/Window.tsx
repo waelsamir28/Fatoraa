@@ -218,8 +218,12 @@ export function Dialog({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-[rgba(5,20,55,.45)] p-4 backdrop-blur-xs">
-      <div className="win-dialog flex max-h-full w-full flex-col shadow-2xl" style={{ maxWidth: width }} role="dialog">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#081a2b]/55 p-4 backdrop-blur-md">
+      <div
+        className="animate-modal-enter win-dialog flex h-[660px] max-h-[90vh] w-[1080px] max-w-[95vw] flex-col overflow-hidden rounded-[16px] shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
+        style={{ maxWidth: width && width > 1080 ? width : undefined }}
+        role="dialog"
+      >
         <div className="win-titlebar win-titlebar-sm" dir="ltr">
           <div className="flex min-w-0 items-center gap-2 px-3">
             {icon ?? <CartLogo className="h-5 w-5" />}

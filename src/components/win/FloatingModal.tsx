@@ -57,7 +57,7 @@ export function FloatingModal({
         className={`animate-modal-enter flex flex-col overflow-hidden rounded-[16px] border border-white/20 bg-[#f4f8fd] transition-all duration-200 ${
           maximized
             ? "h-[94vh] w-[96vw] max-w-[1320px]"
-            : "h-[600px] max-h-[86vh] w-[920px] max-w-[95vw]"
+            : "h-[660px] max-h-[88vh] w-[1080px] max-w-[95vw]"
         }`}
         style={{
           boxShadow:
