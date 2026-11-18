@@ -9,6 +9,7 @@ import { resolveLogo } from "@/lib/logo";
 import { useScreenBg } from "@/lib/useScreenBg";
 import { useAuth, type SessionUser } from "./AuthProvider";
 import { SetupWizard } from "./SetupWizard";
+import { UsersGateModal } from "./UsersGateModal";
 
 /**
  * شاشة الدخول الحقيقية:
@@ -114,6 +115,8 @@ export function LoginGate() {
       />
     );
   }
+
+  return <UsersGateModal logoSrc={logo} />;
 
   return (
     <div
