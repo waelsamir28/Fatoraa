@@ -248,11 +248,11 @@ export function UsersGateModal({
 
       {/* النافذة العائمة المتوسطة 1040×620 */}
       <div
-        className="relative flex w-full max-w-[1040px] flex-col overflow-hidden rounded-[18px] shadow-2xl"
+        className="animate-modal-enter relative flex w-full max-w-[920px] flex-col overflow-hidden rounded-[18px] shadow-2xl"
         style={{
-          height: "min(620px, calc(100vh - 32px))",
+          height: "min(600px, calc(100vh - 32px))",
           background: "#f2f7fd",
-          boxShadow: "0 24px 60px rgba(3, 15, 32, 0.55)",
+          boxShadow: "0 30px 75px -12px rgba(4, 18, 42, 0.58), 0 14px 36px -8px rgba(0, 103, 192, 0.25)",
         }}
       >
         {/* شريط العنوان */}
@@ -278,6 +278,11 @@ export function UsersGateModal({
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 pl-1">
+              <span className="h-3 w-3 rounded-full bg-[#ff5f57] ring-1 ring-black/15" />
+              <span className="h-3 w-3 rounded-full bg-[#febc2e] ring-1 ring-black/15" />
+              <span className="h-3 w-3 rounded-full bg-[#28c840] ring-1 ring-black/15" />
+            </div>
             {onClose && (
               <button
                 type="button"

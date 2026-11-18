@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { parseScaleBarcode } from "@/lib/scaleBarcode";
 import {
   useCallback,
   useEffect,
@@ -601,6 +602,27 @@ export function InvoiceEditor({
       }
       const q = entry.text.trim();
       if (!q) return;
+
+      // فحص باركود الميزان الإلكتروني (EAN-13 يبدأ بـ 20..29)
+      const scale = parseScaleBarcode(q);
+      if (scale) {
+        const scaleProd = products.find(
+          (x) => x.code === scale.itemCode || x.code.endsWith(scale.itemCode),
+        );
+        if (scaleProd) {
+          const qty =
+            scale.mode === "weight"
+              ? round2(scale.value)
+              : scaleProd.salePrice > 0
+                ? round2(scale.value / scaleProd.salePrice)
+                : 1;
+          addProduct(scaleProd, qty > 0 ? qty : 1);
+          setEntry(EMPTY_ENTRY);
+          setShowSuggest(false);
+          return;
+        }
+      }
+
       const exact = products.find((x) => x.code === q);
       if (exact && barcodeMode) {
         addProduct(exact);
@@ -1073,7 +1095,13 @@ export function InvoiceEditor({
         </>
       }
     >
-      <div className="flex h-full w-full flex-col gap-1.5 p-2 bg-[#eef4fb]">
+      <div className="relative flex h-full w-full flex-col gap-1.5 p-2 bg-[#eef4fb]">
+        {/* شريط تقدم متحرك أثناء حفظ الفاتورة */}
+        {saving && (
+          <div className="absolute inset-x-0 top-0 z-30 h-[3px] overflow-hidden bg-[#dbeafe]">
+            <div className="animate-progress-slide h-full w-1/2 rounded-full bg-gradient-to-l from-[#0067c0] via-[#2fb3a6] to-[#0067c0]" />
+          </div>
+        )}
         {/* ===== إطار شريط الأدوات العلوي ===== */}
         <div className={`shrink-0 rounded-lg border border-[#dce7f4] bg-white p-1.5 shadow-sm ${L.toolbar ? "" : "hidden"}`}>
           <div className="flex h-[40px] items-center gap-2">

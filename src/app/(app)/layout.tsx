@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/win/ErrorBoundary";
 import { BackgroundTasks } from "@/components/win/BackgroundTasks";
 import { LockScreen } from "@/components/win/LockScreen";
 import { GlobalShortcuts } from "@/components/win/GlobalShortcuts";
+import { ScreenTransition } from "@/components/win/ScreenTransition";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -18,7 +19,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <AuthGate>
               <PageGuard>
                 <BackgroundTasks />
-                {children}
+                <ScreenTransition>{children}</ScreenTransition>
                 <GlobalShortcuts />
                 <LockScreen />
               </PageGuard>
