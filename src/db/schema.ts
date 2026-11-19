@@ -101,6 +101,7 @@ export const products = pgTable(
     wholesalePrice: doublePrecision("wholesale_price").notNull().default(0),
     stock: doublePrecision("stock").notNull().default(0),
     minStock: doublePrecision("min_stock").notNull().default(0),
+    expiryDate: text("expiry_date").notNull().default(""),
     imageUrl: text("image_url").notNull().default(""),
     createdAt: ts("created_at"),
   },

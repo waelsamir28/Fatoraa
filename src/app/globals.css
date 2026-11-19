@@ -354,6 +354,7 @@ body {
     gap: 0.45rem;
     font-weight: 600;
     font-size: 13px;
+    line-height: 1.45;
     color: var(--c-ink);
     border-radius: var(--r-sm);
     border: 1px solid var(--c-line-2);
@@ -362,7 +363,7 @@ body {
     transition: background 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
     white-space: nowrap;
     user-select: none;
-    padding: 0 12px;
+    padding: 2px 12px;
   }
   .btn:hover:not(:disabled) {
     background: #f7fbff;
@@ -3114,4 +3115,42 @@ html[data-fweight="black"] body { font-weight: 800; }
 
 .animate-progress-slide {
   animation: progressSlide 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ثيمات Windows 8 & Flat Gradient (وضع نهاري) */
+[data-theme="win8-gray"] {
+  --c-bg: #f1f5f9;
+  --c-accent: #475569;
+  --c-accent-2: #64748b;
+  --c-titlebar: linear-gradient(180deg, #64748b 0%, #475569 100%);
+}
+[data-theme="win8-aqua"] {
+  --c-bg: #f0f9ff;
+  --c-accent: #0284c7;
+  --c-accent-2: #0369a1;
+  --c-titlebar: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+}
+[data-theme="win8-charcoal"] {
+  --c-bg: #f3f4f6;
+  --c-accent: #374151;
+  --c-accent-2: #1f2937;
+  --c-titlebar: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+}
+[data-theme="grad-teal-green"] {
+  --c-bg: #f0fdfa;
+  --c-accent: #0d9488;
+  --c-accent-2: #059669;
+  --c-titlebar: linear-gradient(135deg, #14b8a6 0%, #059669 100%);
+}
+[data-theme="grad-charcoal-silver"] {
+  --c-bg: #f8fafc;
+  --c-accent: #475569;
+  --c-accent-2: #334155;
+  --c-titlebar: linear-gradient(135deg, #64748b 0%, #334155 100%);
+}
+[data-theme="grad-amber-coral"] {
+  --c-bg: #fffbeb;
+  --c-accent: #d97706;
+  --c-accent-2: #ea580c;
+  --c-titlebar: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
 }

@@ -1,314 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<!--
-  سبب المشكلة السابقة: script-src كانت 'unsafe-inline' فقط بدون 'self'
-  ⇒ المتصفح كان **يحجب** ملف installer.js بالكامل
-  ⇒ فلا أزرار تعمل ولا إصدار يظهر (الشاشة تبقى واقفة للأبد).
--->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'" />
-<title>FATORA Setup</title>
-<style>
-  /* خط Cairo — مضمّن داخل المثبّت نفسه (بدون حاجة لإنترنت) */
-  @font-face {
-    font-family: "Cairo";
-    src: url("assets/fonts/Cairo.ttf") format("truetype");
-    font-weight: 200 1000;
-    font-display: swap;
-  }
-  :root {
-    --font-cairo: "Cairo", "Segoe UI", "Segoe UI Variable", Tahoma, sans-serif;
-    --accent: #0f6cbd;
-    --accent-hi: #1976d2;
-    --bg: #f3f3f3;
-    --card: #ffffff;
-    --stroke: #d6dae0;
-    --text: #16191d;
-    --muted: #5b6470;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { height: 100%; background: transparent; }
-  /* جسم الصفحة شفاف: النافذة نفسها شفافة من Electron،
-     والإطار المرئي هو .shell بالحواف الدائرية والإطار الأزرق. */
-  body {
-    height: 100%;
-    font-family: var(--font-cairo);
-    font-size: 13px;
-    color: var(--text);
-    background: transparent;
-    overflow: hidden;
-    user-select: none;
-    padding: 12px;
-  }
+  <meta charset="utf-8" />
+  <title>مثبّت نظام فاتورة</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; user-select: none; }
+    .shell {
+      width: calc(100% - 24px); height: calc(100% - 24px); margin: 12px;
+      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+      background: #f4f8fd; box-shadow: 0 18px 45px rgba(5, 20, 45, 0.45); border: 1px solid #c9d8ee;
+    }
+    .titlebar {
+      height: 42px; background: linear-gradient(180deg, #123a63 0%, #0e2e50 100%);
+      color: #fff; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; -webkit-app-region: drag;
+    }
+    .titlebar-brand { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+    .titlebar-brand img { height: 22px; width: auto; }
+    .titlebar-ctrls { display: flex; gap: 6px; -webkit-app-region: no-drag; }
+    .ctrl-btn {
+      width: 26px; height: 26px; border: 0; border-radius: 6px; cursor: pointer;
+      background: rgba(255,255,255,0.14); color: #fff; font-weight: 900; font-size: 13px;
+    }
+    .ctrl-btn:hover { background: rgba(255,255,255,0.25); }
+    .ctrl-btn.close:hover { background: #c42b1c; }
 
-  /* ===== الإطار المرئي للمثبّت: حواف دائرية + إطار أزرق رفيع ===== */
-  .shell {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-    border: 1.5px solid #0f6cbd;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 14px 38px rgba(6, 32, 64, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  }
+    /* Stepper */
+    .stepper {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 18px; background: #fff; border-bottom: 1px solid #dce7f5;
+    }
+    .step-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: #7a90ab; }
+    .step-dot {
+      width: 22px; height: 22px; border-radius: 50%; background: #e2ecf8; color: #5a7593;
+      display: grid; place-items: center; font-size: 11px; font-weight: 900;
+    }
+    .step-item.active { color: #0067c0; }
+    .step-item.active .step-dot { background: #0067c0; color: #fff; }
+    .step-item.done { color: #0f7b0f; }
+    .step-item.done .step-dot { background: #0f7b0f; color: #fff; }
+    .step-line { width: 28px; height: 2px; background: #dce7f5; }
 
-  /* ---------- شريط العنوان (سحب + أزرار ويندوز 11) ---------- */
-  .titlebar {
-    height: 38px; flex: none; display: flex; align-items: center; gap: 9px;
-    padding: 0 0 0 14px; background: transparent; -webkit-app-region: drag;
-    border-bottom: 1px solid rgba(15, 108, 189, 0.12);
-  }
-  .titlebar .app-ico { width: 16px; height: 16px; border-radius: 4px; -webkit-app-region: no-drag; }
-  .titlebar .t { flex: 1; font-size: 12px; color: #2b3036; }
-  .winctl { display: flex; -webkit-app-region: no-drag; }
-  .winctl button {
-    width: 44px; height: 36px; border: 0; background: transparent; color: #333;
-    font-size: 10px; line-height: 1; cursor: pointer; font-family: "Segoe MDL2 Assets", "Segoe UI Symbol", var(--font-cairo);
-  }
-  .winctl button:hover { background: rgba(0,0,0,.06); }
-  .winctl button.close:hover { background: #c42b1c; color: #fff; }
+    /* Body */
+    .body { flex: 1; padding: 16px 20px; overflow: hidden; display: flex; flex-direction: column; }
+    .page { display: none; flex: 1; flex-direction: column; justify-content: space-between; }
+    .page.active { display: flex; }
 
-  /* ---------- المساحة الرئيسية ---------- */
-  .content { flex: 1; display: flex; min-height: 0; padding: 0 12px 12px 12px; gap: 12px; position: relative; }
+    .hero { display: flex; align-items: center; gap: 16px; background: #fff; padding: 14px; border-radius: 12px; border: 1px solid #d5e2f2; }
+    .hero img { width: 56px; height: 56px; object-fit: contain; }
+    .hero h1 { font-size: 18px; font-weight: 900; color: #0b2350; }
+    .hero p { font-size: 12px; color: #5a7593; margin-top: 2px; font-weight: 600; }
+    .badge { display: inline-block; background: #eaf2fc; color: #0067c0; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; margin-top: 4px; }
 
-  /* اللوحة الجانبية */
-  .side {
-    width: 176px; flex: none; border-radius: 8px; overflow: hidden; position: relative;
-    background: linear-gradient(165deg, #1767c6 0%, #0b3f86 58%, #082a5c 100%);
-    color: #fff; display: flex; flex-direction: column; align-items: center;
-    padding: 20px 14px 14px;
-  }
-  .side::after {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(220px 160px at 80% 8%, rgba(120,200,255,.30), transparent 70%);
-    pointer-events: none;
-  }
-  .logo {
-    width: 84px; height: 84px; border-radius: 20px; margin-top: 6px; z-index: 1;
-    background: linear-gradient(150deg, #ffffff, #d9e8ff);
-    display: grid; place-items: center;
-    box-shadow: 0 10px 22px rgba(0,0,0,.28);
-  }
-  .logo img { width: 66px; height: 66px; object-fit: contain; }
-  .brand { margin-top: 12px; font-size: 15px; font-weight: 700; letter-spacing: 1px; z-index: 1; }
-  .ver { font-size: 11px; color: #b9d7ff; margin-top: 3px; z-index: 1; }
-  .sep { width: 54px; height: 1px; background: rgba(255,255,255,.32); margin: 14px 0 10px; z-index: 1; }
-  .side .feat { font-size: 10.5px; color: #cfe3ff; line-height: 2; text-align: center; z-index: 1; }
-  .side .sup {
-    margin-top: auto; font-size: 10.5px; color: #cfe3ff; text-align: center; line-height: 1.9; z-index: 1;
-  }
-  .side .sup b { color: #fff; font-size: 12px; letter-spacing: .5px; }
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .feat { background: #fff; border: 1px solid #d5e2f2; border-radius: 10px; padding: 10px; }
+    .feat h3 { font-size: 12px; font-weight: 900; color: #0b2350; margin-bottom: 4px; }
+    .feat p { font-size: 11px; color: #5a7593; line-height: 1.4; }
 
-  /* المحتوى */
-  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 4px 6px 0 4px; }
-  .page { flex: 1; display: none; min-height: 0; }
-  .page.on { display: flex; flex-direction: column; }
-  h1 { font-size: 21px; font-weight: 600; letter-spacing: -.2px; }
-  .lead { margin-top: 6px; color: var(--muted); font-size: 12.5px; line-height: 1.9; }
+    .sys-checks { display: flex; gap: 10px; margin-top: 10px; }
+    .chk-pill { flex: 1; background: #eefbee; border: 1px solid #b8e4b8; color: #0f7b0f; border-radius: 8px; padding: 7px 10px; font-size: 11px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
 
-  .field { margin-top: 18px; }
-  .field > label { display: block; font-size: 12px; color: #454d57; margin-bottom: 7px; }
-  .row { display: flex; gap: 8px; }
-  .input-shell {
-    flex: 1; height: 32px; border: 1px solid var(--stroke); border-radius: 6px;
-    background: #fff; display: flex; align-items: center; padding: 0 10px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
-    transition: border-color .12s, box-shadow .12s;
-  }
-  .input-shell:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15,108,189,.22); }
-  .input-shell input {
-    border: 0; outline: 0; width: 100%; font: inherit; font-size: 12.5px; color: var(--text);
-    background: transparent; direction: ltr; text-align: left;
-  }
-  .btn2 {
-    height: 32px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--stroke);
-    background: #fbfbfb; color: #15181c; font: inherit; font-size: 12.3px; cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,.06);
-  }
-  .btn2:hover { background: #f1f2f4; }
-  .btn2:active { background: #e9eaee; }
-  .meta { margin-top: 10px; font-size: 11.5px; color: var(--muted); line-height: 1.9; }
-  .opts { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
-  .opt { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: #2c333b; }
-  .opt input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+    .card { background: #fff; border: 1px solid #d5e2f2; border-radius: 12px; padding: 14px; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .mode-opt {
+      border: 2px solid #d5e2f2; border-radius: 10px; padding: 10px; cursor: pointer; background: #f9fbff;
+    }
+    .mode-opt.sel { border-color: #0067c0; background: #eef5ff; }
+    .mode-opt b { display: block; font-size: 12.5px; color: #0b2350; }
+    .mode-opt span { font-size: 11px; color: #5a7593; }
 
-  /* التقدم */
-  .prog { margin-top: 22px; }
-  .bar { height: 6px; border-radius: 99px; background: #dcdfe4; overflow: hidden; position: relative; }
-  .bar > i {
-    position: absolute; top: 0; bottom: 0; width: 30%; border-radius: 99px;
-    background: linear-gradient(90deg, var(--accent), #58aef5);
-    transition: width .35s ease;
-  }
-  .bar.indet > i { animation: slide 1.9s cubic-bezier(.5,0,.3,1) infinite; }
-  @keyframes slide {
-    0% { width: 30%; right: -30%; }
-    55% { width: 55%; }
-    100% { width: 26%; right: 100%; }
-  }
-  .status {
-    margin-top: 12px; min-height: 18px; font-size: 12.5px; color: #0d4f8b;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .status .dot { width: 6px; height: 6px; border-radius: 99px; background: var(--accent); animation: pulse 1.1s ease-in-out infinite; flex: none; }
-  @keyframes pulse { 0%,100% { opacity: .25; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
-  .detail {
-    margin-top: 6px; height: 46px; overflow: hidden; font-size: 10.8px; color: #8a929c;
-    line-height: 1.7; direction: ltr; text-align: left;
-  }
-  .tip { margin-top: 8px; font-size: 11.5px; color: #7a828c; transition: opacity .35s; }
+    .path-input { flex: 1; height: 34px; border: 1px solid #c9d8ee; border-radius: 8px; padding: 0 10px; font-size: 12px; direction: ltr; background: #f8fbff; color: #0b2350; }
+    .btn { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #c9d8ee; background: #fff; color: #0b2350; font-size: 12px; font-weight: 800; cursor: pointer; }
+    .btn-primary { background: #0067c0; color: #fff; border-color: #0067c0; }
+    .btn-green { background: #0f7b0f; color: #fff; border-color: #0f7b0f; }
+    .btn:hover { filter: brightness(1.06); }
 
-  /* الانتهاء */
-  .done-mark {
-    width: 54px; height: 54px; border-radius: 99px; background: #e6f4ea; color: #107c41;
-    display: grid; place-items: center; font-size: 26px; margin-bottom: 14px;
-  }
+    .opts { display: flex; gap: 14px; margin-top: 10px; font-size: 11.5px; font-weight: 700; color: #354b6e; }
+    .opts label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
-  /* ---------- الشريط السفلي ---------- */
-  .foot {
-    flex: none; display: flex; align-items: center; gap: 8px;
-    padding: 12px 18px; background: rgba(255,255,255,.72);
-    border-top: 1px solid #e2e5e9;
-  }
-  .foot .hint { flex: 1; font-size: 11.5px; color: var(--muted); }
-  .btn {
-    min-width: 96px; height: 32px; border-radius: 6px; font: inherit; font-size: 12.6px;
-    cursor: pointer; border: 1px solid transparent; padding: 0 16px;
-  }
-  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 2px 5px rgba(15,108,189,.32); }
-  .btn.primary:hover { background: #1668b3; }
-  .btn.primary:disabled { background: #b6c7d8; box-shadow: none; cursor: default; }
-  .btn.ghost { background: #fbfbfb; border-color: var(--stroke); color: #15181c; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .btn.ghost:hover { background: #f1f2f4; }
-  .btn[hidden] { display: none; }
-  /* سطر التحقق من التحديث */
-  .check-line {
-    margin-top: 16px; display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: #2d5f8b; min-height: 18px;
-  }
-  .check-spin {
-    width: 13px; height: 13px; border-radius: 99px; flex: none;
-    border: 2px solid #bfd7ee; border-top-color: var(--accent);
-    animation: spin .8s linear infinite;
-  }
-  .check-spin.ok { border: 0; background: #107c41; animation: none; position: relative; }
-  .check-spin.ok::after { content: "✓"; color: #fff; font-size: 9px; position: absolute; inset: 0; display: grid; place-items: center; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    /* Progress */
+    .prog-wrap { background: #e2ecf8; height: 14px; border-radius: 99px; overflow: hidden; margin: 14px 0 8px; }
+    .prog-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #0067c0, #2fb3a6); transition: width 0.25s ease; }
+    .tip-card { background: #fff; border: 1px solid #d5e2f2; border-radius: 12px; padding: 14px; text-align: center; margin-top: 12px; }
+    .tip-card b { font-size: 13px; color: #0067c0; display: block; margin-bottom: 4px; }
+    .tip-card p { font-size: 12px; color: #5a7593; }
 
-  /* صفحة الانتهاء */
-  .done-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-  .whatsnew {
-    margin-top: 12px; border: 1px solid var(--stroke); border-radius: 8px;
-    background: #fff; padding: 10px 12px; max-height: 118px; overflow: auto;
-  }
-  .whatsnew__head { font-size: 12px; font-weight: 700; color: #14508f; margin-bottom: 6px; }
-  .whatsnew ul { padding-inline-start: 16px; }
-  .whatsnew li { font-size: 11.6px; color: #4a545f; line-height: 1.9; }
-  .whatsnew[hidden] { display: none; }
-
-</style>
+    .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #dce7f5; }
+    .bottom-bar {
+      height: 26px; background: #0b2545; color: #bfdbfe; font-size: 10.5px; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 14px; shrink: 0;
+    }
+  </style>
 </head>
 <body>
- <div class="shell">
-  <div class="titlebar">
-    <img class="app-ico" src="assets/icon.png" alt="" onerror="this.style.display='none'" />
-    <div class="t">FATORA Setup</div>
-    <div class="winctl">
-      <button id="btnMin" title="تصغير" aria-label="minimize">&#xE921;</button>
-      <button id="btnClose" class="close" title="إغلاق" aria-label="close">&#xE8BB;</button>
+  <div class="shell">
+    <div class="titlebar">
+      <div class="titlebar-brand">
+        <img src="assets/icon.png" alt="" onerror="this.style.display='none'" />
+        <span>مثبّت نظام فاتورة — <span id="ver-label">v1.9.1</span></span>
+      </div>
+      <div class="titlebar-ctrls">
+        <button class="ctrl-btn" id="btn-min" title="تصغير">─</button>
+        <button class="ctrl-btn close" id="btn-close" title="إغلاق">✕</button>
+      </div>
+    </div>
+
+    <div class="stepper">
+      <div class="step-item active" data-step="1"><span class="step-dot">١</span><span>ترحيب</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" data-step="2"><span class="step-dot">٢</span><span>مسار التثبيت</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" data-step="3"><span class="step-dot">٣</span><span>التثبيت</span></div>
+      <div class="step-line"></div>
+      <div class="step-item" data-step="4"><span class="step-dot">٤</span><span>الإنهاء</span></div>
+    </div>
+
+    <div class="body">
+      <!-- 1: ترحيب -->
+      <div class="page active" id="page-1">
+        <div>
+          <div class="hero">
+            <img src="assets/icon.png" alt="فاتورة" onerror="this.style.display='none'" />
+            <div>
+              <h1>مرحباً بك في نظام فاتورة</h1>
+              <p>نظام إدارة المبيعات والمخزون والحسابات المتكامل</p>
+              <span class="badge" id="ver-badge">الإصدار 1.9.1</span>
+            </div>
+          </div>
+          <div class="features">
+            <div class="feat"><h3>فواتير سريعة</h3><p>دعم الباركود وميزان الباركود والطباعة الحرارية A4 و80mm.</p></div>
+            <div class="feat"><h3>مخزون وخزينة</h3><p>تنبيهات النواقص، ربط المصروفات بالخزينة، وتقارير أرباح دقيقة.</p></div>
+            <div class="feat"><h3>نسخ احتياطي</h3><p>حفظ آمن لبياناتك مع إمكانية الاستعادة في أي وقت.</p></div>
+          </div>
+          <div class="sys-checks" id="sys-checks">
+            <div class="chk-pill">✓ الرامات: <span id="chk-ram">جاري الفحص...</span></div>
+            <div class="chk-pill">✓ القرص: <span id="chk-disk">متاح</span></div>
+            <div class="chk-pill">✓ الصلاحيات: <span id="chk-write">جاهز</span></div>
+          </div>
+        </div>
+        <div class="footer">
+          <span style="font-size:11px;color:#7a90ab">اضغط التالي للمتابعة</span>
+          <button class="btn btn-primary" id="to-step-2">التالي ←</button>
+        </div>
+      </div>
+
+      <!-- 2: مسار التثبيت -->
+      <div class="page" id="page-2">
+        <div class="card">
+          <div class="mode-grid">
+            <div class="mode-opt sel" id="mode-std"><b>تثبيت قياسي (جهاز واحد)</b><span>تشغيل كامل للبرنامج وقاعدة البيانات محلياً</span></div>
+            <div class="mode-opt" id="mode-net"><b>تثبيت شبكة / فرع</b><span>ربط الجهاز بسيرفر محلي داخل المحل</span></div>
+          </div>
+          <div style="font-size:12px;font-weight:800;color:#0b2350;margin-bottom:6px">مسار التثبيت (المساحة المطلوبة: ~250 MB)</div>
+          <div class="row">
+            <input class="path-input" id="install-path" readonly />
+            <button class="btn" id="btn-browse">تغيير المسار...</button>
+          </div>
+          <div class="opts">
+            <label><input type="checkbox" id="opt-desktop" checked /> أيقونة على سطح المكتب</label>
+            <label><input type="checkbox" id="opt-taskbar" checked /> تثبيت في شريط المهام</label>
+            <label><input type="checkbox" id="opt-startup" /> التشغيل مع الويندوز</label>
+          </div>
+        </div>
+        <div class="footer">
+          <button class="btn" id="back-1">→ السابق</button>
+          <button class="btn btn-green" id="start-install">بدء التثبيت الآن</button>
+        </div>
+      </div>
+
+      <!-- 3: التثبيت -->
+      <div class="page" id="page-3">
+        <div class="card" style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:900;color:#0b2350">
+            <span id="prog-stage">جاري تجهيز الملفات...</span>
+            <span id="prog-pct">0%</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+          <div class="tip-card">
+            <b id="tip-title">هل تعلم؟</b>
+            <p id="tip-text">يمكنك استخدام قارئ الباركود وميزان الباركود مباشرة في شاشة المبيعات.</p>
+          </div>
+        </div>
+        <div class="footer" style="justify-content:center;text-align:center">
+          <span style="font-size:11.5px;font-weight:700;color:#475569">يرجى الانتظار حتى اكتمال التثبيت...</span>
+        </div>
+      </div>
+
+      <!-- 4: الإنهاء -->
+      <div class="page" id="page-4">
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-size:34px;color:#0f7b0f;margin-bottom:6px">✓</div>
+          <h2 style="font-size:18px;font-weight:900;color:#0b2350">تم تثبيت نظام فاتورة بنجاح!</h2>
+          <p style="font-size:12px;color:#5a7593;margin-top:6px">البرنامج جاهز للعمل الآن. يمكنك تشغيله مباشرة أو فتح مجلد التثبيت.</p>
+          <div style="display:flex;justify-content:center;gap:10px;margin-top:18px">
+            <button class="btn btn-green" id="btn-launch" style="height:40px;padding:0 22px;font-size:13.5px">تشغيل البرنامج الآن</button>
+            <button class="btn" id="btn-folder" style="height:40px">فتح مجلد التثبيت</button>
+          </div>
+        </div>
+        <div class="footer">
+          <span></span>
+          <button class="btn" id="btn-finish-close">إغلاق المثبّت</button>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <span>نظام فاتورة — إدارة المبيعات والمخزون</span>
+      <span>© 2026 FATORA</span>
     </div>
   </div>
-
-  <div class="content">
-    <aside class="side">
-      <div class="logo"><img src="assets/logo-fatora.png" alt="FATORA" onerror="this.replaceWith(document.createTextNode('F'))" /></div>
-      <div class="brand">FATORA</div>
-      <div class="ver" id="sideVer">الإصدار __APP_VERSION__</div>
-      <div class="sep"></div>
-      <div class="feat">إدارة المحلات التجارية<br />نقاط بيع · مخازن · تقارير</div>
-      <div class="sup">الدعم الفني<br /><b>م/ وائل الجمال — 01222355769</b></div>
-    </aside>
-
-    <section class="main">
-      <!-- 1) مكان التثبيت -->
-      <div class="page on" id="pgDir">
-        <h1>اختر مكان التثبيت</h1>
-        <p class="lead">سيتم تثبيت برنامج FATORA في المجلد التالي. يمكنك اختيار مجلد آخر بالضغط على «استعراض».</p>
-
-        <div class="field">
-          <label for="dir">مجلد التثبيت</label>
-          <div class="row">
-            <div class="input-shell"><input id="dir" spellcheck="false" autocomplete="off" /></div>
-            <button class="btn2" id="btnBrowse">استعراض…</button>
-          </div>
-          <div class="meta" id="spaceMeta">جاري حساب المساحة…</div>
-        </div>
-
-        <div class="check-line" id="checkLine">
-          <span class="check-spin" id="checkSpin"></span>
-          <span id="checkText">جاري التحقق من الملفات…</span>
-        </div>
-
-        <div class="opts">
-          <label class="opt"><input type="checkbox" id="optDesktop" checked /> إنشاء اختصار على سطح المكتب</label>
-          <label class="opt"><input type="checkbox" id="optStart" checked /> إضافة البرنامج إلى قائمة «ابدأ»</label>
-          <label class="opt"><input type="checkbox" id="optRun" checked /> تشغيل FATORA بعد انتهاء التثبيت</label>
-        </div>
-      </div>
-
-      <!-- 2) التقدم -->
-      <div class="page" id="pgProg">
-        <h1>جاري التثبيت</h1>
-        <p class="lead">لحظات قليلة… يتم نسخ ملفات البرنامج وتجهيز قاعدة البيانات.</p>
-
-        <div class="prog">
-          <div class="bar indet" id="bar"><i id="barFill"></i></div>
-          <div class="status"><span class="dot"></span><span id="statusText">جاري تحضير الملفات…</span></div>
-          <div class="detail" id="detail"></div>
-          <div class="tip" id="tip"></div>
-        </div>
-      </div>
-
-      <!-- 3) الانتهاء -->
-      <div class="page" id="pgDone">
-        <div style="display:flex;align-items:center;gap:14px">
-          <div class="done-mark">✓</div>
-          <div>
-            <h1>تم تثبيت FATORA بنجاح</h1>
-            <p class="lead" id="doneLead">البرنامج جاهز للاستخدام. شكرًا لثقتك في FATORA.</p>
-          </div>
-        </div>
-        <div class="done-actions">
-          <button class="btn2" id="btnOpenFolder">فتح مجلد التثبيت</button>
-          <button class="btn2" id="btnWhatsNew">ما الجديد في هذا الإصدار</button>
-        </div>
-        <div class="whatsnew" id="whatsNew" hidden>
-          <div class="whatsnew__head">ملاحظات الإصدار <span id="wnVer"></span></div>
-          <ul id="wnList"></ul>
-        </div>
-        <p class="meta">الدعم الفني: <b>م/ وائل الجمال — 01222355769</b></p>
-      </div>
-
-      <!-- 4) خطأ -->
-      <div class="page" id="pgError">
-        <div class="done-mark" style="background:#fdeceb;color:#c42b1c">!</div>
-        <h1>تعذّر إكمال التثبيت</h1>
-        <p class="lead" id="errText">حدث خطأ غير متوقع.</p>
-        <p class="meta">رقم الدعم الفني: <b>م/ وائل الجمال — 01222355769</b></p>
-      </div>
-    </section>
-  </div>
-
-  <div class="foot">
-    <div class="hint" id="footHint">الإصدار __APP_VERSION__</div>
-    <button class="btn ghost" id="btnBack" hidden>رجوع</button>
-    <button class="btn ghost" id="btnCancel">إلغاء</button>
-    <button class="btn primary" id="btnNext">تثبيت</button>
-  </div>
-
   <script src="installer.js"></script>
- </div><!-- /.shell -->
 </body>
 </html>
