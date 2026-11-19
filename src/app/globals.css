@@ -3118,39 +3118,39 @@ html[data-fweight="black"] body { font-weight: 800; }
 }
 
 /* ثيمات Windows 8 & Flat Gradient (وضع نهاري) */
-[data-theme="win8-gray"] {
-  --c-bg: #f1f5f9;
-  --c-accent: #475569;
-  --c-accent-2: #64748b;
-  --c-titlebar: linear-gradient(180deg, #64748b 0%, #475569 100%);
+html[data-theme="win8-gray"] {
+  --ui-title-from: #94a3b8; --ui-title-mid: #64748b; --ui-title-dark: #475569; --ui-title-to: #64748b; --ui-title-border: #334155;
+  --ui-desktop-1: #94a3b8; --ui-desktop-2: #64748b; --ui-desktop-3: #475569; --ui-desktop-4: #334155;
+  --ui-head-from: #64748b; --ui-head-mid: #475569; --ui-head-to: #334155;
+  --ui-side-from: #64748b; --ui-side-mid: #475569; --ui-side-to: #334155;
 }
-[data-theme="win8-aqua"] {
-  --c-bg: #f0f9ff;
-  --c-accent: #0284c7;
-  --c-accent-2: #0369a1;
-  --c-titlebar: linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%);
+html[data-theme="win8-aqua"] {
+  --ui-title-from: #38bdf8; --ui-title-mid: #0284c7; --ui-title-dark: #0369a1; --ui-title-to: #0ea5e9; --ui-title-border: #075985;
+  --ui-desktop-1: #38bdf8; --ui-desktop-2: #0284c7; --ui-desktop-3: #0369a1; --ui-desktop-4: #0c4a6e;
+  --ui-head-from: #0ea5e9; --ui-head-mid: #0284c7; --ui-head-to: #0369a1;
+  --ui-side-from: #0ea5e9; --ui-side-mid: #0284c7; --ui-side-to: #0369a1;
 }
-[data-theme="win8-charcoal"] {
-  --c-bg: #f3f4f6;
-  --c-accent: #374151;
-  --c-accent-2: #1f2937;
-  --c-titlebar: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+html[data-theme="win8-charcoal"] {
+  --ui-title-from: #6b7280; --ui-title-mid: #4b5563; --ui-title-dark: #374151; --ui-title-to: #4b5563; --ui-title-border: #1f2937;
+  --ui-desktop-1: #6b7280; --ui-desktop-2: #4b5563; --ui-desktop-3: #374151; --ui-desktop-4: #1f2937;
+  --ui-head-from: #4b5563; --ui-head-mid: #374151; --ui-head-to: #1f2937;
+  --ui-side-from: #4b5563; --ui-side-mid: #374151; --ui-side-to: #1f2937;
 }
-[data-theme="grad-teal-green"] {
-  --c-bg: #f0fdfa;
-  --c-accent: #0d9488;
-  --c-accent-2: #059669;
-  --c-titlebar: linear-gradient(135deg, #14b8a6 0%, #059669 100%);
+html[data-theme="grad-teal-green"] {
+  --ui-title-from: #2dd4bf; --ui-title-mid: #14b8a6; --ui-title-dark: #059669; --ui-title-to: #10b981; --ui-title-border: #047857;
+  --ui-desktop-1: #14b8a6; --ui-desktop-2: #10b981; --ui-desktop-3: #059669; --ui-desktop-4: #065f46;
+  --ui-head-from: #14b8a6; --ui-head-mid: #0d9488; --ui-head-to: #059669;
+  --ui-side-from: #14b8a6; --ui-side-mid: #0d9488; --ui-side-to: #059669;
 }
-[data-theme="grad-charcoal-silver"] {
-  --c-bg: #f8fafc;
-  --c-accent: #475569;
-  --c-accent-2: #334155;
-  --c-titlebar: linear-gradient(135deg, #64748b 0%, #334155 100%);
+html[data-theme="grad-charcoal-silver"] {
+  --ui-title-from: #cbd5e1; --ui-title-mid: #64748b; --ui-title-dark: #334155; --ui-title-to: #475569; --ui-title-border: #1e293b;
+  --ui-desktop-1: #94a3b8; --ui-desktop-2: #64748b; --ui-desktop-3: #334155; --ui-desktop-4: #1e293b;
+  --ui-head-from: #64748b; --ui-head-mid: #475569; --ui-head-to: #334155;
+  --ui-side-from: #64748b; --ui-side-mid: #475569; --ui-side-to: #334155;
 }
-[data-theme="grad-amber-coral"] {
-  --c-bg: #fffbeb;
-  --c-accent: #d97706;
-  --c-accent-2: #ea580c;
-  --c-titlebar: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+html[data-theme="grad-amber-coral"] {
+  --ui-title-from: #fbbf24; --ui-title-mid: #f59e0b; --ui-title-dark: #ea580c; --ui-title-to: #f97316; --ui-title-border: #c2410c;
+  --ui-desktop-1: #fbbf24; --ui-desktop-2: #f59e0b; --ui-desktop-3: #ea580c; --ui-desktop-4: #9a3412;
+  --ui-head-from: #f59e0b; --ui-head-mid: #ea580c; --ui-head-to: #c2410c;
+  --ui-side-from: #f59e0b; --ui-side-mid: #ea580c; --ui-side-to: #c2410c;
 }

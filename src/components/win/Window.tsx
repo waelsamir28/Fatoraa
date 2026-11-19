@@ -232,8 +232,8 @@ export function Dialog({
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-[#081a2b]/55 p-4 backdrop-blur-md">
       <div
-        className="animate-modal-enter win-dialog flex h-[660px] max-h-[90vh] w-[1080px] max-w-[95vw] flex-col overflow-hidden rounded-[16px] shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
-        style={{ maxWidth: width && width > 1080 ? width : undefined }}
+        className="animate-modal-enter win-dialog flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[16px] shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
+        style={{ maxWidth: width ?? 640 }}
         role="dialog"
       >
         <div className="win-titlebar win-titlebar-sm" dir="ltr">
