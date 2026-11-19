@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>أدوات الدعم الفني — فاتورة</title>
+  <style>
+    body { font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; background: #0f2942; color: #fff; display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    .card { background: #fff; color: #0b2350; border-radius: 16px; padding: 24px; width: 420px; max-width: 94vw; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+    h2 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 0 0 16px; font-size: 12.5px; color: #5a7593; }
+    input { width: 100%; height: 38px; border: 1px solid #c9d8ee; border-radius: 8px; padding: 0 12px; margin-bottom: 10px; box-sizing: border-box; font-size: 13px; }
+    .btn { display: block; width: 100%; height: 40px; border: 0; border-radius: 8px; background: #0067c0; color: #fff; font-weight: 800; font-size: 13.5px; cursor: pointer; text-align: center; line-height: 40px; text-decoration: none; margin-top: 8px; }
+    .btn-green { background: #0f7b0f; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>أدوات الدعم الفني الخاصة</h2>
+    <p>أدخل رابط البرنامج وكلمة مرور الدعم الفني للوصول السريع للوحة التراخيص والتحكم في الأجهزة.</p>
+    <div id="gate">
+      <input id="base-url" type="url" value="https://fatoraa-seven.vercel.app" placeholder="رابط البرنامج" dir="ltr" />
+      <input id="pass" type="password" placeholder="كلمة مرور الدعم الفني" />
+      <button class="btn" onclick="unlock()">دخول</button>
+    </div>
+    <div id="tools" class="hidden">
+      <a id="lnk-lic" class="btn" target="_blank">فتح لوحة التراخيص</a>
+      <a id="lnk-dev" class="btn btn-green" target="_blank">فتح التحكم في الأجهزة</a>
+    </div>
+  </div>
+  <script>
+    function unlock() {
+      const p = document.getElementById("pass").value;
+      if (p !== "FATORA@2026") { alert("كلمة المرور غير صحيحة"); return; }
+      const base = document.getElementById("base-url").value.replace(/\/+$/, "");
+      document.getElementById("lnk-lic").href = base + "/licenses";
+      document.getElementById("lnk-dev").href = base + "/devices";
+      document.getElementById("gate").classList.add("hidden");
+      document.getElementById("tools").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>

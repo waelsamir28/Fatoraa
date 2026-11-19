@@ -36,7 +36,7 @@ export function ConnectionHub() {
         </div>
 
         <div className="min-h-0 flex-1">
-          {tab === "db" ? <DatabaseSetupWizard /> : <DesktopSettingsView />}
+          {tab === "db" ? <DatabaseSetupWizard embedded /> : <DesktopSettingsView />}
         </div>
       </div>
     </Window>

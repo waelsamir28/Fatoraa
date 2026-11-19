@@ -143,12 +143,9 @@ const SECTIONS: Section[] = [
     items: [
       { href: "/users", label: "الصلاحيات", Icon: IcUserGear },
       { href: "/pages", label: "صلاحيات الشاشات", Icon: IcContract },
-      { href: "/devices", label: "التحكم في الأجهزة", Icon: IcContract },
       { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IcBackup },
       // بدل «الفروع» — الفروع باقية زر في القائمة الجانبية
       { href: "/subscription", label: "حالة الاشتراك", Icon: IcContract },
-      // لوحة التراخيص بقت كارت فقط (اتشال زرها من القائمة)
-      { href: "/licenses", label: "لوحة التراخيص", Icon: IcCards },
     ],
   },
 ];
@@ -158,7 +155,6 @@ const RAIL: Array<{ href: string | null; label: string; Icon: RawIcon; danger?: 
   { href: "/", label: "الرئيسية", Icon: RailHome },
   { href: "/users", label: "المستخدمين", Icon: RailUsers },
   { href: "/pages", label: "صلاحيات الشاشات", Icon: RailUsers },
-  { href: "/devices", label: "التحكم في الأجهزة", Icon: RailUsers },
   { href: "/branches", label: "الفروع", Icon: IcBuilding as unknown as RawIcon },
   { href: "/shifts", label: "الورديات", Icon: RailShifts },
   { href: "/settings", label: "الإعدادات", Icon: RailSettings },
