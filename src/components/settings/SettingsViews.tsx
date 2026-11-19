@@ -590,168 +590,48 @@ export function SettingsForm() {
                   <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
                     <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
                       <Sliders className="h-4 w-4 text-[#f5c518]" />
-                      تصميم الأزرار — الألوان والشكل والحركة
+                      حركة الأزرار واستدارة الحواف
                     </div>
-                    <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-3">
-                      {/* الألوان */}
-                      <div className="space-y-2">
-                        <span className="form-label">الألوان</span>
-                        {(
-                          [
-                            ["color", "اللون الطبيعي"],
-                            ["hoverColor", "لون المرور (Hover)"],
-                            ["activeColor", "لون الضغط (Active)"],
-                            ["textColor", "لون الكلام على الزر"],
-                            ["borderColor", "لون حدود الزر"],
-                          ] as Array<[keyof ButtonOptions, string]>
-                        ).map(([k, label]) => (
-                          <label key={k} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 px-2 py-1">
-                            <span className="text-[12px] font-black text-[#0c2340]">{label}</span>
-                            <span className="flex items-center gap-1.5">
-                              <input
-                                type="color"
-                                className="h-7 w-9 cursor-pointer rounded border border-slate-300 bg-white p-0"
-                                value={String(btnOpts[k] ?? "#000000")}
-                                onChange={(e) => setBtn({ [k]: e.target.value } as Partial<ButtonOptions>)}
-                              />
-                              <span className="num text-[10.5px] font-bold text-slate-500" dir="ltr">
-                                {String(btnOpts[k] ?? "")}
-                              </span>
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* الشكل والحدود */}
-                      <div className="space-y-2">
-                        <span className="form-label">الشكل والحدود</span>
-                        <div>
-                          <div className="mb-1 text-[11.5px] font-bold text-slate-600">شكل الزر</div>
-                          <div className="grid grid-cols-3 gap-1">
-                            {[
-                              ["rounded", "مستدير"],
-                              ["pill", "كبسولة"],
-                              ["soft", "ناعم"],
-                              ["square", "مربع"],
-                              ["sharp", "حاد"],
-                            ].map(([k, label]) => (
-                              <button
-                                key={k}
-                                type="button"
-                                onClick={() => setBtn({ shape: k })}
-                                className={`rounded-md border-2 px-1 py-1 text-[11.5px] font-black transition ${
-                                  btnOpts.shape === k ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
-                                }`}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between rounded-md border border-slate-200 px-2 py-1">
-                          <span className="text-[12px] font-black text-[#0c2340]">استدارة الحواف</span>
-                          <span className="num text-[12px] font-black">{btnOpts.radius}px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={24}
-                          value={btnOpts.radius}
-                          onChange={(e) => setBtn({ radius: Number(e.target.value), shape: "custom" })}
-                          className="w-full"
-                        />
-
-                        <div className="flex items-center justify-between rounded-md border border-slate-200 px-2 py-1">
-                          <span className="text-[12px] font-black text-[#0c2340]">سُمك الحدود</span>
-                          <span className="num text-[12px] font-black">{btnOpts.borderWidth}px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={4}
-                          value={btnOpts.borderWidth}
-                          onChange={(e) => setBtn({ borderWidth: Number(e.target.value) })}
-                          className="w-full"
-                        />
-
-                        <label className="flex items-center gap-2 text-[12.5px] font-black text-[#0c2340]">
-                          <input type="checkbox" checked={btnOpts.shadow} onChange={(e) => setBtn({ shadow: e.target.checked })} />
-                          ظل خلف الزر
-                        </label>
-                        <label className="flex items-center gap-2 text-[12.5px] font-black text-[#0c2340]">
-                          <input type="checkbox" checked={btnOpts.bold} onChange={(e) => setBtn({ bold: e.target.checked })} />
-                          خط عريض على الزر
-                        </label>
-                      </div>
-
-                      {/* الحركة + معاينة */}
-                      <div className="space-y-2">
-                        <span className="form-label">حركة الزر عند المرور</span>
-                        <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
+                      <div>
+                        <span className="form-label mb-1.5 block">حركة الأزرار (٦ حركات بدون تغيير اللون)</span>
+                        <div className="grid grid-cols-3 gap-2">
                           {[
-                            ["none", "بدون"],
-                            ["lift", "يرتفع"],
-                            ["grow", "يكبر"],
-                            ["press", "ينضغط"],
-                            ["shine", "لمعة"],
-                            ["pulse", "نبضة"],
+                            ["none", "بدون حركة"],
+                            ["scale", "تكبير خفيف"],
+                            ["lift", "رفع لأعلى"],
+                            ["pulse", "نبض"],
+                            ["shine", "لمعان"],
+                            ["press", "ضغط ناعم"],
                           ].map(([k, label]) => (
                             <button
                               key={k}
                               type="button"
                               onClick={() => setBtn({ animation: k })}
-                              className={`rounded-md border-2 px-1 py-1 text-[11.5px] font-black transition ${
-                                btnOpts.animation === k ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-300 hover:border-[#8fb3e0]"
+                              className={`rounded-lg border px-2 py-2 text-[12px] font-black transition ${
+                                btnOpts.animation === k
+                                  ? "border-2 border-[#0067c0] bg-[#eaf2fc] text-[#0067c0]"
+                                  : "border-slate-300 bg-white text-[#0c2340] hover:bg-slate-50"
                               }`}
                             >
                               {label}
                             </button>
                           ))}
                         </div>
-
-                        <div className="rounded-md border border-slate-200 bg-[#f8fafd] p-2">
-                          <div className="mb-1 text-[11px] font-bold text-slate-500">معاينة مباشرة</div>
-                          <button
-                            type="button"
-                            className="btn w-full"
-                            style={{
-                              background: btnOpts.color,
-                              color: btnOpts.textColor,
-                              borderRadius: btnOpts.shape === "custom" ? btnOpts.radius : btnOpts.shape === "pill" ? 999 : btnOpts.shape === "soft" ? 14 : btnOpts.shape === "square" ? 2 : btnOpts.shape === "sharp" ? 0 : 8,
-                              border: `${btnOpts.borderWidth}px solid ${btnOpts.borderColor}`,
-                              fontWeight: btnOpts.bold ? 900 : 600,
-                              boxShadow: btnOpts.shadow ? "0 2px 6px rgba(0,0,0,.18)" : "none",
-                            }}
-                          >
-                            حفظ الفاتورة
-                          </button>
-                          <div className="mt-1.5 flex gap-1">
-                            {["إلغاء", "طباعة", "جديد"].map((t) => (
-                              <span
-                                key={t}
-                                className="flex-1 rounded text-center text-[11px] font-black"
-                                style={{
-                                  background: btnOpts.color,
-                                  color: btnOpts.textColor,
-                                  padding: "3px 0",
-                                  borderRadius: btnOpts.shape === "pill" ? 999 : btnOpts.shape === "soft" ? 10 : 6,
-                                  border: `${btnOpts.borderWidth}px solid ${btnOpts.borderColor}`,
-                                }}
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
+                      </div>
+                      <div>
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="form-label">استدارة الحواف</span>
+                          <span className="num text-[12px] font-black text-[#0067c0]">{btnOpts.radius} px</span>
                         </div>
-
-                        <button
-                          type="button"
-                          className="btn h-8 w-full text-[12px] font-black"
-                          onClick={() => setBtn(DEFAULT_BUTTONS)}
-                        >
-                          استعادة ألوان الأزرار الافتراضية
-                        </button>
+                        <input
+                          type="range"
+                          min={0}
+                          max={18}
+                          value={btnOpts.radius}
+                          onChange={(e) => setBtn({ radius: Number(e.target.value) })}
+                          className="w-full accent-[#0067c0]"
+                        />
                       </div>
                     </div>
                   </div>
