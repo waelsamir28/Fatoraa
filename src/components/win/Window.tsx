@@ -130,7 +130,7 @@ export function Window({
         className={`win-window animate-modal-enter ${
           maximized
             ? "win-max h-full w-full"
-            : "h-[660px] max-h-[90vh] w-[1080px] max-w-[95vw] rounded-[16px] overflow-hidden shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
+            : "h-[660px] max-h-[90vh] w-[1200px] max-w-[96vw] rounded-[16px] border-2 border-[#7fa6d1] overflow-hidden shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
         }`}
       >
       <div className="win-titlebar app-drag" dir="ltr" onDoubleClick={native ? undefined : toggleMaximized}>

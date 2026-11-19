@@ -42,7 +42,7 @@ type TestResult = { ok: boolean; error?: string; host?: string; ms?: number; ver
  * يلصق رابط واحد → البرنامج يفحصه → ينزّل ملفات الإعداد الجاهزة.
  * بدون أي أكواد ولا تعديل ملفات يدوي.
  */
-export function DatabaseSetupWizard() {
+export function DatabaseSetupWizard({ embedded = false }: { embedded?: boolean } = {}) {
   const { toast, confirm } = useDesktop();
   const [status, setStatus] = useState<Status | null>(null);
   const [url, setUrl] = useState("");
@@ -169,11 +169,7 @@ export function DatabaseSetupWizard() {
     }
   };
 
-  return (
-    <Window
-      title="ربط قاعدة البيانات — إعداد مبسّط"
-      icon={<ServerCog className="h-8 w-8 text-[#2fb3a6]" />}
-    >
+  const content = (
       <div className="h-full w-full overflow-auto p-3">
         <div className="mx-auto max-w-[900px] space-y-4">
           {/* الحالة الحالية */}
@@ -511,6 +507,23 @@ export function DatabaseSetupWizard() {
           )}
         </div>
       </div>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <Window
+      title="ربط قاعدة البيانات — إعداد مبسّط"
+      icon={<Database className="h-5 w-5 text-white" />}
+      statusBar={
+        <>
+          <span>اختر التبويب المناسب لطريقة التشغيل</span>
+          <span className="sep" />
+          <span>دعم فني: م/ وائل الجمال — 01222355769</span>
+        </>
+      }
+    >
+      {content}
     </Window>
   );
 }
