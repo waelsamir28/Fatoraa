@@ -1,5 +1,6 @@
 import { runHealthChecks } from "@/lib/server/health";
 import { getSession } from "@/lib/server/session";
+import { isPglite } from "@/db";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     const { db } = await import("@/db");
     const { sql } = await import("drizzle-orm");
     await db.execute(sql`select 1`);
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, dbMode: isPglite ? "local-pglite" : "cloud-postgres" });
   } catch {
     return Response.json({ ok: false }, { status: 500 });
   }

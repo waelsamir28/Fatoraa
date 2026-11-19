@@ -69,13 +69,18 @@
   document.getElementById("start-install")?.addEventListener("click", async () => {
     goStep(3);
     if (!api) return;
-    await api.install({
-      target: pathInput?.value || "",
+    const res = await api.install({
+      dir: pathInput?.value || "",
       mode: installMode,
       desktopShortcut: document.getElementById("opt-desktop")?.checked ?? true,
-      taskbarPin: document.getElementById("opt-taskbar")?.checked ?? true,
+      startMenuShortcut: document.getElementById("opt-taskbar")?.checked ?? true,
       runAtStartup: document.getElementById("opt-startup")?.checked ?? false,
     });
+    if (res && res.ok === false) {
+      const stage = document.getElementById("prog-stage");
+      if (stage) stage.textContent = res.error || "فشل التثبيت — حاول مرة أخرى";
+      return;
+    }
     goStep(4);
   });
 
