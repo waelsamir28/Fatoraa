@@ -2,9 +2,9 @@
   "name": "fatora-setup",
   "productName": "FATORA Setup",
   "version": "1.9.1",
-  "description": "مثبّت FATORA — نمط Windows 11 (Electron)",
+  "description": "FATORA — للأنشطة التجارية (Electron)",
   "main": "main.js",
-  "author": "FATORA - 01222355769",
+  "author": "WAEL SAMIR | 01222355769",
   "license": "UNLICENSED",
   "private": true
 }
