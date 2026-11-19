@@ -295,6 +295,7 @@ ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "table_header_color" text DEFAUL
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_bg_url" text DEFAULT '' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "custom_logo_url" text DEFAULT '' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "phone2" text DEFAULT '' NOT NULL;
+ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "expiry_date" text DEFAULT '' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_big_title" boolean DEFAULT true NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_logo" boolean DEFAULT true NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "show_online_dot" boolean DEFAULT true NOT NULL;
