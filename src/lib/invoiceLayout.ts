@@ -14,6 +14,14 @@ export interface InvoiceLayout {
   templateName: string;
   /** اللون الأساسي للفاتورة */
   accent: string;
+  /** لون خلفية رأس الجدول */
+  tableHeaderBg?: string;
+  /** لون نص رأس الجدول */
+  tableHeaderText?: string;
+  /** لون حدود الجدول */
+  tableBorderColor?: string;
+  /** تظليل الصفوف المتبادل */
+  zebraRows?: boolean;
   /** حجم الخط بالنسبة المئوية 70..140 */
   scale: number;
   /** نص الترويسة الإضافي فوق البيانات */

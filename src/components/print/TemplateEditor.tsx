@@ -232,6 +232,57 @@ export function TemplateEditor({ onClose }: { onClose: () => void }) {
 
           {inv && (
             <div className="space-y-3">
+              {/* تصميم مخصص للألوان والجدول */}
+              <div className="rounded-xl border border-[#c9d8ee] bg-white p-3 space-y-2.5">
+                <div className="text-[13px] font-black text-[#0b2350]">تصميم الألوان والجدول</div>
+                <div className="grid grid-cols-2 gap-2 text-[11.5px] font-bold text-[#354b6e]">
+                  <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5">
+                    <span>لون الهيدر</span>
+                    <input
+                      type="color"
+                      value={layout.accent || "#0f2e5a"}
+                      onChange={(e) => setLayout({ ...layout, accent: e.target.value })}
+                      className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5">
+                    <span>رأس الجدول</span>
+                    <input
+                      type="color"
+                      value={layout.tableHeaderBg || layout.accent || "#0f2e5a"}
+                      onChange={(e) => setLayout({ ...layout, tableHeaderBg: e.target.value })}
+                      className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5">
+                    <span>نص الجدول</span>
+                    <input
+                      type="color"
+                      value={layout.tableHeaderText || "#ffffff"}
+                      onChange={(e) => setLayout({ ...layout, tableHeaderText: e.target.value })}
+                      className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-2 py-1.5">
+                    <span>حدود الجدول</span>
+                    <input
+                      type="color"
+                      value={layout.tableBorderColor || "#cbd5e1"}
+                      onChange={(e) => setLayout({ ...layout, tableBorderColor: e.target.value })}
+                      className="h-6 w-8 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                  </label>
+                </div>
+                <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11.5px] font-bold text-[#354b6e]">
+                  <span>تظليل الصفوف المتبادل في الجدول</span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(layout.zebraRows)}
+                    onChange={(e) => setLayout({ ...layout, zebraRows: e.target.checked })}
+                    className="h-4 w-4 accent-[#0067c0]"
+                  />
+                </label>
+              </div>
               {/* القوالب الجاهزة */}
               <section className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white">
                 <div className="flex items-center gap-2 bg-[#0f2942] px-3 py-1.5 text-[13.5px] font-black text-white">
