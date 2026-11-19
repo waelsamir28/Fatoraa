@@ -146,7 +146,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [native, setNative] = useState(false);
   const [nativeMax, setNativeMax] = useState(true);
-  const [maximized, setMaximized] = useState(true);
+  const [maximized, setMaximized] = useState(false);
   const [minimized, setMinimizedState] = useState(false);
   const [, setWindowTitle] = useState(APP_NAME);
   const [dialog, setDialog] = useState<DialogState | null>(null);
@@ -232,7 +232,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       native,
-      maximized: native ? true : maximized,
+      maximized,
       showRestore: native ? nativeMax : maximized,
       toggleMaximized,
       minimized: native ? minimized : false,
