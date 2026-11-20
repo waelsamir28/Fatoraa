@@ -31,7 +31,15 @@ export async function GET(req: Request) {
     const { db } = await import("@/db");
     const { sql } = await import("drizzle-orm");
     await db.execute(sql`select 1`);
-    return Response.json({ ok: true, dbMode: isPglite ? "local-pglite" : "cloud-postgres" });
+    return Response.json(
+    { ok: true, dbMode: isPglite ? "local-pglite" : "cloud-postgres" },
+    {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      },
+    },
+  );
   } catch {
     return Response.json({ ok: false }, { status: 500 });
   }
