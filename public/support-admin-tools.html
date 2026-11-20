@@ -2,145 +2,170 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <title>FATORA — أداة التحكم بالتراخيص والأجهزة</title>
+  <title>FATORA — أداة الدعم الفني والتراخيص</title>
   <style>
-    * { box-sizing: border-box; font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
-    body { margin: 0; background: #0b192c; color: #e2e8f0; display: flex; flex-direction: column; min-height: 100vh; }
-    header {
-      background: linear-gradient(90deg, #0f2942 0%, #0067c0 100%);
-      padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 2px solid #2fb3a6; box-shadow: 0 4px 20px rgba(0,0,0,.35);
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Cairo", "Segoe UI", Tahoma, sans-serif; }
+    html, body {
+      width: 950px; height: 550px; overflow: hidden; background: #0b192c; color: #e2e8f0;
+      display: flex; flex-direction: column;
     }
-    header h1 { margin: 0; font-size: 16px; font-weight: 900; color: #fff; }
-    header span { font-size: 11px; color: #bae6fd; font-weight: 700; }
-    main { flex: 1; padding: 18px; max-width: 1060px; width: 100%; margin: 0 auto; }
+    header {
+      height: 50px; shrink: 0;
+      background: linear-gradient(90deg, #0f2942 0%, #0067c0 100%);
+      padding: 0 18px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid #2fb3a6;
+    }
+    header h1 { font-size: 15px; font-weight: 900; color: #fff; }
+    #status { font-size: 11.5px; font-weight: 800; color: #bae6fd; background: rgba(0,0,0,.25); padding: 4px 10px; border-radius: 99px; }
+
+    main { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
     .conn-bar {
-      display: grid; grid-template-columns: 1fr 240px auto; gap: 10px;
-      background: #11223a; padding: 12px; border-radius: 12px; border: 1px solid #1e3a5f; margin-bottom: 14px;
+      display: flex; gap: 10px; align-items: center;
+      background: #11223a; padding: 8px 12px; border-radius: 10px; border: 1px solid #1e3a5f;
     }
     input {
       height: 36px; border-radius: 8px; border: 1px solid #2b4c7e; background: #091526;
       color: #fff; padding: 0 12px; font-size: 12.5px; outline: none;
     }
     input:focus { border-color: #2fb3a6; }
+    .tabs { display: flex; gap: 10px; }
     .btn {
-      height: 36px; padding: 0 16px; border: 0; border-radius: 8px; font-weight: 800;
-      font-size: 12.5px; cursor: pointer; color: #fff; background: #0067c0;
+      width: 180px; height: 50px; border: 0; border-radius: 10px; font-weight: 900;
+      font-size: 13px; cursor: pointer; color: #fff; background: #162e4d; border: 1px solid #2b4c7e;
+      transition: filter .15s;
     }
-    .btn:hover { filter: brightness(1.1); }
-    .btn-green { background: #0f7b0f; }
-    .btn-red { background: #c42b1c; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab { padding: 8px 18px; border-radius: 8px; background: #11223a; color: #94a3b8; border: 1px solid #1e3a5f; cursor: pointer; font-weight: 800; font-size: 13px; }
-    .tab.active { background: #0067c0; color: #fff; border-color: #38bdf8; }
-    .panel { background: #11223a; border: 1px solid #1e3a5f; border-radius: 12px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    th { background: #0c1a2e; color: #93c5fd; padding: 10px; text-align: right; font-weight: 800; }
-    td { padding: 9px 10px; border-top: 1px solid #1e3a5f; }
-    .badge { padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 800; }
+    .btn:hover { filter: brightness(1.12); }
+    .btn.active { background: #0067c0; border-color: #38bdf8; }
+    .btn-green { background: #0f7b0f; border-color: #22c55e; }
+    .btn-red { background: #c42b1c; border-color: #ef4444; width: auto; height: 30px; padding: 0 12px; font-size: 11.5px; }
+    .btn-sm { width: auto; height: 30px; padding: 0 12px; font-size: 11.5px; }
+
+    .panel {
+      flex: 1; background: #11223a; border: 1px solid #1e3a5f; border-radius: 10px;
+      padding: 10px; overflow: hidden; display: none; flex-direction: column;
+    }
+    .panel.active { display: flex; }
+    .table-wrap { flex: 1; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #0c1a2e; color: #93c5fd; padding: 8px 10px; text-align: right; position: sticky; top: 0; }
+    td { padding: 7px 10px; border-top: 1px solid #1e3a5f; }
+    .badge { padding: 2px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 800; }
     .badge-on { background: #064e3b; color: #6ee7b7; }
     .badge-off { background: #7f1d1d; color: #fca5a5; }
+
+    .lic-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 6px; }
+    .lic-card { background: #0c1a2e; border: 1px solid #1e3a5f; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .lic-out { font-family: monospace; font-size: 15px; font-weight: 900; color: #38bdf8; background: #07101d; padding: 10px; border-radius: 8px; text-align: center; direction: ltr; }
+
     footer {
-      background: #081220; border-top: 1px solid #1e3a5f; padding: 8px 20px;
-      display: flex; justify-content: space-between; font-size: 11px; color: #64748b;
+      height: 30px; shrink: 0; background: #081220; border-top: 1px solid #1e3a5f;
+      padding: 0 18px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: #94a3b8; font-weight: 700;
     }
   </style>
 </head>
 <body>
   <header>
-    <div>
-      <h1>FATORA — أداة التحكم بالتراخيص والأجهزة</h1>
-      <span>تحكم مباشر عن بُعد عبر API بدون فتح الموقع</span>
-    </div>
+    <h1>FATORA — أداة الدعم الفني والتراخيص</h1>
     <span id="status">غير متصل</span>
   </header>
 
   <main>
     <div class="conn-bar">
-      <input id="base-url" type="url" value="https://fatoraa-seven.vercel.app" dir="ltr" placeholder="رابط الموقع" />
-      <input id="api-key" type="password" value="FATORA-SUPPORT-2026" dir="ltr" placeholder="مفتاح الدعم الفني" />
-      <button class="btn btn-green" onclick="loadData()">اتصال وتحديث</button>
+      <input id="base-url" type="url" value="https://fatoraa-seven.vercel.app" dir="ltr" style="flex:1" placeholder="رابط الموقع" />
+      <input id="api-key" type="password" value="FATORA-SUPPORT-2026" dir="ltr" style="width:210px" placeholder="كلمة مرور الأداة" />
+      <button class="btn btn-green" style="height:36px;width:150px" onclick="loadData()">اتصال وتحديث</button>
     </div>
 
     <div class="tabs">
-      <button class="tab active" id="t-dev" onclick="showTab('dev')">الأجهزة (<span id="c-dev">0</span>)</button>
-      <button class="tab" id="t-lic" onclick="showTab('lic')">التراخيص (<span id="c-lic">0</span>)</button>
+      <button class="btn active" id="t-dev" onclick="showTab('dev')">الأجهزة (<span id="c-dev">0</span>)</button>
+      <button class="btn" id="t-lic" onclick="showTab('lic')">التراخيص (<span id="c-lic">0</span>)</button>
+      <button class="btn" id="t-act" onclick="showTab('act')">تفعيل البرنامج</button>
     </div>
 
-    <div class="panel" id="p-dev">
-      <table>
-        <thead><tr><th>#</th><th>الجهاز</th><th>المعرّف</th><th>الحالة</th><th>إجراء</th></tr></thead>
-        <tbody id="tb-dev"><tr><td colspan="5" style="text-align:center;color:#64748b">اضغط اتصال وتحديث لتحميل البيانات</td></tr></tbody>
-      </table>
+    <div class="panel active" id="p-dev">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>الجهاز</th><th>المعرّف</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody id="tb-dev"><tr><td colspan="5" style="text-align:center;color:#64748b">اضغط اتصال وتحديث لتحميل الأجهزة</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="panel" id="p-lic" style="display:none">
-      <table>
-        <thead><tr><th>#</th><th>كود الترخيص</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead>
-        <tbody id="tb-lic"></tbody>
-      </table>
+    <div class="panel" id="p-lic">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>كود الترخيص</th><th>النوع</th><th>الحالة</th><th>إجراء</th></tr></thead>
+          <tbody id="tb-lic"><tr><td colspan="5" style="text-align:center;color:#64748b">لا توجد تراخيص محمّلة</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel" id="p-act">
+      <div class="lic-box">
+        <div class="lic-card">
+          <b style="font-size:13.5px;color:#93c5fd">توليد كود تفعيل (HMAC)</b>
+          <input id="req-code" dir="ltr" placeholder="كود الطلب مثال: FAT-1234-5678-9012" />
+          <input id="plan-letter" dir="ltr" value="P" maxlength="1" placeholder="حرف الباقة (P / Y / M)" />
+          <button class="btn btn-green" style="width:100%;height:40px" onclick="genKey()">توليد كود التفعيل</button>
+        </div>
+        <div class="lic-card">
+          <b style="font-size:13.5px;color:#93c5fd">كود التفعيل الناتج</b>
+          <div class="lic-out" id="gen-out">---- ---- ---- ----</div>
+          <button class="btn" style="width:100%;height:40px" onclick="copyKey()">نسخ الكود</button>
+        </div>
+      </div>
     </div>
   </main>
 
   <footer>
-    <span>FATORA Support Control Tool v2.0</span>
-    <span>مخصص للاستخدام الإداري فقط</span>
+    <span>الدعم الفني</span>
+    <span>كلمة مرور الأداة: FATORA-SUPPORT-2026</span>
   </footer>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    function cfg() {
-      return {
-        base: $("base-url").value.replace(/\/+$/, ""),
-        key: $("api-key").value.trim(),
-      };
-    }
     function showTab(t) {
-      $("p-dev").style.display = t === "dev" ? "block" : "none";
-      $("p-lic").style.display = t === "lic" ? "block" : "none";
-      $("t-dev").classList.toggle("active", t === "dev");
-      $("t-lic").classList.toggle("active", t === "lic");
+      ["dev", "lic", "act"].forEach((k) => {
+        $("p-" + k).classList.toggle("active", k === t);
+        $("t-" + k).classList.toggle("active", k === t);
+      });
     }
     async function loadData() {
-      const { base, key } = cfg();
+      const base = $("base-url").value.replace(/\/+$/, "");
+      const key = $("api-key").value.trim();
       $("status").textContent = "جاري الاتصال...";
       try {
         const res = await fetch(base + "/api/support/remote", { headers: { "x-support-key": key } });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "فشل الاتصال");
         $("status").textContent = "متصل ✓";
-        const devs = data.devices || [];
-        const lics = data.licenses || [];
+        const devs = data.devices || [], lics = data.licenses || [];
         $("c-dev").textContent = devs.length;
         $("c-lic").textContent = lics.length;
-        $("tb-dev").innerHTML = devs.map((d) => `
-          <tr>
-            <td>${d.id}</td>
-            <td>${d.name || d.machineName || "-"}</td>
-            <td dir="ltr">${d.machineId || d.fingerprint || "-"}</td>
-            <td><span class="badge ${d.active ? "badge-on" : "badge-off"}">${d.active ? "مفعّل" : "موقوف"}</span></td>
-            <td><button class="btn ${d.active ? "btn-red" : "btn-green"}" onclick="toggleItem('toggle-device', ${d.id}, ${!d.active})">${d.active ? "إيقاف" : "تفعيل"}</button></td>
-          </tr>`).join("") || '<tr><td colspan="5" style="text-align:center">لا توجد أجهزة</td></tr>';
-        $("tb-lic").innerHTML = lics.map((l) => `
-          <tr>
-            <td>${l.id}</td>
-            <td dir="ltr">${l.key || l.code || "-"}</td>
-            <td>${l.plan || "-"}</td>
-            <td><span class="badge ${l.active ? "badge-on" : "badge-off"}">${l.active ? "نشط" : "معطّل"}</span></td>
-            <td><button class="btn ${l.active ? "btn-red" : "btn-green"}" onclick="toggleItem('toggle-license', ${l.id}, ${!l.active})">${l.active ? "تعطيل" : "تفعيل"}</button></td>
-          </tr>`).join("") || '<tr><td colspan="5" style="text-align:center">لا توجد تراخيص</td></tr>';
-      } catch (e) {
-        $("status").textContent = "خطأ: " + e.message;
-      }
+        $("tb-dev").innerHTML = devs.map((d) => `<tr><td>${d.id}</td><td>${d.name || d.machineName || "-"}</td><td dir="ltr">${d.machineId || d.fingerprint || "-"}</td><td><span class="badge ${d.active ? "badge-on" : "badge-off"}">${d.active ? "مفعّل" : "موقوف"}</span></td><td><button class="btn btn-sm ${d.active ? "btn-red" : "btn-green"}" onclick="toggleItem('toggle-device',${d.id},${!d.active})">${d.active ? "إيقاف" : "تفعيل"}</button></td></tr>`).join("") || '<tr><td colspan="5" style="text-align:center">لا توجد أجهزة</td></tr>';
+        $("tb-lic").innerHTML = lics.map((l) => `<tr><td>${l.id}</td><td dir="ltr">${l.key || l.code || "-"}</td><td>${l.plan || "-"}</td><td><span class="badge ${l.active ? "badge-on" : "badge-off"}">${l.active ? "نشط" : "معطّل"}</span></td><td><button class="btn btn-sm ${l.active ? "btn-red" : "btn-green"}" onclick="toggleItem('toggle-license',${l.id},${!l.active})">${l.active ? "تعطيل" : "تفعيل"}</button></td></tr>`).join("") || '<tr><td colspan="5" style="text-align:center">لا توجد تراخيص</td></tr>';
+      } catch (e) { $("status").textContent = "خطأ: " + e.message; }
     }
     async function toggleItem(action, id, active) {
-      const { base, key } = cfg();
-      await fetch(base + "/api/support/remote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-support-key": key },
-        body: JSON.stringify({ action, id, active }),
-      });
+      const base = $("base-url").value.replace(/\/+$/, ""), key = $("api-key").value.trim();
+      await fetch(base + "/api/support/remote", { method: "POST", headers: { "Content-Type": "application/json", "x-support-key": key }, body: JSON.stringify({ action, id, active }) });
       loadData();
+    }
+    async function genKey() {
+      const req = $("req-code").value.trim().toUpperCase();
+      const letter = ($("plan-letter").value.trim().toUpperCase() || "P")[0];
+      if (!req) return alert("أدخل كود الطلب");
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey("raw", enc.encode("WAEL_ALGAMMAL_FATORA_2026_PRO"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const sig = await crypto.subtle.sign("HMAC", key, enc.encode(req + "|" + letter));
+      const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+      const code = `${hex.slice(0,4)}-${hex.slice(4,8)}-${hex.slice(8,12)}-${hex.slice(12,15)}${letter}`;
+      $("gen-out").textContent = code;
+    }
+    function copyKey() {
+      navigator.clipboard.writeText($("gen-out").textContent);
+      alert("تم نسخ كود التفعيل");
     }
   </script>
 </body>
