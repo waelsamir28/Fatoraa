@@ -166,6 +166,36 @@ export const DEFAULT_LAYOUT: InvoiceLayout = {
 /** قوالب جاهزة يمكن البدء منها */
 export const TEMPLATE_PRESETS: { key: string; label: string; hint: string; layout: Partial<InvoiceLayout> }[] = [
   {
+    key: "template-a5-bw-1",
+    label: "A5 أبيض وأسود — رسمي",
+    hint: "لوجو بالمنتصف، جدول وفواصل واضحة للطباعة الليزر",
+    layout: { paper: "a5", accent: "#000000", tableHeaderBg: "#000000", tableHeaderText: "#ffffff", tableBorderColor: "#000000", showBorder: true, headerAlign: "center", zebraRows: false },
+  },
+  {
+    key: "template-a5-bw-2",
+    label: "A5 أبيض وأسود — مخطط",
+    hint: "لوجو بالمنتصف مع تظليل رمادي خفيف للصفوف",
+    layout: { paper: "a5", accent: "#111827", tableHeaderBg: "#1f2937", tableHeaderText: "#ffffff", tableBorderColor: "#374151", showBorder: true, headerAlign: "center", zebraRows: true },
+  },
+  {
+    key: "template-a5-royal",
+    label: "A5 أزرق ملكي — لوجو بالمنتصف",
+    hint: "ترويسة زرقاء أنيقة وجدول بفواصل كاملة",
+    layout: { paper: "a5", accent: "#0067c0", tableHeaderBg: "#0067c0", tableHeaderText: "#ffffff", tableBorderColor: "#93c5fd", showBorder: true, headerAlign: "center", zebraRows: true },
+  },
+  {
+    key: "template-a5-emerald",
+    label: "A5 أخضر زمردي — لوجو بالمنتصف",
+    hint: "إطار أخضر هادئ وجدول منسق",
+    layout: { paper: "a5", accent: "#0f7b0f", tableHeaderBg: "#0f7b0f", tableHeaderText: "#ffffff", tableBorderColor: "#86efac", showBorder: true, headerAlign: "center", zebraRows: true },
+  },
+  {
+    key: "template-a5-navy",
+    label: "A5 كحلي فخم — لوجو بالمنتصف",
+    hint: "ترويسة كحلية رسمية مع حدود واضحة",
+    layout: { paper: "a5", accent: "#0f2942", tableHeaderBg: "#0f2942", tableHeaderText: "#ffffff", tableBorderColor: "#94a3b8", showBorder: true, headerAlign: "center", zebraRows: false },
+  },
+  {
     key: "template-modern-a5",
     label: "① عصري — إطار ملوّن",
     hint: "ترويسة ملوّنة ورقم فاتورة بارز",

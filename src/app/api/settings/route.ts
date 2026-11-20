@@ -38,12 +38,12 @@ export function PUT(req: Request) {
           "classic-blue",
           "sky-blue",
           "steel-blue",
-          "sage-green",
-          "warm-sand",
-          "muted-purple",
-          "soft-teal",
-          "slate-gray",
-          "dusty-rose",
+          "win8-gray",
+          "win8-aqua",
+          "win8-charcoal",
+          "grad-teal-green",
+          "grad-charcoal-silver",
+          "grad-amber-coral",
         ].includes(str(b.theme))
           ? str(b.theme)
           : "classic-blue",

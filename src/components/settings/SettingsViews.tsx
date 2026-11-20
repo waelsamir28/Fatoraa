@@ -587,55 +587,6 @@ export function SettingsForm() {
                   </div>
 
                   {/* ===== مصمم الأزرار الكامل ===== */}
-                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
-                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
-                      <Sliders className="h-4 w-4 text-[#f5c518]" />
-                      حركة الأزرار واستدارة الحواف
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 p-3 md:grid-cols-2">
-                      <div>
-                        <span className="form-label mb-1.5 block">حركة الأزرار (٦ حركات بدون تغيير اللون)</span>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            ["none", "بدون حركة"],
-                            ["scale", "تكبير خفيف"],
-                            ["lift", "رفع لأعلى"],
-                            ["pulse", "نبض"],
-                            ["shine", "لمعان"],
-                            ["press", "ضغط ناعم"],
-                          ].map(([k, label]) => (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => setBtn({ animation: k })}
-                              className={`rounded-lg border px-2 py-2 text-[12px] font-black transition ${
-                                btnOpts.animation === k
-                                  ? "border-2 border-[#0067c0] bg-[#eaf2fc] text-[#0067c0]"
-                                  : "border-slate-300 bg-white text-[#0c2340] hover:bg-slate-50"
-                              }`}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <span className="form-label">استدارة الحواف</span>
-                          <span className="num text-[12px] font-black text-[#0067c0]">{btnOpts.radius} px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={18}
-                          value={btnOpts.radius}
-                          onChange={(e) => setBtn({ radius: Number(e.target.value) })}
-                          className="w-full accent-[#0067c0]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
                   {/* ===== الجداول: الترويسة وتحديد الصف ===== */}
                   <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
                     <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { parseScaleBarcode } from "@/lib/scaleBarcode";
+import { ExcessPaymentModal } from "./ExcessPaymentModal";
 import {
   useCallback,
   useEffect,
@@ -330,6 +331,7 @@ export function InvoiceEditor({
 
   const [saving, setSaving] = useState(false);
   const [excessAction, setExcessAction] = useState<"deduct" | "refund">("deduct");
+  const [excessPromptOpen, setExcessPromptOpen] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
   const [shareInvoice, setShareInvoice] = useState<Invoice | null>(null);
   const [clock, setClock] = useState("");
@@ -747,7 +749,11 @@ export function InvoiceEditor({
     }
   };
 
-  const save = async (): Promise<Invoice | null> => {
+  const save = async (forcedExcess?: "deduct" | "refund"): Promise<Invoice | null> => {
+    if (!forcedExcess && state.party.id && paidNum > totals.total) {
+      setExcessPromptOpen(true);
+      return null;
+    }
     if (saving) return null;
     if (!state.rows.length) {
       playError();
@@ -2198,6 +2204,26 @@ export function InvoiceEditor({
             setCategory(catName);
           }}
           onChanged={() => void loadProducts()}
+        />
+      )}
+      {excessPromptOpen && (
+        <ExcessPaymentModal
+          netTotal={totals.total}
+          paidAmount={paidNum}
+          partyName={state.party.name}
+          partyBalance={state.party.balance}
+          currency={settings?.currency || "ج.م"}
+          onRefundCash={() => {
+            setExcessAction("refund");
+            setExcessPromptOpen(false);
+            void save("refund");
+          }}
+          onDeductAccount={() => {
+            setExcessAction("deduct");
+            setExcessPromptOpen(false);
+            void save("deduct");
+          }}
+          onCancel={() => setExcessPromptOpen(false)}
         />
       )}
     </Window>
