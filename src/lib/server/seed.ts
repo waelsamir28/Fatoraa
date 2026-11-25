@@ -43,6 +43,7 @@ export const DEFAULT_SETTINGS = {
   invoiceTemplate: "template-modern-a5",
   invoiceLayout: "",
   fontScale: 100,
+  sidebarOptions: "",
 };
 
 type P = [

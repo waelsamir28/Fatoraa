@@ -64,6 +64,8 @@ export const settings = pgTable("settings", {
   fontWeight: text("font_weight").notNull().default("normal"),
   /** لون ترويسات الجداول — يتبع الثيم عند القيمة "theme" */
   tableHeaderFollowTheme: boolean("table_header_follow_theme").notNull().default(true),
+  /** تخصيص القائمة الجانبية العائمة والواجهة الرئيسية (JSON) */
+  sidebarOptions: text("sidebar_options").notNull().default(""),
   updatedAt: ts("updated_at"),
 });
 
