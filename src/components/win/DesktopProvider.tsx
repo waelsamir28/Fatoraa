@@ -232,7 +232,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       native,
-      maximized,
+      maximized: native ? true : maximized,
       showRestore: native ? nativeMax : maximized,
       toggleMaximized,
       minimized: native ? minimized : false,
@@ -245,7 +245,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       activeUser,
       setActiveUser,
     }),
-    [native, maximized, nativeMax, toggleMaximized, minimized, setMinimized, quitApp, msg, confirm, toast, activeUser],
+    [native, maximized, nativeMax, toggleMaximized, minimized, setMinimized, quitApp, msg, confirm, toast, activeUser, setActiveUser],
   );
 
   return (

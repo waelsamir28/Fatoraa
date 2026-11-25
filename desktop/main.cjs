@@ -329,17 +329,19 @@ function showSplashFallback() {
 function createMainWindow() {
   Menu.setApplicationMenu(null);
   const area = screen.getPrimaryDisplay().workAreaSize;
+  const winW = Math.min(1260, Math.max(980, Math.round(area.width * 0.88)));
+  const winH = Math.min(760, Math.max(620, Math.round(area.height * 0.86)));
   mainWindow = new BrowserWindow({
-    // تفتح دائمًا ممتلئة الشاشة (Maximized) كما طُلب
-    width: Math.min(1400, area.width),
-    height: Math.min(900, area.height),
+    width: winW,
+    height: winH,
     center: true,
     minWidth: 960,
     minHeight: 600,
-    // لا يوجد زر تصغير/تكبير للنافذة: البرنامج يفتح على كامل الشاشة دائماً
-    maximizable: false,
-    fullscreenable: false,
+    // زر التكبير يعمل للتبديل بين ملء الشاشة والوضع المصغّر المتمركز — مع إغلاق التحريك نهائياً
+    maximizable: true,
+    fullscreenable: true,
     resizable: false,
+    movable: false,
     show: false,
     frame: false,
     fullscreen: true,
@@ -367,50 +369,47 @@ function createMainWindow() {
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;
-    // ملء الشاشة الكامل — يغطي شريط مهام ويندوز ولا يوجد استعادة للأسفل
+    // يفتح على ملء الشاشة افتراضياً، ويمكن للمستخدم الضغط على زر التكبير/الاستعادة مع بقاء النافذة ثابتة غير قابلة للتحريك
     mainWindow.setFullScreen(true);
     mainWindow.setResizable(false);
-    mainWindow.setMaximizable(false);
-    // منع تحريك النافذة نهائيًا: البرنامج ثابت في مكانه على الشاشة
     mainWindow.setMovable(false);
-    mainWindow.maximize();
-    // حجم الخط الافتراضي 100% كما طُلب (كان 110%)
     mainWindow.webContents.setZoomFactor(1.0);
     mainWindow.show();
+    mainWindow.webContents.send("win:maximized", true);
     if (splash && !splash.isDestroyed()) splash.destroy();
   });
 
-  // ثبات نسبة التكبير 110% بعد كل تنقل (Next.js client-side navigation)
   mainWindow.webContents.on("did-finish-load", () => {
     try {
       mainWindow.webContents.setZoomFactor(1.0);
       mainWindow.setMovable(false);
+      mainWindow.webContents.send("win:maximized", mainWindow.isFullScreen() || mainWindow.isMaximized());
     } catch {
       /* ignore */
     }
   });
   mainWindow.on("maximize", () => mainWindow.webContents.send("win:maximized", true));
-  mainWindow.on("unmaximize", () => mainWindow.webContents.send("win:maximized", false));
-
-  /**
-   * منع «تصغير لأسفل» نهائياً:
-   * لو خرج البرنامج من ملء الشاشة بأي طريقة (F11 / سحب النافذة) يرجّعه فوراً.
-   */
-  // أي محاولة تحريك للنافذة تُلغى فورًا (ثابتة على الشاشة)
-  mainWindow.on("will-move", (e) => {
-    e.preventDefault();
+  mainWindow.on("unmaximize", () => mainWindow.webContents.send("win:maximized", mainWindow.isFullScreen()));
+  mainWindow.on("enter-full-screen", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.setMovable(false);
+    mainWindow.webContents.send("win:maximized", true);
   });
-
   mainWindow.on("leave-full-screen", () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
-    setTimeout(() => {
-      try {
-        mainWindow.setFullScreen(true);
-        mainWindow.setResizable(false);
-      } catch {
-        /* ignore */
-      }
-    }, 120);
+    try {
+      mainWindow.setResizable(false);
+      mainWindow.center();
+      mainWindow.setMovable(false);
+      mainWindow.webContents.send("win:maximized", mainWindow.isMaximized());
+    } catch {
+      /* ignore */
+    }
+  });
+
+  // أي محاولة تحريك للنافذة بالماوس أو النظام تُلغى فوراً (ثابتة في المنتصف دائماً)
+  mainWindow.on("will-move", (e) => {
+    e.preventDefault();
   });
 
   // تأكيد الخروج عند الضغط على Alt+F4 أو إغلاق من شريط المهام
@@ -761,31 +760,46 @@ ipcMain.handle("settings:clear-database", () => {
   return { ok: true, restartNeeded: true };
 });
 
-// البرنامج ملء الشاشة دائماً — التصغير يرجّع النافذة فوراً (بدون شريط مهام)
 ipcMain.on("win:minimize", () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   try {
-    mainWindow.setFullScreen(true);
-    mainWindow.focus();
+    mainWindow.minimize();
   } catch {
     /* ignore */
   }
 });
 ipcMain.on("win:toggle-maximize", () => {
-  // البرنامج دائم ملء الشاشة — لا يوجد تصغير/استعادة
-  if (!mainWindow) return;
-  if (mainWindow.isFullScreen()) {
-    mainWindow.webContents.send("win:maximized", true);
-    return;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const isFull = mainWindow.isFullScreen() || mainWindow.isMaximized();
+    if (isFull) {
+      if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      const area = screen.getPrimaryDisplay().workAreaSize;
+      const winW = Math.min(1260, Math.max(980, Math.round(area.width * 0.88)));
+      const winH = Math.min(760, Math.max(620, Math.round(area.height * 0.86)));
+      mainWindow.setSize(winW, winH);
+      mainWindow.center();
+      mainWindow.setResizable(false);
+      mainWindow.setMovable(false);
+      mainWindow.webContents.send("win:maximized", false);
+    } else {
+      mainWindow.setFullScreen(true);
+      mainWindow.setResizable(false);
+      mainWindow.setMovable(false);
+      mainWindow.webContents.send("win:maximized", true);
+    }
+  } catch {
+    /* ignore */
   }
-  if (mainWindow.isMaximized()) mainWindow.unmaximize();
-  else mainWindow.maximize();
 });
 ipcMain.on("app:quit", () => {
   quitting = true;
   app.quit();
 });
-ipcMain.handle("win:is-maximized", () => (mainWindow ? mainWindow.isMaximized() : false));
+ipcMain.handle("win:is-maximized", () =>
+  mainWindow ? mainWindow.isFullScreen() || mainWindow.isMaximized() : true,
+);
 
 async function start() {
   createSplash();
