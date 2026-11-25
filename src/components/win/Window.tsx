@@ -133,7 +133,7 @@ export function Window({
             : "h-[660px] max-h-[90vh] w-[1200px] max-w-[96vw] rounded-[16px] border-2 border-[#7fa6d1] overflow-hidden shadow-[0_30px_75px_-12px_rgba(4,18,42,0.58)]"
         }`}
       >
-      <div className="win-titlebar app-drag" dir="ltr" onDoubleClick={native ? undefined : toggleMaximized}>
+      <div className="win-titlebar" dir="ltr" onDoubleClick={toggleMaximized}>
         <div className="flex min-w-0 items-center gap-2 px-2.5">
           {/* زر أيقونة صغير لفتح القائمة الجانبية العائمة فوق الصفحة الحالية */}
           <button
@@ -176,24 +176,34 @@ export function Window({
             type="button"
             className="win-ctrl"
             onClick={() => {
-              if (!isFs && !maximized) toggleMaximized();
-              toggleFs();
+              if (native) {
+                toggleMaximized();
+              } else {
+                if (!isFs && !maximized) toggleMaximized();
+                toggleFs();
+              }
             }}
-            title={isFs ? "إنهاء ملء الشاشة (Esc)" : "تكبير ملء الشاشة (F11)"}
+            title={(native ? showRestore : isFs) ? "استعادة الحجم العادي" : "تكبير ملء الشاشة (F11)"}
           >
-            {isFs ? <Minimize2 className="h-3.5 w-3.5" strokeWidth={2.8} /> : <Maximize2 className="h-3.5 w-3.5" strokeWidth={2.8} />}
+            {(native ? showRestore : isFs) ? (
+              <Minimize2 className="h-3.5 w-3.5" strokeWidth={2.8} />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5" strokeWidth={2.8} />
+            )}
           </button>
           <span className="mx-1 my-2 w-px bg-white/30" />
-          {/* نسخة سطح المكتب: النافذة ملء الشاشة دائماً — لا تصغير ولا استعادة */}
-          {!native && (
-            <button type="button" className="win-ctrl" onClick={toggleMaximized} title={showRestore ? "استعادة" : "تكبير"}>
-              {showRestore ? (
-                <Copy className="h-[13px] w-[13px]" strokeWidth={2.6} />
-              ) : (
-                <Square className="h-[13px] w-[13px]" strokeWidth={2.8} />
-              )}
-            </button>
-          )}
+          <button
+            type="button"
+            className="win-ctrl"
+            onClick={toggleMaximized}
+            title={showRestore ? "تصغير / استعادة في المنتصف" : "تكبير ملء الشاشة"}
+          >
+            {showRestore ? (
+              <Copy className="h-[13px] w-[13px]" strokeWidth={2.6} />
+            ) : (
+              <Square className="h-[13px] w-[13px]" strokeWidth={2.8} />
+            )}
+          </button>
           <button type="button" className="win-ctrl close" onClick={handleClose} title="إغلاق">
             <X className="h-4 w-4" strokeWidth={3} />
           </button>

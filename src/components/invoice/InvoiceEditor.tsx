@@ -2010,7 +2010,7 @@ export function InvoiceEditor({
           {/* فاتورة جديدة */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0067c0] text-white text-[15px] font-black shadow-sm hover:bg-[#005a9e] cursor-pointer"
+            className="pos-action-btn pos-action-btn--print flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0067c0] text-white text-[15px] font-black shadow-sm hover:bg-[#005a9e] cursor-pointer"
             onClick={() => void newInvoice()}
           >
             <FilePlus2 className="h-5 w-5" strokeWidth={2.5} />
@@ -2020,7 +2020,7 @@ export function InvoiceEditor({
           {/* حفظ الفاتورة */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f7b0f] text-white text-[15px] font-black shadow-sm hover:bg-[#0c660c] disabled:opacity-50 cursor-pointer"
+            className="pos-action-btn pos-action-btn--save flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f7b0f] text-white text-[15px] font-black shadow-sm hover:bg-[#0c660c] disabled:opacity-50 cursor-pointer"
             onClick={() => void save()}
             disabled={saving}
           >
@@ -2031,7 +2031,7 @@ export function InvoiceEditor({
           {/* عرض المبيعات */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f6cbd] text-white text-[15px] font-black shadow-sm hover:bg-[#0d599b] cursor-pointer"
+            className="pos-action-btn pos-action-btn--print flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#0f6cbd] text-white text-[15px] font-black shadow-sm hover:bg-[#0d599b] cursor-pointer"
             onClick={() => void goTo(cfg.listHref)}
           >
             <BarChart3 className="h-5 w-5" strokeWidth={2.5} />
@@ -2041,7 +2041,7 @@ export function InvoiceEditor({
           {/* إلغاء الفاتورة */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#c42b1c] text-white text-[15px] font-black shadow-sm hover:bg-[#a52417] cursor-pointer"
+            className="pos-action-btn pos-action-btn--danger flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#c42b1c] text-white text-[15px] font-black shadow-sm hover:bg-[#a52417] cursor-pointer"
             onClick={() => void cancelInvoice()}
           >
             <X className="h-5 w-5" strokeWidth={3} />
@@ -2051,7 +2051,7 @@ export function InvoiceEditor({
           {/* تعليق الفاتورة */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#b45309] text-white text-[15px] font-black shadow-sm hover:bg-[#92400e] disabled:opacity-50 cursor-pointer"
+            className="pos-action-btn pos-action-btn--warn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#b45309] text-white text-[15px] font-black shadow-sm hover:bg-[#92400e] disabled:opacity-50 cursor-pointer"
             onClick={() => void holdDraft()}
             disabled={saving}
             title="حفظ الفاتورة معلقة بدون خصم من المخزون واستكمالها لاحقاً"
@@ -2063,7 +2063,7 @@ export function InvoiceEditor({
           {/* الفواتير المعلقة */}
           <button
             type="button"
-            className="pos-action-btn flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#5c2e91] text-white text-[15px] font-black shadow-sm hover:bg-[#4a2475] cursor-pointer"
+            className="pos-action-btn pos-action-btn--print flex h-[46px] items-center justify-center gap-2 rounded-xl bg-[#5c2e91] text-white text-[15px] font-black shadow-sm hover:bg-[#4a2475] cursor-pointer"
             onClick={() => void openDrafts()}
             title="عرض الفواتير المعلقة واستكمالها"
           >

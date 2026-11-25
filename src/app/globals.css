@@ -1200,8 +1200,9 @@ body {
     transform-origin: 0 0;
   }
   .app-drag {
-    -webkit-app-region: drag;
-    app-region: drag;
+    /* التحريك مغلق تماماً بناءً على طلب المستخدم */
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
   }
   .app-no-drag {
     -webkit-app-region: no-drag;
@@ -2916,48 +2917,192 @@ table, tbody, tr, td, th {
 }
 
 /* ==================================================================
-   تخصيص الأزرار الكامل — يتحكم فيه المستخدم من الإعدادات
-   html[data-anim] = حركة المرور، والمتغيرات --btn-* من applyUiPrefs
+   تخصيص الأزرار الفرعية الكامل (حفظ، طباعة، حذف، تعليق، الأزرار العامة...)
+   html[data-anim] = حركة الزر، والمتغيرات --btn-* من applyUiPrefs
    ================================================================== */
-html[data-btn-custom="1"] .btn,
-html[data-btn-custom="1"] .btn-blue,
-html[data-btn-custom="1"] .pay-btn {
+
+/* 1) الوضع الموحد: لون واحد لكل الأزرار */
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-blue,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-green,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-red,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-orange,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-teal,
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn-violet,
+html[data-btn-custom="1"][data-btn-mode="unified"] .pos-action-btn,
+html[data-btn-custom="1"][data-btn-mode="unified"] .pay-btn {
   background: var(--btn-bg) !important;
   color: var(--btn-text) !important;
   border-radius: var(--btn-radius) !important;
   border: var(--btn-border-w) solid var(--btn-border-color) !important;
   box-shadow: var(--btn-shadow) !important;
   font-weight: var(--btn-font-weight) !important;
-  transition: transform .16s ease, background-color .16s ease, box-shadow .16s ease, filter .16s ease;
+  transition: transform 0.17s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, box-shadow 0.16s ease, filter 0.15s ease;
 }
-html[data-btn-custom="1"] .btn:hover:not(:disabled),
-html[data-btn-custom="1"] .btn-blue:hover:not(:disabled),
-html[data-btn-custom="1"] .pay-btn:hover:not(:disabled) {
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn svg,
+html[data-btn-custom="1"][data-btn-mode="unified"] .pos-action-btn svg {
+  color: var(--btn-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="unified"] .pos-action-btn:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="unified"] .pay-btn:hover:not(:disabled) {
   background: var(--btn-bg-hover) !important;
 }
-html[data-btn-custom="1"] .btn:active:not(:disabled),
-html[data-btn-custom="1"] .btn-blue:active:not(:disabled),
-html[data-btn-custom="1"] .pay-btn:active:not(:disabled) {
+html[data-btn-custom="1"][data-btn-mode="unified"] .btn:active:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="unified"] .pos-action-btn:active:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="unified"] .pay-btn:active:not(:disabled) {
   background: var(--btn-bg-active) !important;
 }
 
-/* ---- الحركات ---- */
-html[data-anim="lift"] .btn:hover:not(:disabled) { transform: translateY(-2px); }
-html[data-anim="grow"] .btn:hover:not(:disabled) { transform: scale(1.04); }
-html[data-anim="press"] .btn:hover:not(:disabled) { transform: translateY(1px) scale(.985); }
-html[data-anim="pulse"] .btn:hover:not(:disabled) { animation: btnPulse 1.1s ease-in-out infinite; }
+/* 2) وضع التخصيص حسب دور كل زر (حفظ / طباعة / حذف / تعليق / ثانوي) */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn {
+  border-radius: var(--btn-radius) !important;
+  border: var(--btn-border-w) solid var(--btn-border-color) !important;
+  box-shadow: var(--btn-shadow) !important;
+  font-weight: var(--btn-font-weight) !important;
+  transition: transform 0.17s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, box-shadow 0.16s ease, filter 0.15s ease;
+}
+
+/* الأزرار الثانوية / العامة (مثل تراجع، تحديث، تصدير...) */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn:not(.btn-green):not(.btn-blue):not(.btn-teal):not(.btn-violet):not(.btn-red):not(.btn-orange) {
+  background: var(--btn-sec-bg) !important;
+  color: var(--btn-sec-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn:not(.btn-green):not(.btn-blue):not(.btn-teal):not(.btn-violet):not(.btn-red):not(.btn-orange):hover:not(:disabled) {
+  background: var(--btn-sec-hover) !important;
+}
+
+/* أزرار الحفظ والتأكيد */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-green,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--save {
+  background: var(--btn-save-bg) !important;
+  color: var(--btn-save-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-green svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--save svg {
+  color: var(--btn-save-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-green:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--save:hover:not(:disabled) {
+  background: var(--btn-save-hover) !important;
+}
+
+/* أزرار الطباعة والإضافة والعرض */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-blue,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-teal,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-violet,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--print {
+  background: var(--btn-print-bg) !important;
+  color: var(--btn-print-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-blue svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-teal svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-violet svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--print svg {
+  color: var(--btn-print-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-blue:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-teal:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-violet:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--print:hover:not(:disabled) {
+  background: var(--btn-print-hover) !important;
+}
+
+/* أزرار الحذف والإلغاء */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-red,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--danger {
+  background: var(--btn-danger-bg) !important;
+  color: var(--btn-danger-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-red svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--danger svg {
+  color: var(--btn-danger-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-red:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--danger:hover:not(:disabled) {
+  background: var(--btn-danger-hover) !important;
+}
+
+/* أزرار التعليق والتنبيهات الفرعية */
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-orange,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--warn {
+  background: var(--btn-warn-bg) !important;
+  color: var(--btn-warn-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-orange svg,
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--warn svg {
+  color: var(--btn-warn-text) !important;
+}
+html[data-btn-custom="1"][data-btn-mode="per-role"] .btn-orange:hover:not(:disabled),
+html[data-btn-custom="1"][data-btn-mode="per-role"] .pos-action-btn--warn:hover:not(:disabled) {
+  background: var(--btn-warn-hover) !important;
+}
+
+/* ---- حركات الأزرار الفرعية (تعمل على .btn و .pos-action-btn في كل الشاشات) ---- */
+html[data-anim="none"] .btn:hover:not(:disabled),
+html[data-anim="none"] .pos-action-btn:hover:not(:disabled) {
+  transform: none !important;
+}
+html[data-anim="lift"] .btn:hover:not(:disabled),
+html[data-anim="lift"] .pos-action-btn:hover:not(:disabled) {
+  transform: translateY(-2.5px) !important;
+}
+html[data-anim="grow"] .btn:hover:not(:disabled),
+html[data-anim="grow"] .pos-action-btn:hover:not(:disabled) {
+  transform: scale(1.045) !important;
+}
+html[data-anim="press"] .btn:hover:not(:disabled),
+html[data-anim="press"] .pos-action-btn:hover:not(:disabled) {
+  transform: translateY(1px) scale(0.985) !important;
+}
+html[data-anim="bounce"] .btn:hover:not(:disabled),
+html[data-anim="bounce"] .pos-action-btn:hover:not(:disabled) {
+  animation: btnSpringBounce 0.42s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+@keyframes btnSpringBounce {
+  0% { transform: scale(1); }
+  45% { transform: translateY(-3px) scale(1.05); }
+  75% { transform: translateY(0.5px) scale(0.99); }
+  100% { transform: translateY(-1.5px) scale(1.02); }
+}
+html[data-anim="glow"] .btn:hover:not(:disabled),
+html[data-anim="glow"] .pos-action-btn:hover:not(:disabled) {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.32), 0 8px 18px -4px rgba(15, 41, 66, 0.28) !important;
+}
+html[data-anim="pulse"] .btn:hover:not(:disabled),
+html[data-anim="pulse"] .pos-action-btn:hover:not(:disabled) {
+  animation: btnPulse 1.05s ease-in-out infinite !important;
+}
 @keyframes btnPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.035); }
+  50% { transform: scale(1.038); }
 }
-html[data-anim="shine"] .btn { position: relative; overflow: hidden; }
-html[data-anim="shine"] .btn::after {
-  content: ""; position: absolute; top: 0; bottom: 0; width: 45%;
-  left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent);
-  transform: skewX(-18deg); pointer-events: none;
+html[data-anim="shine"] .btn,
+html[data-anim="shine"] .pos-action-btn {
+  position: relative;
+  overflow: hidden;
 }
-html[data-anim="shine"] .btn:hover::after { animation: btnShine .75s ease; }
-@keyframes btnShine { to { left: 130%; } }
+html[data-anim="shine"] .btn::after,
+html[data-anim="shine"] .pos-action-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 45%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+}
+html[data-anim="shine"] .btn:hover::after,
+html[data-anim="shine"] .pos-action-btn:hover::after {
+  animation: btnShine 0.72s ease;
+}
+@keyframes btnShine {
+  to { left: 130%; }
+}
 
 /* ==================================================================
    ترويسات الجداول: تتبع الثيم أو لون مخصص + لون تحديد الصف

@@ -38,6 +38,8 @@ import { BANNER_SPEC, RAIL_SPEC, imageSize, pxToCm, ratioText, resizeDataUrl } f
 import type { BackupPreview } from "@/lib/backup-preview";
 import type { Settings } from "@/lib/types";
 import {
+  BUTTON_MOTIONS,
+  BUTTON_PRESETS,
   BUTTON_STYLES,
   DEFAULT_BUTTONS,
   DEFAULT_SIDEBAR,
@@ -105,7 +107,7 @@ export function SettingsForm() {
   const [f, setF] = useState<SForm | null>(null);
   const [savedForm, setSavedForm] = useState<SForm | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"appearance" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks">("appearance");
+  const [tab, setTab] = useState<"appearance" | "buttons" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks">("appearance");
   const [editorOpen, setEditorOpen] = useState(false);
   // تخصيص الأزرار (يعمل على القيم المحفوظة في النموذج)
   const btnOpts: ButtonOptions = (() => {
@@ -213,6 +215,7 @@ export function SettingsForm() {
     try {
       const sp = new URLSearchParams(window.location.search);
       if (sp.get("tab") === "sidebar") setTab("sidebar");
+      if (sp.get("tab") === "buttons") setTab("buttons");
     } catch {
       /* ignore */
     }
@@ -342,9 +345,10 @@ export function SettingsForm() {
   const scale = Number(f?.fontScale ?? prefs.fontScale ?? 100);
 
   // ===== تبويبات الإعدادات =====
-  type TabKey = "appearance" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks";
+  type TabKey = "appearance" | "buttons" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks";
   const TABS: { key: TabKey; label: string; hint: string }[] = [
     { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والجداول" },
+    { key: "buttons", label: "الأزرار الفرعية", hint: "تلوين وحركة حفظ وطباعة" },
     { key: "sidebar", label: "القائمة والرئيسية", hint: "حركة وألوان القائمة وكروت Win11" },
     { key: "store", label: "بيانات المحل", hint: "الاسم والهاتف والعنوان والضريبة" },
     { key: "invoices", label: "قوالب الفواتير", hint: "القالب والمقاس والتذييل" },
@@ -387,7 +391,7 @@ export function SettingsForm() {
               <div className="flex flex-col">
                 <span className="text-[16.5px] font-black">إعدادات البرنامج</span>
                 <span className="text-[11.5px] font-bold text-blue-200">
-                  7 أقسام — اختر القسم من التبويبات بالأسفل
+                  8 أقسام — اختر القسم من التبويبات بالأسفل
                 </span>
               </div>
               <div className="ms-auto flex flex-wrap items-center gap-1.5">
@@ -944,6 +948,356 @@ export function SettingsForm() {
                           >
                             فتح القائمة الحقيقية الآن
                           </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------- تخصيص الأزرار الفرعية بالكامل (حفظ، طباعة، حذف، تعليق...) ---------- */}
+              {tab === "buttons" && (
+                <div className="space-y-3">
+                  {/* معاينة تفاعلية حية للأزرار الفرعية */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <span className="flex items-center gap-2">
+                        <Palette className="h-4 w-4 text-[#f5c518]" />
+                        معاينة حية للأزرار الفرعية (مرّر الماوس واضغط للتجربة)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setVisual({ buttonOptions: JSON.stringify(DEFAULT_BUTTONS), buttonStyle: "glossy-3d" })}
+                        className="rounded-md bg-white/15 px-2.5 py-0.5 text-[11.5px] font-black text-white hover:bg-white/25"
+                      >
+                        استعادة افتراضي الأزرار
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <div className="flex flex-wrap items-center justify-center gap-2.5 rounded-xl border border-[#dbe7f6] bg-[#f4f8fd] p-3.5">
+                        <button type="button" className="btn btn-green h-[38px] px-4 text-[13.5px]">
+                          <Save className="h-4 w-4" />
+                          <span>حفظ الفاتورة</span>
+                        </button>
+                        <button type="button" className="btn btn-blue h-[38px] px-4 text-[13.5px]">
+                          <span>🖨 طباعة الفاتورة</span>
+                        </button>
+                        <button type="button" className="btn btn-red h-[38px] px-4 text-[13.5px]">
+                          <Trash2 className="h-4 w-4" />
+                          <span>حذف / إلغاء</span>
+                        </button>
+                        <button type="button" className="btn btn-orange h-[38px] px-4 text-[13.5px]">
+                          <span>⏳ تعليق الفاتورة</span>
+                        </button>
+                        <button type="button" className="btn h-[38px] px-4 text-[13.5px]">
+                          <RotateCcw className="h-4 w-4" />
+                          <span>تراجع / زر فرعي</span>
+                        </button>
+                      </div>
+
+                      {/* ستايلات جاهزة سريعة */}
+                      <div className="mt-3">
+                        <span className="form-label">قوالب ألوان وحركات جاهزة للأزرار (اضغط للتطبيق السريع)</span>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                          {BUTTON_PRESETS.map((pr) => (
+                            <button
+                              key={pr.key}
+                              type="button"
+                              onClick={() => setBtn(pr.patch)}
+                              className="flex flex-col gap-1.5 rounded-lg border-2 border-slate-200 bg-white p-2 text-right transition hover:border-[#0067c0] hover:bg-[#f8fbff]"
+                            >
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className="h-4 w-5 rounded border border-black/10"
+                                  style={{ background: pr.patch.colorMode === "unified" ? pr.patch.color : pr.patch.saveBg }}
+                                />
+                                <span
+                                  className="h-4 w-5 rounded border border-black/10"
+                                  style={{ background: pr.patch.colorMode === "unified" ? pr.patch.hoverColor : pr.patch.printBg }}
+                                />
+                                <span
+                                  className="h-4 w-5 rounded border border-black/10"
+                                  style={{ background: pr.patch.colorMode === "unified" ? pr.patch.activeColor : pr.patch.dangerBg }}
+                                />
+                              </div>
+                              <span className="truncate text-[11.5px] font-black text-[#0f2942]">{pr.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* تلوين الأزرار وتلوين الكلام */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <span className="flex items-center gap-2">
+                        <Palette className="h-4 w-4 text-[#f5c518]" />
+                        تلوين الزر وتلوين الكلام (حفظ، طباعة، حذف، تعليق، زر فرعي)
+                      </span>
+                      <div className="flex items-center gap-1.5 rounded-lg bg-white/15 p-0.5 text-[11.5px]">
+                        <button
+                          type="button"
+                          onClick={() => setBtn({ colorMode: "per-role" })}
+                          className={`rounded-md px-2.5 py-0.5 font-black transition ${
+                            btnOpts.colorMode !== "unified" ? "bg-white text-[#0f2942]" : "text-white hover:bg-white/10"
+                          }`}
+                        >
+                          تخصيص كل زر على حدة
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBtn({ colorMode: "unified" })}
+                          className={`rounded-md px-2.5 py-0.5 font-black transition ${
+                            btnOpts.colorMode === "unified" ? "bg-white text-[#0f2942]" : "text-white hover:bg-white/10"
+                          }`}
+                        >
+                          لون موحّد لكل الأزرار
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3">
+                      {btnOpts.colorMode === "unified" ? (
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          {[
+                            { key: "color" as const, label: "لون الزر الأساسي" },
+                            { key: "hoverColor" as const, label: "لون الزر عند المرور" },
+                            { key: "activeColor" as const, label: "لون الزر عند الضغط" },
+                            { key: "textColor" as const, label: "لون الكلام والأيقونة" },
+                          ].map((c) => (
+                            <div
+                              key={c.key}
+                              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[#f8fafd] p-2.5"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-[12px] font-black text-[#0f2942]">{c.label}</div>
+                                <div className="num text-[10.5px] font-bold text-slate-500" dir="ltr">
+                                  {btnOpts[c.key]}
+                                </div>
+                              </div>
+                              <input
+                                type="color"
+                                value={btnOpts[c.key]}
+                                onChange={(e) => setBtn({ [c.key]: e.target.value })}
+                                className="h-9 w-12 shrink-0 cursor-pointer rounded border border-slate-300 bg-white p-0.5"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                          {[
+                            {
+                              title: "أزرار الحفظ والتأكيد (حفظ الفاتورة / واتساب / تطبيق)",
+                              bgKey: "saveBg" as const,
+                              hoverKey: "saveHover" as const,
+                              textKey: "saveText" as const,
+                            },
+                            {
+                              title: "أزرار الطباعة والإضافة (طباعة / فاتورة جديدة / إضافة)",
+                              bgKey: "printBg" as const,
+                              hoverKey: "printHover" as const,
+                              textKey: "printText" as const,
+                            },
+                            {
+                              title: "أزرار الحذف والإلغاء (حذف الفاتورة / إلغاء / مسح)",
+                              bgKey: "dangerBg" as const,
+                              hoverKey: "dangerHover" as const,
+                              textKey: "dangerText" as const,
+                            },
+                            {
+                              title: "أزرار التعليق والتنبيه (تعليق الفاتورة / استعادة)",
+                              bgKey: "warnBg" as const,
+                              hoverKey: "warnHover" as const,
+                              textKey: "warnText" as const,
+                            },
+                            {
+                              title: "الأزرار الفرعية العامة (تراجع / تحديث / تصدير / بحث)",
+                              bgKey: "secondaryBg" as const,
+                              hoverKey: "secondaryHover" as const,
+                              textKey: "secondaryText" as const,
+                            },
+                          ].map((role) => (
+                            <div
+                              key={role.bgKey}
+                              className="rounded-xl border border-[#dbe7f6] bg-[#f8fbff] p-2.5"
+                            >
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-[12.5px] font-black text-[#0f2942]">{role.title}</span>
+                                <span
+                                  className="rounded-md px-2.5 py-0.5 text-[11px] font-black shadow-2xs"
+                                  style={{
+                                    background: btnOpts[role.bgKey],
+                                    color: btnOpts[role.textKey],
+                                  }}
+                                >
+                                  معاينة الكلام
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                <label className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1">
+                                  <span className="text-[11px] font-bold text-slate-600">لون الزر</span>
+                                  <input
+                                    type="color"
+                                    value={btnOpts[role.bgKey]}
+                                    onChange={(e) => setBtn({ [role.bgKey]: e.target.value })}
+                                    className="h-7 w-9 cursor-pointer rounded border-0 bg-transparent p-0"
+                                  />
+                                </label>
+                                <label className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1">
+                                  <span className="text-[11px] font-bold text-slate-600">عند المرور</span>
+                                  <input
+                                    type="color"
+                                    value={btnOpts[role.hoverKey]}
+                                    onChange={(e) => setBtn({ [role.hoverKey]: e.target.value })}
+                                    className="h-7 w-9 cursor-pointer rounded border-0 bg-transparent p-0"
+                                  />
+                                </label>
+                                <label className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2 py-1">
+                                  <span className="text-[11px] font-bold text-slate-600">لون الكلام</span>
+                                  <input
+                                    type="color"
+                                    value={btnOpts[role.textKey]}
+                                    onChange={(e) => setBtn({ [role.textKey]: e.target.value })}
+                                    className="h-7 w-9 cursor-pointer rounded border-0 bg-transparent p-0"
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* حركة الزر + الشكل والحواف والحدود */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Sliders className="h-4 w-4 text-[#f5c518]" />
+                      حركة الزر، شكل الحواف، الحدود والظل
+                    </div>
+                    <div className="space-y-3 p-3">
+                      <div>
+                        <span className="form-label">حركة الزر عند مرور الماوس (8 حركات تفاعلية)</span>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                          {BUTTON_MOTIONS.map((m) => {
+                            const on = (btnOpts.animation || "lift") === m.key;
+                            return (
+                              <button
+                                key={m.key}
+                                type="button"
+                                onClick={() => setBtn({ animation: m.key })}
+                                className={`flex flex-col items-start rounded-xl border-2 p-2 text-right transition ${
+                                  on
+                                    ? "border-[#2fb3a6] bg-[#eefaf8] shadow-xs"
+                                    : "border-slate-200 bg-white hover:border-[#8fb3e0]"
+                                }`}
+                              >
+                                <div className="flex w-full items-center justify-between gap-1">
+                                  <span className="text-[12.5px] font-black text-[#0f2942]">{m.label}</span>
+                                  {on && <Check className="h-4 w-4 shrink-0 text-[#0f8f82]" strokeWidth={3.5} />}
+                                </div>
+                                <span className="mt-0.5 text-[10.5px] font-bold leading-4 text-slate-500">{m.hint}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {/* شكل الحواف */}
+                        <div className="rounded-xl border border-slate-200 bg-[#f8fafd] p-2.5">
+                          <span className="form-label">استدارة وشكل حواف الأزرار</span>
+                          <div className="mb-2 grid grid-cols-5 gap-1.5">
+                            {[
+                              { key: "sharp", label: "حادة", r: 0 },
+                              { key: "square", label: "مربعة", r: 3 },
+                              { key: "rounded", label: "متوسطة", r: 8 },
+                              { key: "soft", label: "ناعمة", r: 14 },
+                              { key: "pill", label: "كبسولة", r: 999 },
+                            ].map((sh) => {
+                              const on = btnOpts.shape === sh.key;
+                              return (
+                                <button
+                                  key={sh.key}
+                                  type="button"
+                                  onClick={() => setBtn({ shape: sh.key, radius: sh.r })}
+                                  className={`rounded-lg border-2 py-1.5 text-[11.5px] font-black transition ${
+                                    on ? "border-[#0067c0] bg-[#eff6ff] text-[#0067c0]" : "border-slate-200 bg-white text-slate-700"
+                                  }`}
+                                >
+                                  {sh.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="flex items-center justify-between text-[11.5px] font-bold text-slate-600">
+                            <span>تحكم حر في دائرية الحواف (Radius)</span>
+                            <span className="num font-black text-[#0f2942]">{btnOpts.radius}px</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={28}
+                            step={1}
+                            value={Math.min(28, btnOpts.radius ?? 8)}
+                            onChange={(e) => setBtn({ shape: "custom", radius: Number(e.target.value) })}
+                            className="mt-1 h-2 w-full cursor-pointer"
+                            style={{ accentColor: "#0067c0" }}
+                          />
+                        </div>
+
+                        {/* سُمك ولون الإطار + الظل والخط */}
+                        <div className="rounded-xl border border-slate-200 bg-[#f8fafd] p-2.5 space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <label className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+                              <span className="text-[11.5px] font-black text-[#0f2942]">لون إطار الزر</span>
+                              <input
+                                type="color"
+                                value={btnOpts.borderColor || "#cbdcf0"}
+                                onChange={(e) => setBtn({ borderColor: e.target.value })}
+                                className="h-7 w-9 cursor-pointer rounded border-0 bg-transparent p-0"
+                              />
+                            </label>
+                            <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+                              <div className="flex items-center justify-between text-[11px] font-black text-[#0f2942]">
+                                <span>سُمك الإطار</span>
+                                <span className="num">{btnOpts.borderWidth ?? 1}px</span>
+                              </div>
+                              <input
+                                type="range"
+                                min={0}
+                                max={4}
+                                step={1}
+                                value={btnOpts.borderWidth ?? 1}
+                                onChange={(e) => setBtn({ borderWidth: Number(e.target.value) })}
+                                className="h-1.5 w-full cursor-pointer"
+                                style={{ accentColor: "#0067c0" }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[12px] font-black text-[#0f2942]">
+                              <span>ظل بارز للأزرار</span>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4"
+                                checked={btnOpts.shadow !== false}
+                                onChange={(e) => setBtn({ shadow: e.target.checked })}
+                              />
+                            </label>
+                            <label className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[12px] font-black text-[#0f2942]">
+                              <span>خط عريض للكلام</span>
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4"
+                                checked={btnOpts.bold !== false}
+                                onChange={(e) => setBtn({ bold: e.target.checked })}
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
                     </div>

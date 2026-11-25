@@ -4,40 +4,208 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { api } from "@/lib/client";
 import type { Settings } from "@/lib/types";
 
-/** تخصيص الأزرار بالكامل — يُحفظ داخل Settings.buttonOptions كـ JSON */
+/** تخصيص الأزرار الفرعية بالكامل (حفظ، طباعة، حذف، إضافة، تعليق، الأزرار العامة...) — يُحفظ داخل Settings.buttonOptions كـ JSON */
 export interface ButtonOptions {
-  /** لون أساسي / مرور / ضغط / نص */
+  /** وضع التلوين: حسب دور كل زر (موصى به) أو لون موحد لكل الأزرار */
+  colorMode: "per-role" | "unified";
+  /** لون الزر العام / الموحد */
   color: string;
   hoverColor: string;
   activeColor: string;
   textColor: string;
-  /** حدود */
+  /** زر الحفظ والتأكيد (حفظ الفاتورة / تطبيق وحفظ / واتساب...) */
+  saveBg: string;
+  saveHover: string;
+  saveText: string;
+  /** زر الطباعة والإضافة والعرض (طباعة الفاتورة / فاتورة جديدة / إضافة...) */
+  printBg: string;
+  printHover: string;
+  printText: string;
+  /** زر الحذف والإلغاء */
+  dangerBg: string;
+  dangerHover: string;
+  dangerText: string;
+  /** زر التعليق والتنبيهات الفرعية */
+  warnBg: string;
+  warnHover: string;
+  warnText: string;
+  /** زر ثانوي / فرعي (تراجع / تصدير / تحديث / مسح...) */
+  secondaryBg: string;
+  secondaryHover: string;
+  secondaryText: string;
+  /** حدود وشكل */
   radius: number;
   borderWidth: number;
   borderColor: string;
-  /** شكل */
-  shape: string; // rounded | pill | square | soft | sharp
-  /** حركة عند المرور */
-  animation: string; // none | lift | grow | press | shine | pulse
-  /** ظل */
+  shape: string; // rounded | pill | square | soft | sharp | custom
+  /** حركة الزر عند المرور والضغط */
+  animation: string; // none | lift | grow | press | shine | pulse | bounce | glow
+  /** ظل ووزن الخط */
   shadow: boolean;
-  /** وزن الخط */
   bold: boolean;
 }
 
 export const DEFAULT_BUTTONS: ButtonOptions = {
-  color: "#1a5fc0",
-  hoverColor: "#2f7fe0",
-  activeColor: "#0e4390",
+  colorMode: "per-role",
+  color: "#0067c0",
+  hoverColor: "#1975c5",
+  activeColor: "#005a9e",
   textColor: "#ffffff",
+  saveBg: "#0f7b0f",
+  saveHover: "#15803d",
+  saveText: "#ffffff",
+  printBg: "#0067c0",
+  printHover: "#1d4ed8",
+  printText: "#ffffff",
+  dangerBg: "#c42b1c",
+  dangerHover: "#dc2626",
+  dangerText: "#ffffff",
+  warnBg: "#b45309",
+  warnHover: "#d97706",
+  warnText: "#ffffff",
+  secondaryBg: "#ffffff",
+  secondaryHover: "#eff6ff",
+  secondaryText: "#12263f",
   radius: 8,
   borderWidth: 1,
-  borderColor: "#0e4390",
+  borderColor: "#cbdcf0",
   shape: "rounded",
   animation: "lift",
   shadow: true,
   bold: true,
 };
+
+export const BUTTON_MOTIONS: Array<{ key: string; label: string; hint: string }> = [
+  { key: "lift", label: "رفع ناعم للأعلى (Lift)", hint: "يرتفع الزر برشاقة مع ظل خفيف عند مرور الماوس" },
+  { key: "grow", label: "تكبير انسيابي (Grow)", hint: "يكبر الزر قليلاً لإبراز التركيز" },
+  { key: "bounce", label: "ارتداد مرن (Spring Bounce)", hint: "حركة حيوية نابضة بستايل عصري" },
+  { key: "shine", label: "لمعة ضوئية عابرة (Shine)", hint: "شعاع ضوئي لامع يعبر فوق الزر" },
+  { key: "glow", label: "توهج مضيء (Fluent Glow)", hint: "هالة إضاءة ناعمة حول إطار الزر" },
+  { key: "pulse", label: "نبض متكرر هادئ (Pulse)", hint: "نبضة خفيفة مستمرة أثناء الوقوف على الزر" },
+  { key: "press", label: "ضغطة كاشير لمسية (Tactile)", hint: "إحساس ضغط الأزرار الميكانيكية السريعة" },
+  { key: "none", label: "بدون حركة (ثابت)", hint: "تغيير اللون فقط بدون تحريك" },
+];
+
+export const BUTTON_PRESETS: Array<{
+  key: string;
+  label: string;
+  patch: Partial<ButtonOptions>;
+}> = [
+  {
+    key: "fluent-default",
+    label: "ويندوز 11 القياسي (الافتراضي)",
+    patch: {
+      colorMode: "per-role",
+      saveBg: "#0f7b0f",
+      saveHover: "#15803d",
+      saveText: "#ffffff",
+      printBg: "#0067c0",
+      printHover: "#1d4ed8",
+      printText: "#ffffff",
+      dangerBg: "#c42b1c",
+      dangerHover: "#dc2626",
+      dangerText: "#ffffff",
+      warnBg: "#b45309",
+      warnHover: "#d97706",
+      warnText: "#ffffff",
+      secondaryBg: "#ffffff",
+      secondaryHover: "#eff6ff",
+      secondaryText: "#12263f",
+      shape: "rounded",
+      radius: 8,
+      animation: "lift",
+    },
+  },
+  {
+    key: "vivid-modern",
+    label: "ألوان حيوية مشرقة",
+    patch: {
+      colorMode: "per-role",
+      saveBg: "#10b981",
+      saveHover: "#059669",
+      saveText: "#ffffff",
+      printBg: "#2563eb",
+      printHover: "#1d4ed8",
+      printText: "#ffffff",
+      dangerBg: "#ef4444",
+      dangerHover: "#dc2626",
+      dangerText: "#ffffff",
+      warnBg: "#f59e0b",
+      warnHover: "#d97706",
+      warnText: "#ffffff",
+      secondaryBg: "#f8fafc",
+      secondaryHover: "#e0f2fe",
+      secondaryText: "#0f172a",
+      shape: "soft",
+      radius: 12,
+      animation: "shine",
+    },
+  },
+  {
+    key: "royal-dark",
+    label: "كحلي وذهبي فخم",
+    patch: {
+      colorMode: "per-role",
+      saveBg: "#0d9488",
+      saveHover: "#0f766e",
+      saveText: "#ffffff",
+      printBg: "#1e3a8a",
+      printHover: "#1d4ed8",
+      printText: "#fde047",
+      dangerBg: "#991b1b",
+      dangerHover: "#b91c1c",
+      dangerText: "#ffffff",
+      warnBg: "#92400e",
+      warnHover: "#b45309",
+      warnText: "#fef08a",
+      secondaryBg: "#0f2942",
+      secondaryHover: "#1e3a8a",
+      secondaryText: "#ffffff",
+      shape: "rounded",
+      radius: 10,
+      animation: "glow",
+    },
+  },
+  {
+    key: "soft-pastel",
+    label: "باستيل هادئ مريح للعين",
+    patch: {
+      colorMode: "per-role",
+      saveBg: "#dcfce7",
+      saveHover: "#bbf7d0",
+      saveText: "#14532d",
+      printBg: "#dbeafe",
+      printHover: "#bfdbfe",
+      printText: "#1e3a8a",
+      dangerBg: "#fee2e2",
+      dangerHover: "#fecaca",
+      dangerText: "#7f1d1d",
+      warnBg: "#fef3c7",
+      warnHover: "#fde68a",
+      warnText: "#78350f",
+      secondaryBg: "#f1f5f9",
+      secondaryHover: "#e2e8f0",
+      secondaryText: "#0f172a",
+      shape: "pill",
+      radius: 999,
+      animation: "bounce",
+    },
+  },
+  {
+    key: "unified-ocean",
+    label: "لون موحّد لكل الأزرار (أزرق ملكي)",
+    patch: {
+      colorMode: "unified",
+      color: "#1d4ed8",
+      hoverColor: "#2563eb",
+      activeColor: "#1e40af",
+      textColor: "#ffffff",
+      shape: "rounded",
+      radius: 9,
+      animation: "lift",
+    },
+  },
+];
 
 /** تخصيص القائمة الجانبية العائمة والصفحة الرئيسية (ستايل Windows 11) */
 export type SidebarMotion = "win11-pop" | "slide-right" | "fade-blur" | "spring" | "none";
@@ -332,7 +500,7 @@ export function applyUiPrefs(p: UiPrefs) {
   root.style.setProperty("--ui-font", font.stack);
   root.style.setProperty("--ui-scale", String((p.fontScale || 100) / 100));
 
-  // ===== تخصيص الأزرار =====
+  // ===== تخصيص الأزرار الفرعية بالكامل (حفظ، طباعة، حذف، تعليق، ثانوي...) =====
   const b: ButtonOptions = { ...DEFAULT_BUTTONS, ...(p.buttonOptions || {}) };
   const radius = b.shape === "custom" ? b.radius : (SHAPES[b.shape] ?? b.radius ?? 8);
   const s = root.style;
@@ -340,14 +508,36 @@ export function applyUiPrefs(p: UiPrefs) {
   s.setProperty("--btn-bg-hover", b.hoverColor || b.color || DEFAULT_BUTTONS.hoverColor);
   s.setProperty("--btn-bg-active", b.activeColor || b.color || DEFAULT_BUTTONS.activeColor);
   s.setProperty("--btn-text", b.textColor || DEFAULT_BUTTONS.textColor);
+
+  s.setProperty("--btn-save-bg", b.saveBg || DEFAULT_BUTTONS.saveBg);
+  s.setProperty("--btn-save-hover", b.saveHover || b.saveBg || DEFAULT_BUTTONS.saveHover);
+  s.setProperty("--btn-save-text", b.saveText || DEFAULT_BUTTONS.saveText);
+
+  s.setProperty("--btn-print-bg", b.printBg || DEFAULT_BUTTONS.printBg);
+  s.setProperty("--btn-print-hover", b.printHover || b.printBg || DEFAULT_BUTTONS.printHover);
+  s.setProperty("--btn-print-text", b.printText || DEFAULT_BUTTONS.printText);
+
+  s.setProperty("--btn-danger-bg", b.dangerBg || DEFAULT_BUTTONS.dangerBg);
+  s.setProperty("--btn-danger-hover", b.dangerHover || b.dangerBg || DEFAULT_BUTTONS.dangerHover);
+  s.setProperty("--btn-danger-text", b.dangerText || DEFAULT_BUTTONS.dangerText);
+
+  s.setProperty("--btn-warn-bg", b.warnBg || DEFAULT_BUTTONS.warnBg);
+  s.setProperty("--btn-warn-hover", b.warnHover || b.warnBg || DEFAULT_BUTTONS.warnHover);
+  s.setProperty("--btn-warn-text", b.warnText || DEFAULT_BUTTONS.warnText);
+
+  s.setProperty("--btn-sec-bg", b.secondaryBg || DEFAULT_BUTTONS.secondaryBg);
+  s.setProperty("--btn-sec-hover", b.secondaryHover || b.secondaryBg || DEFAULT_BUTTONS.secondaryHover);
+  s.setProperty("--btn-sec-text", b.secondaryText || DEFAULT_BUTTONS.secondaryText);
+
   s.setProperty("--btn-radius", `${radius}px`);
   s.setProperty("--btn-border-w", `${b.borderWidth ?? 1}px`);
   s.setProperty("--btn-border-color", b.borderColor || "transparent");
-  s.setProperty("--btn-shadow", b.shadow ? "0 2px 6px rgba(0,0,0,.18)" : "none");
+  s.setProperty("--btn-shadow", b.shadow ? "0 3px 10px -2px rgba(15, 38, 68, 0.22)" : "none");
   s.setProperty("--btn-font-weight", b.bold ? "900" : "600");
-  root.setAttribute("data-anim", b.animation || "none");
-  // تفعيل التخصيص فقط لو المستخدم غيّر شيئًا عن الافتراضي
-  root.setAttribute("data-btn-custom", JSON.stringify(b) === JSON.stringify(DEFAULT_BUTTONS) ? "0" : "1");
+  root.setAttribute("data-anim", b.animation || "lift");
+  const isCustom = JSON.stringify(b) !== JSON.stringify(DEFAULT_BUTTONS);
+  root.setAttribute("data-btn-custom", isCustom ? "1" : "0");
+  root.setAttribute("data-btn-mode", b.colorMode === "unified" ? "unified" : "per-role");
   root.setAttribute("data-table-follow", p.tableHeaderFollowTheme === false ? "manual" : "theme");
   s.setProperty("--row-select", p.rowSelectColor || "#dbeafe");
 
