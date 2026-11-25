@@ -40,13 +40,18 @@ import type { Settings } from "@/lib/types";
 import {
   BUTTON_STYLES,
   DEFAULT_BUTTONS,
+  DEFAULT_SIDEBAR,
   FONT_OPTIONS,
+  SIDEBAR_MOTIONS,
+  SIDEBAR_PRESETS,
   TABLE_HEADERS,
   THEMES,
   applyUiPrefs,
   fromSettings,
+  parseSidebarOptions,
   useUiPrefs,
   type ButtonOptions,
+  type SidebarOptions,
   type UiPrefs,
 } from "@/components/win/UiPrefs";
 
@@ -91,6 +96,7 @@ const toForm = (s: Settings): SForm => ({
   lockBgUrl: s.lockBgUrl || "",
   rowSelectColor: s.rowSelectColor || "#dbeafe",
   tableHeaderFollowTheme: s.tableHeaderFollowTheme !== false,
+  sidebarOptions: s.sidebarOptions || "",
 });
 
 export function SettingsForm() {
@@ -99,7 +105,7 @@ export function SettingsForm() {
   const [f, setF] = useState<SForm | null>(null);
   const [savedForm, setSavedForm] = useState<SForm | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"appearance" | "store" | "invoices" | "branding" | "sales" | "thanks">("appearance");
+  const [tab, setTab] = useState<"appearance" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks">("appearance");
   const [editorOpen, setEditorOpen] = useState(false);
   // تخصيص الأزرار (يعمل على القيم المحفوظة في النموذج)
   const btnOpts: ButtonOptions = (() => {
@@ -111,6 +117,11 @@ export function SettingsForm() {
   })();
   const setBtn = (patch: Partial<ButtonOptions>) => {
     setVisual({ buttonOptions: JSON.stringify({ ...btnOpts, ...patch }) });
+  };
+  // تخصيص القائمة الجانبية العائمة والواجهة الرئيسية
+  const sbOpts: SidebarOptions = parseSidebarOptions(f?.sidebarOptions);
+  const setSb = (patch: Partial<SidebarOptions>) => {
+    setVisual({ sidebarOptions: JSON.stringify({ ...sbOpts, ...patch }) });
   };
   // تخطيط شاشة المبيعات
   const salesLayout: SalesLayout = parseSalesLayout(f?.salesLayout);
@@ -199,11 +210,12 @@ export function SettingsForm() {
   useEffect(() => {
     load();
     loadHomeImages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    load();
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("tab") === "sidebar") setTab("sidebar");
+    } catch {
+      /* ignore */
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -220,7 +232,8 @@ export function SettingsForm() {
     | "tableHeaderFollowTheme"
     | "rowSelectColor"
     | "fontScale"
-    | "buttonOptions";
+    | "buttonOptions"
+    | "sidebarOptions";
   const setVisual = (patch: Partial<Pick<SForm, VisualKey>>) => {
     setF((p) => (p ? { ...p, ...patch } : p));
     const ui: Partial<UiPrefs> = {};
@@ -238,6 +251,9 @@ export function SettingsForm() {
       } catch {
         /* ignore */
       }
+    }
+    if (patch.sidebarOptions !== undefined) {
+      ui.sidebarOptions = parseSidebarOptions(patch.sidebarOptions);
     }
     if (Object.keys(ui).length) preview(ui);
   };
@@ -326,9 +342,10 @@ export function SettingsForm() {
   const scale = Number(f?.fontScale ?? prefs.fontScale ?? 100);
 
   // ===== تبويبات الإعدادات =====
-  type TabKey = "appearance" | "store" | "invoices" | "branding" | "sales" | "thanks";
+  type TabKey = "appearance" | "sidebar" | "store" | "invoices" | "branding" | "sales" | "thanks";
   const TABS: { key: TabKey; label: string; hint: string }[] = [
-    { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والأزرار" },
+    { key: "appearance", label: "المظهر والثيمات", hint: "الألوان والخطوط والجداول" },
+    { key: "sidebar", label: "القائمة والرئيسية", hint: "حركة وألوان القائمة وكروت Win11" },
     { key: "store", label: "بيانات المحل", hint: "الاسم والهاتف والعنوان والضريبة" },
     { key: "invoices", label: "قوالب الفواتير", hint: "القالب والمقاس والتذييل" },
     { key: "branding", label: "الشعار والخلفية", hint: "اللوجو والشاشة الرئيسية" },
@@ -370,7 +387,7 @@ export function SettingsForm() {
               <div className="flex flex-col">
                 <span className="text-[16.5px] font-black">إعدادات البرنامج</span>
                 <span className="text-[11.5px] font-bold text-blue-200">
-                  5 أقسام — اختر القسم من التبويبات بالأسفل
+                  7 أقسام — اختر القسم من التبويبات بالأسفل
                 </span>
               </div>
               <div className="ms-auto flex flex-wrap items-center gap-1.5">
@@ -666,6 +683,272 @@ export function SettingsForm() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* ---------- تخصيص القائمة العائمة والشاشة الرئيسية (Windows 11) ---------- */}
+              {tab === "sidebar" && (
+                <div className="space-y-3">
+                  {/* ستايل الكروت والبانر في الشاشة الرئيسية */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <span className="flex items-center gap-2">
+                        <LayoutTemplate className="h-4 w-4 text-[#f5c518]" />
+                        تخصيص الشاشة الرئيسية وكروت Windows 11
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
+                      <div>
+                        <span className="form-label">طريقة تلوين الكروت في منتصف الشاشة</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            {
+                              key: "colored" as const,
+                              label: "كروت ملونة بالكامل",
+                              hint: "Fluent Colored Tiles — خلفية متدرجة غنية ونص أبيض",
+                            },
+                            {
+                              key: "acrylic" as const,
+                              label: "كروت زجاجية بأيقونات ملونة",
+                              hint: "Win11 Acrylic — خلفية ناعمة وكبسولة أيقونة ملونة",
+                            },
+                          ].map((opt) => {
+                            const active = sbOpts.homeCardStyle === opt.key;
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                onClick={() => setSb({ homeCardStyle: opt.key })}
+                                className={`flex flex-col items-start rounded-xl border-2 p-2.5 text-right transition ${
+                                  active
+                                    ? "border-[#0067c0] bg-[#eff6ff] shadow-sm ring-2 ring-[#0067c0]/25"
+                                    : "border-slate-200 bg-white hover:border-[#8fb3e0]"
+                                }`}
+                              >
+                                <div className="flex w-full items-center justify-between gap-1">
+                                  <span className="text-[13px] font-black text-[#0f2942]">{opt.label}</span>
+                                  {active && <Check className="h-4 w-4 text-[#0067c0]" strokeWidth={3.5} />}
+                                </div>
+                                <span className="mt-1 text-[11px] font-bold leading-4 text-slate-500">{opt.hint}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col justify-between rounded-xl border border-[#dbe7f6] bg-[#f8fbff] p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[13.5px] font-black text-[#0f2942]">البانر العلوي الاختياري</div>
+                            <div className="text-[11.5px] font-bold text-slate-600">
+                              مخفي افتراضياً لمنح مساحة كاملة لستايل Windows 11 — يمكنك إظهاره إن أردت
+                            </div>
+                          </div>
+                          <label className="flex cursor-pointer items-center gap-2 font-black text-[#0f2942]">
+                            <input
+                              type="checkbox"
+                              className="h-5 w-5 rounded"
+                              checked={Boolean(sbOpts.showHomeBanner)}
+                              onChange={(e) => setSb({ showHomeBanner: e.target.checked })}
+                            />
+                            <span className="text-[12.5px]">{sbOpts.showHomeBanner ? "ظاهر" : "مخفي"}</span>
+                          </label>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between border-t border-[#dbe7f6] pt-2">
+                          <span className="text-[11.5px] font-bold text-slate-500">
+                            جرب فتح القائمة العائمة الآن لمعاينة تعديلاتك مباشرة
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new Event("fatora:open-nav"))}
+                            className="btn btn-blue h-8 px-3 text-[12px] font-black"
+                          >
+                            معاينة فتح القائمة ↗
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* حركة القائمة العائمة + قوالب الألوان السريعة */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <span className="flex items-center gap-2">
+                        <Sliders className="h-4 w-4 text-[#f5c518]" />
+                        حركة ظهور القائمة الجانبية العائمة
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSb(DEFAULT_SIDEBAR)}
+                        className="rounded-md bg-white/15 px-2.5 py-0.5 text-[11.5px] font-black text-white hover:bg-white/25"
+                      >
+                        استعادة افتراضي القائمة
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {SIDEBAR_MOTIONS.map((m) => {
+                          const on = sbOpts.animation === m.key;
+                          return (
+                            <button
+                              key={m.key}
+                              type="button"
+                              onClick={() => setSb({ animation: m.key })}
+                              className={`flex flex-col items-start rounded-xl border-2 p-2.5 text-right transition ${
+                                on
+                                  ? "border-[#2fb3a6] bg-[#eefaf8] shadow-sm"
+                                  : "border-slate-200 bg-white hover:border-[#8fb3e0]"
+                              }`}
+                            >
+                              <div className="flex w-full items-center justify-between gap-1">
+                                <span className="text-[13px] font-black text-[#0f2942]">{m.label}</span>
+                                {on && <Check className="h-4 w-4 shrink-0 text-[#0f8f82]" strokeWidth={3.5} />}
+                              </div>
+                              <span className="mt-0.5 text-[11px] font-bold text-slate-500">{m.hint}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ألوان القائمة والكلام والأزرار + معاينة مصغّرة حية */}
+                  <div className="overflow-hidden rounded-xl border-2 border-[#c9d8ee] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 bg-[#0f2942] px-4 py-2 text-[15px] font-black text-white">
+                      <Palette className="h-4 w-4 text-[#f5c518]" />
+                      تخصيص ألوان القائمة ولون الكلام ولون الأزرار
+                    </div>
+                    <div className="p-3 space-y-3">
+                      {/* ستايلات جاهزة سريعة */}
+                      <div>
+                        <span className="form-label">قوالب ألوان جاهزة للقائمة (اضغط للتجربة السريعة)</span>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                          {SIDEBAR_PRESETS.map((pr) => {
+                            const active =
+                              sbOpts.bgColor.toLowerCase() === pr.opts.bgColor.toLowerCase() &&
+                              sbOpts.btnActiveColor.toLowerCase() === pr.opts.btnActiveColor.toLowerCase();
+                            return (
+                              <button
+                                key={pr.key}
+                                type="button"
+                                onClick={() => setSb(pr.opts)}
+                                className={`flex flex-col gap-1.5 rounded-lg border-2 p-2 text-right transition ${
+                                  active ? "border-[#2fb3a6] bg-[#eefaf8]" : "border-slate-200 hover:border-[#8fb3e0]"
+                                }`}
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="h-4 w-5 rounded border border-black/10" style={{ background: pr.opts.bgColor }} />
+                                  <span className="h-4 w-5 rounded border border-black/10" style={{ background: pr.opts.btnColor }} />
+                                  <span className="h-4 w-5 rounded border border-black/10" style={{ background: pr.opts.btnActiveColor }} />
+                                </div>
+                                <span className="truncate text-[11.5px] font-black text-[#0f2942]">{pr.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* التحكم التفصيلي بالألوان + بطاقة المعاينة */}
+                      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_250px]">
+                        <div className="grid grid-cols-2 gap-2.5">
+                          {[
+                            { key: "bgColor" as const, label: "لون خلفية القائمة" },
+                            { key: "textColor" as const, label: "لون الكلام والعناوين" },
+                            { key: "btnColor" as const, label: "لون الأزرار" },
+                            { key: "btnTextColor" as const, label: "لون كلام الأزرار" },
+                            { key: "btnHoverColor" as const, label: "لون الزر عند المرور" },
+                            { key: "btnActiveColor" as const, label: "لون الزر النشط (الحالي)" },
+                          ].map((c) => (
+                            <div
+                              key={c.key}
+                              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[#f8fafd] px-2.5 py-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-[12px] font-black text-[#0f2942]">{c.label}</div>
+                                <div className="num text-[10.5px] font-bold text-slate-500" dir="ltr">
+                                  {sbOpts[c.key]}
+                                </div>
+                              </div>
+                              <input
+                                type="color"
+                                value={sbOpts[c.key]}
+                                onChange={(e) => setSb({ [c.key]: e.target.value })}
+                                className="h-8 w-11 shrink-0 cursor-pointer rounded border border-slate-300 bg-white p-0.5"
+                              />
+                            </div>
+                          ))}
+
+                          <div className="col-span-2 rounded-lg border border-slate-200 bg-[#f8fafd] px-3 py-2">
+                            <div className="mb-1 flex items-center justify-between">
+                              <span className="text-[12px] font-black text-[#0f2942]">درجة كثافة / شفافية خلفية القائمة (Mica Blur)</span>
+                              <span className="num rounded bg-white px-2 py-0.5 text-[11.5px] font-black text-[#0f2942]">
+                                {sbOpts.bgOpacity}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={70}
+                              max={100}
+                              step={2}
+                              value={sbOpts.bgOpacity}
+                              onChange={(e) => setSb({ bgOpacity: Number(e.target.value) })}
+                              className="h-2 w-full cursor-pointer"
+                              style={{ accentColor: "#0067c0" }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* معاينة حية مصغّرة لشكل القائمة */}
+                        <div
+                          className="flex flex-col justify-between rounded-2xl border p-3 shadow-md"
+                          style={{
+                            backgroundColor: sbOpts.bgColor,
+                            color: sbOpts.textColor,
+                            borderColor: "rgba(148,163,184,0.35)",
+                          }}
+                        >
+                          <div>
+                            <div className="mb-2 flex items-center justify-between border-b border-white/15 pb-1.5">
+                              <span className="text-[12.5px] font-black" style={{ color: sbOpts.textColor }}>
+                                معاينة القائمة
+                              </span>
+                              <span className="text-[10px] font-bold opacity-75" style={{ color: sbOpts.textColor }}>
+                                Win11 Flyout
+                              </span>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div
+                                className="rounded-lg px-2.5 py-1.5 text-[12px] font-extrabold shadow-sm"
+                                style={{ backgroundColor: sbOpts.btnActiveColor, color: sbOpts.btnTextColor }}
+                              >
+                                ★ الرئيسية (نشط)
+                              </div>
+                              <div
+                                className="rounded-lg px-2.5 py-1.5 text-[12px] font-extrabold"
+                                style={{ backgroundColor: sbOpts.btnHoverColor, color: sbOpts.btnTextColor }}
+                              >
+                                ← فاتورة مبيعات (عند المرور)
+                              </div>
+                              <div
+                                className="rounded-lg px-2.5 py-1.5 text-[12px] font-extrabold"
+                                style={{ backgroundColor: sbOpts.btnColor, color: sbOpts.btnTextColor }}
+                              >
+                                • المخازن والأصناف (زر عادي)
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => window.dispatchEvent(new Event("fatora:open-nav"))}
+                            className="mt-3 w-full rounded-lg border border-white/25 bg-white/15 py-1.5 text-[11.5px] font-black transition hover:bg-white/25"
+                            style={{ color: sbOpts.textColor }}
+                          >
+                            فتح القائمة الحقيقية الآن
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* ---------- 2) بيانات المحل ---------- */}

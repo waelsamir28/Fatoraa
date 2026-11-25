@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Calculator as CalcIcon, Copy, Maximize2, Minimize2, Minus, Square, X } from "lucide-react";
+import { ArrowRight, Calculator as CalcIcon, Copy, LayoutGrid, Maximize2, Minimize2, Minus, Square, X } from "lucide-react";
 import { CartLogo } from "@/components/icons/AppIcons";
 import { DEFAULT_LOGO } from "@/lib/constants";
 import { APP_NAME } from "@/lib/constants";
@@ -135,11 +135,21 @@ export function Window({
       >
       <div className="win-titlebar app-drag" dir="ltr" onDoubleClick={native ? undefined : toggleMaximized}>
         <div className="flex min-w-0 items-center gap-2 px-2.5">
+          {/* زر أيقونة صغير لفتح القائمة الجانبية العائمة فوق الصفحة الحالية */}
+          <button
+            type="button"
+            className="app-no-drag win-menu-btn flex h-6 w-6 items-center justify-center rounded-md transition"
+            title="فتح قائمة البرنامج السريعة (Ctrl+B)"
+            onClick={() => window.dispatchEvent(new Event("fatora:toggle-nav"))}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" strokeWidth={2.6} />
+          </button>
+
           {/* زر رجوع صغير ومضغوط للعودة السريعة للرئيسية */}
           {showBackBtn && (
             <button
               type="button"
-              className="app-no-drag win-back mr-1 flex h-6 w-6 items-center justify-center rounded-md transition"
+              className="app-no-drag win-back mr-0.5 flex h-6 w-6 items-center justify-center rounded-md transition"
               title="رجوع إلى الشاشة الرئيسية"
               onClick={() => router.push("/")}
             >

@@ -39,6 +39,131 @@ export const DEFAULT_BUTTONS: ButtonOptions = {
   bold: true,
 };
 
+/** تخصيص القائمة الجانبية العائمة والصفحة الرئيسية (ستايل Windows 11) */
+export type SidebarMotion = "win11-pop" | "slide-right" | "fade-blur" | "spring" | "none";
+export type HomeCardStyle = "colored" | "acrylic";
+
+export interface SidebarOptions {
+  /** حركة ظهور القائمة */
+  animation: SidebarMotion;
+  /** لون خلفية القائمة */
+  bgColor: string;
+  /** درجة شفافية الخلفية (70..100) */
+  bgOpacity: number;
+  /** لون الكلام والأيقونات داخل القائمة */
+  textColor: string;
+  /** لون أزرار القائمة */
+  btnColor: string;
+  /** لون الزر عند المرور بالماوس */
+  btnHoverColor: string;
+  /** لون الزر النشط (الشاشة الحالية) */
+  btnActiveColor: string;
+  /** لون كلام الأزرار */
+  btnTextColor: string;
+  /** ستايل كروت الشاشة الرئيسية: ملونة بالكامل أو زجاجية بأيقونات ملونة */
+  homeCardStyle: HomeCardStyle;
+  /** إظهار البانر الاختياري في أعلى الشاشة الرئيسية */
+  showHomeBanner: boolean;
+}
+
+export const DEFAULT_SIDEBAR: SidebarOptions = {
+  animation: "win11-pop",
+  bgColor: "#0f2744",
+  bgOpacity: 94,
+  textColor: "#f8fafc",
+  btnColor: "#1b3b64",
+  btnHoverColor: "#2563eb",
+  btnActiveColor: "#0ea5e9",
+  btnTextColor: "#ffffff",
+  homeCardStyle: "colored",
+  showHomeBanner: false,
+};
+
+export const SIDEBAR_MOTIONS: Array<{ key: SidebarMotion; label: string; hint: string }> = [
+  { key: "win11-pop", label: "ويندوز 11 زجاجي (Scale & Pop)", hint: "ظهور ناعم مع تكبير خفيف مثل قائمة Start" },
+  { key: "slide-right", label: "انزلاق ناعم من اليمين", hint: "سحب انسيابي من يمين الشاشة" },
+  { key: "spring", label: "حركة مرنة نابضة (Spring)", hint: "ارتداد عصري حيوي وسريع" },
+  { key: "fade-blur", label: "تلاشي هادئ (Fade)", hint: "ظهور تدريجي ناعم ومريح للعين" },
+  { key: "none", label: "فوري بدون حركة", hint: "فتح لحظي فوري" },
+];
+
+export const SIDEBAR_PRESETS: Array<{
+  key: string;
+  label: string;
+  opts: Pick<SidebarOptions, "bgColor" | "textColor" | "btnColor" | "btnHoverColor" | "btnActiveColor" | "btnTextColor">;
+}> = [
+  {
+    key: "win11-navy",
+    label: "كحلي ويندوز 11 (الافتراضي)",
+    opts: {
+      bgColor: "#0f2744",
+      textColor: "#f8fafc",
+      btnColor: "#1b3b64",
+      btnHoverColor: "#2563eb",
+      btnActiveColor: "#0ea5e9",
+      btnTextColor: "#ffffff",
+    },
+  },
+  {
+    key: "win11-mica-light",
+    label: "زجاجي فاتح (Mica Light)",
+    opts: {
+      bgColor: "#f0f6ff",
+      textColor: "#0f2942",
+      btnColor: "#ffffff",
+      btnHoverColor: "#dbeafe",
+      btnActiveColor: "#0067c0",
+      btnTextColor: "#0f2942",
+    },
+  },
+  {
+    key: "royal-ocean",
+    label: "أزرق ملكي فخم",
+    opts: {
+      bgColor: "#0b3b8c",
+      textColor: "#ffffff",
+      btnColor: "#164fa8",
+      btnHoverColor: "#3b82f6",
+      btnActiveColor: "#14b8a6",
+      btnTextColor: "#ffffff",
+    },
+  },
+  {
+    key: "emerald-dark",
+    label: "بترولي زمردي",
+    opts: {
+      bgColor: "#0d2f36",
+      textColor: "#ecfdf5",
+      btnColor: "#15464f",
+      btnHoverColor: "#0d9488",
+      btnActiveColor: "#10b981",
+      btnTextColor: "#ffffff",
+    },
+  },
+  {
+    key: "slate-fluent",
+    label: "رمادي فحمي أنيق",
+    opts: {
+      bgColor: "#1e293b",
+      textColor: "#f1f5f9",
+      btnColor: "#334155",
+      btnHoverColor: "#4f46e5",
+      btnActiveColor: "#6366f1",
+      btnTextColor: "#ffffff",
+    },
+  },
+];
+
+export function parseSidebarOptions(raw: unknown): SidebarOptions {
+  if (typeof raw !== "string" || !raw.trim()) return DEFAULT_SIDEBAR;
+  try {
+    const parsed = JSON.parse(raw) as Partial<SidebarOptions>;
+    return { ...DEFAULT_SIDEBAR, ...parsed };
+  } catch {
+    return DEFAULT_SIDEBAR;
+  }
+}
+
 export interface UiPrefs {
   theme: string;
   /** light | dark */
@@ -48,6 +173,7 @@ export interface UiPrefs {
   fontScale: number;
   buttonStyle: string;
   buttonOptions: ButtonOptions;
+  sidebarOptions: SidebarOptions;
   tableHeaderColor: string;
   tableHeaderFollowTheme: boolean;
   rowSelectColor: string;
@@ -61,6 +187,7 @@ export const DEFAULT_PREFS: UiPrefs = {
   fontScale: 100,
   buttonStyle: "glossy-3d",
   buttonOptions: DEFAULT_BUTTONS,
+  sidebarOptions: DEFAULT_SIDEBAR,
   tableHeaderColor: "navy-dark",
   tableHeaderFollowTheme: true,
   rowSelectColor: "#dbeafe",
@@ -223,6 +350,18 @@ export function applyUiPrefs(p: UiPrefs) {
   root.setAttribute("data-btn-custom", JSON.stringify(b) === JSON.stringify(DEFAULT_BUTTONS) ? "0" : "1");
   root.setAttribute("data-table-follow", p.tableHeaderFollowTheme === false ? "manual" : "theme");
   s.setProperty("--row-select", p.rowSelectColor || "#dbeafe");
+
+  // ===== تخصيص القائمة الجانبية العائمة والواجهة الرئيسية =====
+  const sb: SidebarOptions = { ...DEFAULT_SIDEBAR, ...(p.sidebarOptions || {}) };
+  s.setProperty("--sb-bg", sb.bgColor || DEFAULT_SIDEBAR.bgColor);
+  s.setProperty("--sb-opacity", String(Math.min(1, Math.max(0.65, (sb.bgOpacity ?? 94) / 100))));
+  s.setProperty("--sb-text", sb.textColor || DEFAULT_SIDEBAR.textColor);
+  s.setProperty("--sb-btn-bg", sb.btnColor || DEFAULT_SIDEBAR.btnColor);
+  s.setProperty("--sb-btn-hover", sb.btnHoverColor || DEFAULT_SIDEBAR.btnHoverColor);
+  s.setProperty("--sb-btn-active", sb.btnActiveColor || DEFAULT_SIDEBAR.btnActiveColor);
+  s.setProperty("--sb-btn-text", sb.btnTextColor || sb.textColor || DEFAULT_SIDEBAR.btnTextColor);
+  root.setAttribute("data-sb-motion", sb.animation || "win11-pop");
+  root.setAttribute("data-home-cards", sb.homeCardStyle || "colored");
 }
 
 interface Ctx {
@@ -270,6 +409,7 @@ export const fromSettings = (s: Partial<Settings>): UiPrefs => ({
   fontScale: typeof s.fontScale === "number" && s.fontScale > 0 ? s.fontScale : DEFAULT_PREFS.fontScale,
   buttonStyle: s.buttonStyle || DEFAULT_PREFS.buttonStyle,
   buttonOptions: parseButtons(s.buttonOptions),
+  sidebarOptions: parseSidebarOptions(s.sidebarOptions),
   tableHeaderColor: s.tableHeaderColor || DEFAULT_PREFS.tableHeaderColor,
   tableHeaderFollowTheme: s.tableHeaderFollowTheme !== false,
   rowSelectColor: s.rowSelectColor || DEFAULT_PREFS.rowSelectColor,
@@ -287,6 +427,7 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
         const stored = JSON.parse(raw) as Partial<UiPrefs>;
         const parsed = { ...DEFAULT_PREFS, ...stored };
         parsed.buttonOptions = { ...DEFAULT_BUTTONS, ...(stored.buttonOptions || {}) };
+        parsed.sidebarOptions = { ...DEFAULT_SIDEBAR, ...(stored.sidebarOptions || {}) };
         parsed.theme = normalizeTheme(parsed.theme);
         setPrefs(parsed);
         setSaved(parsed);
@@ -327,6 +468,7 @@ export function UiPrefsProvider({ children }: { children: ReactNode }) {
           ...next,
           // الحقول النصية في قاعدة البيانات
           buttonOptions: JSON.stringify(next.buttonOptions || DEFAULT_BUTTONS),
+          sidebarOptions: JSON.stringify(next.sidebarOptions || DEFAULT_SIDEBAR),
         },
       });
       setSaved(next);

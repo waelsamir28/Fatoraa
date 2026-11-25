@@ -9,6 +9,7 @@ import { BackgroundTasks } from "@/components/win/BackgroundTasks";
 import { LockScreen } from "@/components/win/LockScreen";
 import { GlobalShortcuts } from "@/components/win/GlobalShortcuts";
 import { ScreenTransition } from "@/components/win/ScreenTransition";
+import { FloatingSidebar } from "@/components/home/HomeSidebar";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,6 +21,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <PageGuard>
                 <BackgroundTasks />
                 <ScreenTransition>{children}</ScreenTransition>
+                <FloatingSidebar />
                 <GlobalShortcuts />
                 <LockScreen />
               </PageGuard>

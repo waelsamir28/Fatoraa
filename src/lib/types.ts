@@ -47,6 +47,8 @@ export interface Settings {
   tableHeaderFollowTheme: boolean;
   /** إعدادات محرّر قوالب الفاتورة (JSON) */
   invoiceLayout: string;
+  /** تخصيص القائمة الجانبية العائمة والواجهة الرئيسية (JSON) */
+  sidebarOptions: string;
 }
 
 export interface Product {

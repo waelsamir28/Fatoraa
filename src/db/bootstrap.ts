@@ -318,6 +318,7 @@ ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "lock_bg_url" text DEFAULT '' NO
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "row_select_color" text DEFAULT '#dbeafe' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "font_weight" text DEFAULT 'normal' NOT NULL;
 ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "table_header_follow_theme" boolean DEFAULT true NOT NULL;
+ALTER TABLE "settings" ADD COLUMN IF NOT EXISTS "sidebar_options" text DEFAULT '' NOT NULL;
 -- صلاحيات الشاشات لكل مستخدم (JSON)
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "allowed_pages" text DEFAULT '' NOT NULL;
 -- التحكم عن بعد في الأجهزة (إلغاء التفعيل من لوحة التحكم)

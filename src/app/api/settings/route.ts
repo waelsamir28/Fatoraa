@@ -73,6 +73,10 @@ export function PUT(req: Request) {
         lockBgUrl: str(b.lockBgUrl).slice(0, 900000),
         rowSelectColor: /^#[0-9a-fA-F]{3,8}$/.test(str(b.rowSelectColor)) ? str(b.rowSelectColor) : "#dbeafe",
         tableHeaderFollowTheme: b.tableHeaderFollowTheme === undefined ? true : Boolean(b.tableHeaderFollowTheme),
+        sidebarOptions:
+          typeof b.sidebarOptions === "string"
+            ? str(b.sidebarOptions).slice(0, 3000)
+            : undefined,
         updatedAt: new Date(),
       })
       .where(eq(settings.id, 1))

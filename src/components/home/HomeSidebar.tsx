@@ -1,25 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ComponentType, type SVGProps } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState, type ComponentType, type SVGProps } from "react";
 import {
   Building2,
   ChevronDown,
-  ChevronLeft,
   Cloud as IconCloud,
   LayoutDashboard,
+  LayoutGrid,
   LogOut,
-  PanelRightClose,
-  ListTree,
-  PanelRightOpen,
-  Rows3,
   Search,
+  ShieldCheck,
+  Sparkles,
   TrendingUp,
   User,
   Users,
   X,
 } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useDesktop } from "@/components/win/DesktopProvider";
+import { DEFAULT_SIDEBAR, useUiPrefs } from "@/components/win/UiPrefs";
+import { pageAllowed } from "@/lib/pages";
+import { api } from "@/lib/client";
 import {
   IconBackup,
   IconBox,
@@ -68,26 +71,27 @@ export interface NavGroup {
 
 const SalesSmall: Icon = (p) => <IconSales plus={false} {...p} />;
 
-/** مجموعات القائمة الجانبية — مرتبة حسب الاستخدام اليومي */
+/** مجموعات القائمة العائمة — مرتبة حسب الاستخدام اليومي وشاملة لكل الشاشات */
 export function buildNavGroups(lowStock: number): NavGroup[] {
   return [
     {
       title: "العمليات اليومية",
-      tone: "#2fb3a6",
+      tone: "#0ea5e9",
       items: [
-        { href: "/", label: "الرئيسية", Icon: IconHome, keywords: "home رئيسية" },
-        { href: "/sales", label: "فاتورة مبيعات", Icon: SalesSmall, keywords: "بيع sales" },
+        { href: "/", label: "الرئيسية", Icon: IconHome, keywords: "home رئيسية start" },
+        { href: "/sales", label: "فاتورة مبيعات", Icon: SalesSmall, keywords: "بيع sales كاشير" },
         { href: "/purchases", label: "فاتورة مشتريات", Icon: IconBox, keywords: "شراء purchase" },
         { href: "/returns/sales", label: "مرتجع مبيعات", Icon: IconReturn, keywords: "return مرتجع" },
         { href: "/returns/purchases", label: "مرتجع مشتريات", Icon: IconReturnBox, keywords: "return مرتجع" },
         { href: "/sales/list", label: "سجل الفواتير", Icon: IconInvoices, keywords: "سجل invoices" },
+        { href: "/price-checker", label: "كشك الاستعلام عن السعر", Icon: IconBarcode, keywords: "سعر كشك price" },
       ],
     },
     {
       title: "الأصناف والمخزون",
-      tone: "#3b82f6",
+      tone: "#10b981",
       items: [
-        { href: "/products-manager", label: "الأصناف والمجموعات", Icon: IconCategories, keywords: "صنف منتج category" },
+        { href: "/products-manager", label: "الأصناف والمجموعات", Icon: IconCategories, keywords: "صنف منتج category مخازن" },
         { href: "/inventory", label: "المخازن والجرد", Icon: IconWarehouse, keywords: "مخزن جرد stock" },
         { href: "/low-stock", label: "الأصناف الناقصة", Icon: IconWarehouse, badge: lowStock > 0 ? String(lowStock) : "", keywords: "نواقص تنبيه" },
         { href: "/stock-movements", label: "حركات المخزون", Icon: IconWarehouse, keywords: "حركة مخزون" },
@@ -98,7 +102,7 @@ export function buildNavGroups(lowStock: number): NavGroup[] {
     },
     {
       title: "العملاء والحسابات",
-      tone: "#0ea5e9",
+      tone: "#8b5cf6",
       items: [
         { href: "/customers", label: "العملاء", Icon: IconCustomers, keywords: "عميل customer" },
         { href: "/suppliers", label: "الموردون", Icon: IconSuppliers, keywords: "مورد supplier" },
@@ -110,26 +114,30 @@ export function buildNavGroups(lowStock: number): NavGroup[] {
     },
     {
       title: "التقارير والتحليل",
-      tone: "#f5c518",
+      tone: "#f59e0b",
       items: [
-        { href: "/reports", label: "التقارير الشاملة", Icon: IconReports, keywords: "تقرير" },
+        { href: "/reports", label: "التقارير الشاملة", Icon: IconReports, keywords: "تقرير مبيعات" },
         { href: "/profit", label: "تقرير الأرباح", Icon: TrendingUp as Icon, keywords: "ربح" },
-        { href: "/dashboard", label: "لوحة المالك", Icon: LayoutDashboard as Icon, keywords: "لوحة" },
+        { href: "/dashboard", label: "لوحة المالك", Icon: LayoutDashboard as Icon, keywords: "لوحة مؤشرات" },
+        { href: "/audit", label: "سجل النشاط والمراجعة", Icon: ShieldCheck as Icon, keywords: "سجل مراجعة نشاط" },
       ],
     },
     {
       title: "الإدارة والإعدادات",
-      tone: "#8b5cf6",
+      tone: "#3b82f6",
       items: [
-        { href: "/users", label: "المستخدمون", Icon: Users as Icon, keywords: "مستخدم صلاحيات" },
+        { href: "/settings", label: "الإعدادات والمظهر", Icon: IconSettings, keywords: "إعداد ثيم قائمة مظهر" },
+        { href: "/users", label: "المستخدمون والصلاحيات", Icon: Users as Icon, keywords: "مستخدم صلاحيات" },
+        { href: "/pages", label: "صلاحيات الشاشات", Icon: Users as Icon, keywords: "صلاحيات شاشات" },
         { href: "/branches", label: "الفروع", Icon: Building2 as Icon, keywords: "فرع" },
         { href: "/connection", label: "ربط قاعدة البيانات", Icon: IconCloud as Icon, keywords: "سحابة قاعدة" },
-        { href: "/backup-schedule", label: "النسخ الاحتياطي", Icon: IconBackup, keywords: "نسخة" },
-        { href: "/settings", label: "الإعدادات والمظهر", Icon: IconSettings, keywords: "إعداد ثيم" },
+        { href: "/backup", label: "النسخ الاحتياطي", Icon: IconBackup, keywords: "نسخة احتياطية" },
+        { href: "/backup-schedule", label: "النسخ التلقائي", Icon: IconBackup, keywords: "جدولة نسخ تلقائي" },
+        { href: "/subscription", label: "حالة الاشتراك", Icon: Sparkles as Icon, keywords: "اشتراك تفعيل" },
       ],
     },
     {
-      title: "المساعدة",
+      title: "المساعدة والدعم",
       tone: "#64748b",
       items: [
         { href: "/health", label: "صحة البرنامج", Icon: IconSupport, keywords: "فحص صحة تنبيه" },
@@ -143,79 +151,95 @@ export function buildNavGroups(lowStock: number): NavGroup[] {
 const isActive = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
-export function HomeSidebar({
-  activeUser,
-  lowStock,
-  onExit,
-}: {
-  activeUser: string;
-  lowStock: number;
-  onExit: () => void;
-}) {
-  const [mini, setMini] = useState(false);
-  /** شكل العرض: مجموعات مصنّفة أو قائمة مسطحة مضغوطة */
-  const [flat, setFlat] = useState(false);
-  const [q, setQ] = useState("");
-  const [openGroup, setOpenGroup] = useState<Record<string, boolean>>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canUp, setCanUp] = useState(false);
+/** تحويل HEX إلى rgba مع درجة الشفافية */
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = (hex || "#0f2744").replace("#", "").trim();
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  if (clean.length >= 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    if (!Number.isNaN(r) && !Number.isNaN(g) && !Number.isNaN(b)) {
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+  }
+  return `rgba(15, 39, 68, ${alpha})`;
+}
+
+/**
+ * القائمة الجانبية العائمة الموحّدة (Windows 11 Global Overlay Flyout):
+ * - لا تأخذ أي مساحة ثابتة من الشاشة نهائياً.
+ * - تفتح من زر الأيقونة الصغير في شريط العنوان أو الشاشة الرئيسية أو باختصار Ctrl+B.
+ * - تظهر فوق الصفحة الحالية مع تغبيش زجاجي ناعم وتتبع ألوان وحركة الإعدادات.
+ */
+export function FloatingSidebar() {
   const pathname = usePathname();
-  const [canDown, setCanDown] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+  const { confirm, native, quitApp, activeUser } = useDesktop();
+  const { prefs } = useUiPrefs();
+  const sb = { ...DEFAULT_SIDEBAR, ...(prefs.sidebarOptions || {}) };
 
-  // استرجاع الحالة المحفوظة (بعد أول رسم لتجنب اختلاف الترطيب)
-  useEffect(() => {
-    const id = setTimeout(() => {
-      try {
-        setMini(localStorage.getItem("fatora.nav.mini") === "1");
-        setFlat(localStorage.getItem("fatora.nav.flat") === "1");
-      } catch {
-        /* ignore */
-      }
-    }, 0);
-    return () => clearTimeout(id);
-  }, []);
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const [lowStock, setLowStock] = useState(0);
+  const [openGroup, setOpenGroup] = useState<Record<string, boolean>>({});
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-  // Ctrl+B من أي مكان: طيّ/بسط القائمة
+  // إغلاق تلقائي عند تغير المسار
   useEffect(() => {
-    const onToggle = () => setMini((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem("fatora.nav.mini", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setOpen(false);
+  }, [pathname]);
+
+  // الاستماع لأحداث الفتح / الإغلاق / التبديل من أي مكان في البرنامج
+  useEffect(() => {
+    const onToggle = () => setOpen((v) => !v);
+    const onOpen = () => setOpen(true);
+    const onClose = () => setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
     window.addEventListener("fatora:toggle-nav", onToggle);
-    return () => window.removeEventListener("fatora:toggle-nav", onToggle);
+    window.addEventListener("fatora:open-nav", onOpen);
+    window.addEventListener("fatora:close-nav", onClose);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("fatora:toggle-nav", onToggle);
+      window.removeEventListener("fatora:open-nav", onOpen);
+      window.removeEventListener("fatora:close-nav", onClose);
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
 
-  const toggleMini = () =>
-    setMini((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem("fatora.nav.mini", next ? "1" : "0");
-        localStorage.setItem("aljamal.sidebar", next ? "0" : "1");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  // جلب عداد النواقص عند فتح القائمة
+  useEffect(() => {
+    if (!open) return;
+    api<{ lowStock?: number }>("/api/home")
+      .then((r) => setLowStock(Number(r?.lowStock ?? 0)))
+      .catch(() => undefined);
+  }, [open]);
 
-  const toggleFlat = () =>
-    setFlat((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem("fatora.nav.flat", next ? "1" : "0");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  const handleExit = useCallback(async () => {
+    setOpen(false);
+    if (!(await confirm("هل تريد الخروج من برنامج FATORA؟", { title: "خروج" }))) return;
+    if (native) quitApp();
+    else router.push("/exit");
+  }, [confirm, native, quitApp, router]);
 
-  const groups = useMemo(() => buildNavGroups(lowStock), [lowStock]);
+  const groups = useMemo(() => {
+    return buildNavGroups(lowStock)
+      .map((g) => ({
+        ...g,
+        items: g.items.filter((it) => it.href === "/" || pageAllowed(user, it.href.split("?")[0])),
+      }))
+      .filter((g) => g.items.length > 0);
+  }, [lowStock, user]);
 
-  /** تصفية العناصر بالبحث */
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return groups;
@@ -229,198 +253,245 @@ export function HomeSidebar({
       .filter((g) => g.items.length > 0);
   }, [groups, q]);
 
-  const total = filtered.reduce((n, g) => n + g.items.length, 0);
+  const totalScreens = filtered.reduce((acc, g) => acc + g.items.length, 0);
+  const displayUser = user?.name || activeUser || "FATORA";
+  const roleLabel = user?.roleLabel || "مستخدم";
 
-  /** مؤشرات التمرير: هل يوجد محتوى أعلى/أسفل؟ */
-  const checkScroll = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanUp(el.scrollTop > 4);
-    setCanDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4);
-  };
+  if (!open) return null;
 
-  useEffect(() => {
-    checkScroll();
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", checkScroll, { passive: true });
-    const ro = new ResizeObserver(checkScroll);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", checkScroll);
-      ro.disconnect();
-    };
-  }, [filtered.length, mini]);
+  const alpha = Math.min(1, Math.max(0.68, (sb.bgOpacity ?? 94) / 100));
+  const panelBg = hexToRgba(sb.bgColor, alpha);
 
   return (
-    <aside
-      className={`nav-rail ${mini ? "nav-rail--mini" : ""}`}
-      // ارتفاع كامل + تمرير داخلي = القائمة لا تُقص أبداً
-      aria-label="قائمة البرنامج"
+    <div
+      className="win11-flyout-backdrop"
+      dir="rtl"
+      onClick={() => setOpen(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="القائمة الرئيسية للبرنامج"
     >
-      {/* ===== ترويسة القائمة ===== */}
-      <div className="nav-head">
-        {!mini && (
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[13.5px] font-black text-white">قائمة البرنامج</div>
-            <div className="text-[10.5px] font-bold text-blue-200">
-              {total} شاشة — مرّر لعرض الباقي
+      <aside
+        className={`win11-flyout win11-flyout--${sb.animation || "win11-pop"}`}
+        style={{
+          backgroundColor: panelBg,
+          color: sb.textColor,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* الترويسة */}
+        <div className="win11-flyout__head" style={{ borderColor: hexToRgba(sb.textColor, 0.14) }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl shadow-sm"
+              style={{ background: sb.btnActiveColor, color: "#ffffff" }}
+            >
+              <LayoutGrid className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-[14.5px] font-black leading-tight" style={{ color: sb.textColor }}>
+                قائمة برنامج FATORA
+              </div>
+              <div className="truncate text-[11px] font-bold opacity-75" style={{ color: sb.textColor }}>
+                {totalScreens} شاشة متاحة — اختر للانتقال السريع
+              </div>
             </div>
           </div>
-        )}
-        <button
-          type="button"
-          onClick={toggleFlat}
-          className="nav-mini-btn"
-          title={flat ? "عرض بالمجموعات المصنّفة" : "عرض كقائمة مسطحة مضغوطة"}
-        >
-          {flat ? <ListTree className="h-4 w-4" /> : <Rows3 className="h-4 w-4" />}
-        </button>
-        <button
-          type="button"
-          onClick={toggleMini}
-          className="nav-mini-btn"
-          title={mini ? "توسيع القائمة" : "تصغير القائمة إلى أيقونات"}
-        >
-          {mini ? <PanelRightOpen className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
-        </button>
-      </div>
 
-      {/* ===== بحث ===== */}
-      {!mini && (
-        <div className="nav-search">
-          <Search className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-200" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="ابحث عن شاشة..."
-            className="nav-search-input"
-          />
-          {q && (
-            <button type="button" onClick={() => setQ("")} className="absolute left-1.5 top-1/2 -translate-y-1/2 text-blue-200 hover:text-white" title="مسح">
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg transition hover:scale-105"
+            style={{
+              background: hexToRgba(sb.textColor, 0.12),
+              color: sb.textColor,
+            }}
+            title="إغلاق القائمة (Esc)"
+          >
+            <X className="h-4 w-4" strokeWidth={2.6} />
+          </button>
         </div>
-      )}
 
-      {/* ===== منطقة التمرير ===== */}
-      <div className="relative min-h-0 flex-1">
-        {canUp && <div className="nav-fade nav-fade--top" />}
-        {canDown && <div className="nav-fade nav-fade--bottom" />}
+        {/* شريط البحث داخل القائمة */}
+        <div className="px-3 pt-2.5 pb-1.5">
+          <div
+            className="relative flex items-center rounded-xl border px-3 py-1.5 transition"
+            style={{
+              background: hexToRgba(sb.textColor, 0.09),
+              borderColor: hexToRgba(sb.textColor, 0.18),
+            }}
+          >
+            <Search className="h-4 w-4 shrink-0 opacity-75" style={{ color: sb.textColor }} />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="ابحث عن شاشة أو قسم..."
+              className="h-6 flex-1 bg-transparent px-2 text-[12.5px] font-bold focus:outline-none"
+              style={{ color: sb.textColor }}
+            />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                className="rounded p-0.5 opacity-75 hover:opacity-100"
+                style={{ color: sb.textColor }}
+                title="مسح"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
 
-        <div ref={scrollRef} className="nav-scroll">
+        {/* عناصر القائمة */}
+        <div className="win11-flyout__scroll">
           {filtered.length === 0 && (
-            <div className="px-3 py-6 text-center text-[12px] font-bold text-blue-200">
-              لا توجد شاشة بهذا الاسم
+            <div className="py-10 text-center text-[12.5px] font-bold opacity-75" style={{ color: sb.textColor }}>
+              لا توجد شاشة مطابقة لبحثك
             </div>
           )}
 
-          {/* ===== العرض المسطح: قائمة واحدة متصلة ===== */}
-          {flat &&
-            !mini &&
-            filtered.map((g) =>
-              g.items.map((it) => (
-                <Link
-                  key={`flat-${it.href}-${it.label}`}
-                  href={it.href}
-                  className={`nav-btn nav-btn--flat ${isActive(pathname, it.href) ? "is-active" : ""}`}
-                  style={{ borderInlineStartColor: g.tone }}
-                  title={it.label}
-                >
-                  <it.Icon className="nav-btn-icon" />
-                  <span className="nav-btn-text">{it.label}</span>
-                  {it.badge && (
-                    <span className={`nav-badge ${it.badge === "AI" ? "nav-badge--ai" : ""}`}>{it.badge}</span>
-                  )}
-                </Link>
-              )),
-            )}
-
-          {/* ===== العرض بالمجموعات ===== */}
-          {(!flat || mini) && filtered.map((g) => {
+          {filtered.map((g) => {
             const collapsed = !q && openGroup[g.title] === false;
             return (
-              <div key={g.title} className="nav-group">
-                {/* عنوان المجموعة — ثابت أعلى القسم */}
-                {q ? (
-                  <div className="nav-group-label" style={{ borderInlineStartColor: g.tone }}>
+              <div key={g.title} className="mb-2.5">
+                <button
+                  type="button"
+                  onClick={() => setOpenGroup((o) => ({ ...o, [g.title]: collapsed }))}
+                  className="mb-1.5 flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11.5px] font-black tracking-wide transition"
+                  style={{ color: sb.textColor, opacity: 0.88 }}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ background: g.tone }} />
                     <span>{g.title}</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="nav-group-label nav-group-label--btn"
-                    style={{ borderInlineStartColor: g.tone }}
-                    onClick={() => setOpenGroup((o) => ({ ...o, [g.title]: collapsed }))}
-                    title={collapsed ? "إظهار" : "إخفاء"}
-                  >
-                    <span className="truncate">{g.title}</span>
-                    {mini ? (
-                      <span className="nav-dot" style={{ background: g.tone }} />
-                    ) : (
-                      <ChevronDown
-                        className={`h-3.5 w-3.5 shrink-0 transition-transform ${collapsed ? "-rotate-90" : ""}`}
-                      />
-                    )}
-                  </button>
-                )}
+                  </span>
+                  {!q && (
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-200 ${collapsed ? "rotate-90" : ""}`}
+                    />
+                  )}
+                </button>
 
-                {!collapsed &&
-                  g.items.map((it) => (
-                    <Link
-                      key={it.href + it.label}
-                      href={it.href}
-                      className={`nav-btn ${isActive(pathname, it.href) ? "is-active" : ""}`}
-                      title={mini ? it.label : undefined}
-                    >
-                      <it.Icon className="nav-btn-icon" />
-                      {!mini && <span className="nav-btn-text">{it.label}</span>}
-                      {it.badge && (
-                        <span
-                          className={`nav-badge ${it.badge === "AI" ? "nav-badge--ai" : ""} ${
-                            !mini ? "" : "nav-badge--dot"
-                          }`}
+                {!collapsed && (
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {g.items.map((it) => {
+                      const active = isActive(pathname, it.href);
+                      const itemKey = `${g.title}-${it.href}`;
+                      const hovered = hoveredKey === itemKey;
+                      const bg = active ? sb.btnActiveColor : hovered ? sb.btnHoverColor : sb.btnColor;
+                      const txt = sb.btnTextColor || sb.textColor;
+
+                      return (
+                        <Link
+                          key={itemKey}
+                          href={it.href}
+                          onClick={() => setOpen(false)}
+                          onMouseEnter={() => setHoveredKey(itemKey)}
+                          onMouseLeave={() => setHoveredKey((k) => (k === itemKey ? null : k))}
+                          className="win11-flyout__btn"
+                          style={{
+                            backgroundColor: bg,
+                            color: txt,
+                            borderColor: active ? "rgba(255,255,255,0.45)" : hexToRgba(txt, 0.12),
+                          }}
                         >
-                          {mini ? "" : it.badge}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
+                          <span
+                            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
+                            style={{
+                              background: active ? "rgba(255,255,255,0.22)" : hexToRgba(g.tone, 0.22),
+                            }}
+                          >
+                            <it.Icon className="h-4 w-4" />
+                          </span>
+                          <span className="flex-1 truncate text-[12.8px] font-extrabold">{it.label}</span>
+                          {it.badge && (
+                            <span
+                              className="rounded-full px-2 py-0.5 text-[10px] font-black"
+                              style={{
+                                background: it.badge === "AI" ? "#8b5cf6" : "#ef4444",
+                                color: "#ffffff",
+                              }}
+                            >
+                              {it.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}
-          <div className="h-2" />
         </div>
-      </div>
 
-      {/* ===== المستخدم + خروج (ثابت أسفل القائمة) ===== */}
-      <div className="nav-foot">
-        <div className="nav-user" title={activeUser}>
-          <span className="nav-avatar">
-            <User className="h-3.5 w-3.5" />
-          </span>
-          {!mini && (
-            <span className="min-w-0 flex-1">
-              <span className="block text-[9.5px] font-bold text-blue-200">المستخدم الحالي</span>
-              <span className="block truncate text-[11.5px] font-black text-white">{activeUser}</span>
+        {/* التذييل: المستخدم الحالي + الإعدادات السريعة للقائمة + خروج */}
+        <div
+          className="win11-flyout__foot"
+          style={{
+            borderColor: hexToRgba(sb.textColor, 0.14),
+            background: hexToRgba("#000000", 0.14),
+          }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
+              style={{ background: sb.btnActiveColor, color: "#ffffff" }}
+            >
+              <User className="h-4 w-4" />
             </span>
-          )}
+            <div className="min-w-0">
+              <div className="truncate text-[12px] font-black leading-tight" style={{ color: sb.textColor }}>
+                {displayUser}
+              </div>
+              <div className="truncate text-[10.5px] font-bold opacity-75" style={{ color: sb.textColor }}>
+                {roleLabel}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/settings?tab=sidebar"
+              onClick={() => setOpen(false)}
+              className="flex h-8 items-center gap-1 rounded-lg px-2.5 text-[11.5px] font-black transition hover:opacity-90"
+              style={{
+                background: hexToRgba(sb.textColor, 0.14),
+                color: sb.textColor,
+              }}
+              title="تخصيص شكل وألوان وحركة القائمة"
+            >
+              <IconSettings className="h-3.5 w-3.5" />
+              <span>تخصيص</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => void handleExit()}
+              className="flex h-8 items-center gap-1 rounded-lg bg-gradient-to-b from-[#ef4444] to-[#dc2626] px-2.5 text-[11.5px] font-black text-white shadow-sm transition hover:brightness-110"
+              title="خروج من البرنامج"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>خروج</span>
+            </button>
+          </div>
         </div>
-        <button type="button" onClick={onExit} className="nav-exit" title="خروج من البرنامج">
-          <LogOut className="h-4 w-4" />
-          {!mini && <span>خروج</span>}
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </div>
   );
 }
 
-/** زر إظهار/إخفاء القائمة — يظهر عند تصغيرها */
-export function SidebarOpenButton({ onClick }: { onClick: () => void }) {
+/** زر الأيقونة الصغير لفتح القائمة العائمة */
+export function SidebarTriggerButton({ className = "" }: { className?: string }) {
   return (
-    <button type="button" onClick={onClick} className="side-open-btn" title="إظهار القائمة الجانبية">
-      <ChevronLeft className="h-4 w-4" strokeWidth={3} />
+    <button
+      type="button"
+      onClick={() => window.dispatchEvent(new Event("fatora:toggle-nav"))}
+      className={`win11-menu-trigger app-no-drag ${className}`}
+      title="فتح قائمة البرنامج (Ctrl+B)"
+      aria-label="فتح قائمة البرنامج"
+    >
+      <LayoutGrid className="h-4 w-4" strokeWidth={2.5} />
     </button>
   );
 }
