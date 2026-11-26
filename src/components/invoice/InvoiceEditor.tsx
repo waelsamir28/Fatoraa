@@ -196,7 +196,7 @@ function stateFromInvoice(inv: Invoice, party: Party | undefined): EditorState {
     })),
     notes: inv.notes,
     extraDiscount: inv.extraDiscount ? String(inv.extraDiscount) : "",
-    paid: inv.paymentType === "credit" && inv.paid ? String(inv.paid) : "",
+    paid: (inv.paymentType === "credit" && inv.paid) || inv.paid > inv.total ? String(inv.paid) : "",
     taxRate: inv.taxRate,
   };
 }
@@ -344,8 +344,13 @@ export function InvoiceEditor({
    * بناء نفس البيانات اللي تتخزن — مشترك بين الحفظ اليدوي والحفظ التلقائي.
    * (يُستخدم داخل save و autoSave)
    */
-  const buildPayload = () => {
+  const buildPayload = (actionOverride?: "deduct" | "refund") => {
     const keepTime = state.originalDate && isoToDateInput(state.originalDate) === state.date ? state.originalDate : null;
+    const chosenAction = actionOverride ?? excessAction;
+    const rawPaid = Math.max(0, toNum(state.paid));
+    // عند اختيار «تسليم المتبقي نقداً» يُسجَّل المدفوع على قدر صافي الفاتورة؛ وعند «تنزيل من الحساب» يُرسَل المبلغ المدفوع كاملاً ليُخصم الفارق من رصيد العميل
+    const effectivePaid =
+      chosenAction === "refund" && rawPaid > totals.total ? totals.total : rawPaid;
     return {
       type,
       partyId: state.party.id,
@@ -356,7 +361,8 @@ export function InvoiceEditor({
       priceLevel: state.priceLevel,
       extraDiscount: Math.max(0, toNum(state.extraDiscount)),
       taxRate: 0,
-      paid: Math.max(0, toNum(state.paid)),
+      paid: effectivePaid,
+      excessAction: chosenAction,
       notes: state.notes,
       userName: activeUser || settings?.userName || "FATORA",
       template: settings?.invoiceTemplate || "template-modern-a5",
@@ -767,7 +773,7 @@ export function InvoiceEditor({
     }
     setSaving(true);
     try {
-      const payload = buildPayload();
+      const payload = buildPayload(forcedExcess);
       const autoDraftId = draftIdRef.current;
       const inv = state.invoiceId
         ? await api<Invoice>(`/api/invoices/${state.invoiceId}`, { method: "PUT", json: payload })
@@ -803,11 +809,14 @@ export function InvoiceEditor({
       loadInvoice(inv, plist);
 
       if (state.party.id) {
-        const remainingOnCustomer = Math.max(0, inv.total - inv.paid);
+        const netDiffOnAccount = round2(inv.total - inv.paid);
         const updatedCust = plist.find((x) => x.id === state.party.id);
-        const newBal = updatedCust?.balance ?? state.party.balance + remainingOnCustomer;
+        const newBal = updatedCust?.balance ?? round2(state.party.balance + netDiffOnAccount);
+        const excessDeducted = round2(inv.paid - inv.total);
         toast(
-          `تم حفظ الفاتورة #${inv.number} بنجاح!\nالرصيد الحالي للعميل: ${fmt(newBal)} ج.م`,
+          excessDeducted > 0
+            ? `تم حفظ الفاتورة #${inv.number} وتنزيل ${fmt(excessDeducted)} ج.م من الحساب!\nالرصيد الحالي: ${fmt(newBal)} ج.م`
+            : `تم حفظ الفاتورة #${inv.number} بنجاح!\nالرصيد الحالي للعميل: ${fmt(newBal)} ج.م`,
           "success",
         );
       } else {
@@ -1045,7 +1054,12 @@ export function InvoiceEditor({
   const paidNum = Math.max(0, toNum(state.paid));
   // المدفوع: لو المستخدم كتب مبلغ يستخدمه، غير كده في النقدي = المطلوب كامل
   const paidValue = state.paid.trim() ? paidNum : (state.paymentType === "credit" ? 0 : round2(totals.total));
-  const change = state.paymentType === "credit" ? round2(totals.total - paidNum) : (paidNum > 0 ? round2(paidNum - totals.total) : 0);
+  // change موجب = آجل على العميل، سالب = فائض مدفوع (باقي للعميل أو يُنزّل من الحساب)
+  const change = state.paid.trim()
+    ? round2(totals.total - paidNum)
+    : state.paymentType === "credit"
+      ? round2(totals.total)
+      : 0;
 
   return (
     <Window

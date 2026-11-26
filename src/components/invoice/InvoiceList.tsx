@@ -229,6 +229,10 @@ export function InvoiceList({ type }: { type: InvoiceType }) {
                     <td className="num">
                       {inv.total - inv.paid > 0.009 ? (
                         <span className="font-black text-red-600">{fmt(inv.total - inv.paid)}</span>
+                      ) : inv.paid - inv.total > 0.009 ? (
+                        <span className="font-black text-blue-700" title="تم تنزيل الزيادة من حساب العميل">
+                          -{fmt(inv.paid - inv.total)} (من الحساب)
+                        </span>
                       ) : (
                         <span className="font-black text-emerald-700">مسددة</span>
                       )}

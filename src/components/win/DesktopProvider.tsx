@@ -192,7 +192,21 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       b.toggleMaximize();
       return;
     }
-    setMaximized((m) => !m);
+    setMaximized((prev) => {
+      const next = !prev;
+      try {
+        if (next) {
+          if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => undefined);
+          }
+        } else if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => undefined);
+        }
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   const setMinimized = useCallback((v: boolean) => {

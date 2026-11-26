@@ -175,17 +175,10 @@ export function Window({
           <button
             type="button"
             className="win-ctrl"
-            onClick={() => {
-              if (native) {
-                toggleMaximized();
-              } else {
-                if (!isFs && !maximized) toggleMaximized();
-                toggleFs();
-              }
-            }}
-            title={(native ? showRestore : isFs) ? "استعادة الحجم العادي" : "تكبير ملء الشاشة (F11)"}
+            onClick={toggleMaximized}
+            title={(native ? showRestore : isFs || showRestore) ? "استعادة الحجم المتمركز في المنتصف" : "تكبير ملء الشاشة (F11)"}
           >
-            {(native ? showRestore : isFs) ? (
+            {(native ? showRestore : isFs || showRestore) ? (
               <Minimize2 className="h-3.5 w-3.5" strokeWidth={2.8} />
             ) : (
               <Maximize2 className="h-3.5 w-3.5" strokeWidth={2.8} />

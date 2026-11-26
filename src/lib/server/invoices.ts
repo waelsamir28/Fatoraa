@@ -37,6 +37,8 @@ export interface InvoiceInput {
   userName: string;
   /** الفرع (يأتي من جلسة المستخدم إن لم يُحدَّد) */
   branchId?: number | null;
+  /** عند دفع مبلغ أكبر من صافي الفاتورة لطرف مسجّل: refund = إرجاع الفكة نقداً، deduct = تنزيل الزيادة من حساب العميل/المورد */
+  excessAction?: "refund" | "deduct";
   items: ItemInput[];
 }
 
@@ -81,6 +83,7 @@ export function parseInvoiceInput(body: Record<string, unknown>): InvoiceInput {
       isCustomerType(type) ? "يجب اختيار العميل في حالة الدفع الآجل" : "يجب اختيار المورد في حالة الدفع الآجل",
     );
   }
+  const excessAction: "refund" | "deduct" = body.excessAction === "deduct" ? "deduct" : "refund";
   return {
     type,
     partyId,
@@ -94,17 +97,28 @@ export function parseInvoiceInput(body: Record<string, unknown>): InvoiceInput {
     paid: Math.max(0, round2(num(body.paid))),
     notes: str(body.notes),
     userName: str(body.userName),
+    excessAction,
     items,
   };
 }
 
-export function computeTotals(input: Pick<InvoiceInput, "items" | "extraDiscount" | "taxRate" | "paymentType" | "paid">) {
+export function computeTotals(
+  input: Pick<InvoiceInput, "items" | "extraDiscount" | "taxRate" | "paymentType" | "paid" | "partyId" | "excessAction">,
+) {
   const subtotal = round2(input.items.reduce((s, it) => s + it.qty * it.price, 0));
   const discount = round2(input.items.reduce((s, it) => s + it.discount, 0) + input.extraDiscount);
   const taxable = Math.max(0, round2(subtotal - discount));
   const tax = round2((taxable * input.taxRate) / 100);
   const total = round2(taxable + tax);
-  const paid = input.paymentType === "cash" ? total : Math.min(total, input.paid);
+  // إذا كان هناك طرف مسجل واختار المستخدم «تنزيل من الحساب» (deduct) والمبلغ المدفوع أكبر من إجمالي الفاتورة:
+  // نحتفظ بكامل المبلغ المدفوع في الفاتورة حتى تصبح (due = total - paid) بالسالب وتُخصم الزيادة تلقائياً من رصيد حساب العميل/المورد!
+  // أما إذا اختار «تسليم المتبقي نقداً» (refund) أو لم يكن هناك طرف مسجل، فيكون المدفوع المحفوظ = صافي الفاتورة.
+  const hasExcessDeduct = Boolean(input.partyId && input.excessAction === "deduct" && input.paid > total);
+  const paid = hasExcessDeduct
+    ? round2(input.paid)
+    : input.paymentType === "cash"
+      ? total
+      : Math.min(total, input.paid);
   return { subtotal, discount, tax, total, paid };
 }
 

@@ -21,11 +21,12 @@ export function InvoiceSheet({
 }) {
   const isSale = inv.type === "sale" || inv.type === "sale_return";
   const remaining = Math.max(0, inv.total - inv.paid);
+  const excessDeducted = Math.max(0, Math.round((inv.paid - inv.total) * 100) / 100);
   // رصيد العميل قبل/بعد الفاتورة (يأتي من API؛ لو غير متاح نحسب تقديرًا محليًا)
   const balanceBeforeRaw = typeof inv.partyBalanceBefore === "number" ? inv.partyBalanceBefore : null;
   const balanceAfterRaw = typeof inv.partyBalanceAfter === "number" ? inv.partyBalanceAfter : null;
   const balanceBefore = balanceBeforeRaw ?? 0;
-  const balanceAfter = balanceAfterRaw ?? (balanceBefore + remaining);
+  const balanceAfter = balanceAfterRaw ?? Math.round((balanceBefore + (inv.total - inv.paid)) * 100) / 100;
   const showBalances = !!inv.partyId && (balanceBeforeRaw !== null || balanceAfterRaw !== null);
   const itemsDiscount = inv.items.reduce((a, b) => a + b.discount, 0);
   const thermal = layout.paper === "thermal";
@@ -296,10 +297,17 @@ export function InvoiceSheet({
                   <span>المدفوع نقداً:</span>
                   <span className="num">{fmt(inv.paid)}</span>
                 </div>
-                <div className="flex justify-between px-2 py-0.5 text-red-600">
-                  <span>المتبقي (آجل):</span>
-                  <span className="num">{fmt(remaining)}</span>
-                </div>
+                {excessDeducted > 0 ? (
+                  <div className="flex justify-between px-2 py-0.5 text-blue-700 font-black">
+                    <span>منزّل من الحساب:</span>
+                    <span className="num">{fmt(excessDeducted)}</span>
+                  </div>
+                ) : (
+                  <div className="flex justify-between px-2 py-0.5 text-red-600">
+                    <span>المتبقي (آجل):</span>
+                    <span className="num">{fmt(remaining)}</span>
+                  </div>
+                )}
               </>
             )}
 
