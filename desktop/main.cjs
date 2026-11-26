@@ -326,15 +326,78 @@ function showSplashFallback() {
   splash.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html)).catch(() => undefined);
 }
 
-function createMainWindow() {
-  Menu.setApplicationMenu(null);
-  const area = screen.getPrimaryDisplay().workAreaSize;
+function getCenteredWindowBounds() {
+  const display = screen.getPrimaryDisplay();
+  const area = display.workArea;
   const winW = Math.min(1260, Math.max(980, Math.round(area.width * 0.88)));
   const winH = Math.min(760, Math.max(620, Math.round(area.height * 0.86)));
+  const x = Math.round(area.x + (area.width - winW) / 2);
+  const y = Math.round(area.y + (area.height - winH) / 2);
+  return { x, y, width: winW, height: winH };
+}
+
+function getFullDisplayBounds() {
+  const display = screen.getPrimaryDisplay();
+  return { ...display.bounds };
+}
+
+/** التبديل البرمجي الآمن بين ملء الشاشة الكامل والوضع المتمركز في المنتصف — مع قفل تحريك الماوس تماماً */
+let isWindowFullMode = true;
+let programmaticMove = false;
+
+function applyWindowMode(full) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  isWindowFullMode = Boolean(full);
+  programmaticMove = true;
+  try {
+    if (isWindowFullMode) {
+      mainWindow.setFullScreenable(true);
+      mainWindow.setFullScreen(true);
+      // تأكيد أبعاد الشاشة الكاملة حتى لو رفضت بعض كروت الشاشة setFullScreen مع resizable:false
+      if (!mainWindow.isFullScreen()) {
+        mainWindow.setBounds(getFullDisplayBounds());
+      }
+      mainWindow.setResizable(false);
+      mainWindow.setMovable(false);
+      mainWindow.webContents.send("win:maximized", true);
+    } else {
+      if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      const target = getCenteredWindowBounds();
+      mainWindow.setBounds(target);
+      mainWindow.setResizable(false);
+      mainWindow.setMovable(false);
+      // تأكيد التمركز بعد انتهاء أنيميشن الخروج من Fullscreen في ويندوز
+      setTimeout(() => {
+        if (!mainWindow || mainWindow.isDestroyed() || isWindowFullMode) return;
+        programmaticMove = true;
+        try {
+          mainWindow.setBounds(getCenteredWindowBounds());
+          mainWindow.setMovable(false);
+        } finally {
+          setTimeout(() => {
+            programmaticMove = false;
+          }, 80);
+        }
+      }, 120);
+      mainWindow.webContents.send("win:maximized", false);
+    }
+  } finally {
+    setTimeout(() => {
+      programmaticMove = false;
+    }, 150);
+  }
+}
+
+function createMainWindow() {
+  Menu.setApplicationMenu(null);
+  const centered = getCenteredWindowBounds();
+  isWindowFullMode = true;
   mainWindow = new BrowserWindow({
-    width: winW,
-    height: winH,
-    center: true,
+    x: centered.x,
+    y: centered.y,
+    width: centered.width,
+    height: centered.height,
     minWidth: 960,
     minHeight: 600,
     // زر التكبير يعمل للتبديل بين ملء الشاشة والوضع المصغّر المتمركز — مع إغلاق التحريك نهائياً
@@ -369,13 +432,9 @@ function createMainWindow() {
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;
-    // يفتح على ملء الشاشة افتراضياً، ويمكن للمستخدم الضغط على زر التكبير/الاستعادة مع بقاء النافذة ثابتة غير قابلة للتحريك
-    mainWindow.setFullScreen(true);
-    mainWindow.setResizable(false);
-    mainWindow.setMovable(false);
     mainWindow.webContents.setZoomFactor(1.0);
+    applyWindowMode(true);
     mainWindow.show();
-    mainWindow.webContents.send("win:maximized", true);
     if (splash && !splash.isDestroyed()) splash.destroy();
   });
 
@@ -383,33 +442,40 @@ function createMainWindow() {
     try {
       mainWindow.webContents.setZoomFactor(1.0);
       mainWindow.setMovable(false);
-      mainWindow.webContents.send("win:maximized", mainWindow.isFullScreen() || mainWindow.isMaximized());
+      mainWindow.webContents.send("win:maximized", isWindowFullMode);
     } catch {
       /* ignore */
     }
   });
-  mainWindow.on("maximize", () => mainWindow.webContents.send("win:maximized", true));
-  mainWindow.on("unmaximize", () => mainWindow.webContents.send("win:maximized", mainWindow.isFullScreen()));
   mainWindow.on("enter-full-screen", () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
+    isWindowFullMode = true;
     mainWindow.setMovable(false);
     mainWindow.webContents.send("win:maximized", true);
   });
   mainWindow.on("leave-full-screen", () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
+    isWindowFullMode = false;
+    programmaticMove = true;
     try {
+      mainWindow.setBounds(getCenteredWindowBounds());
       mainWindow.setResizable(false);
-      mainWindow.center();
       mainWindow.setMovable(false);
-      mainWindow.webContents.send("win:maximized", mainWindow.isMaximized());
+      mainWindow.webContents.send("win:maximized", false);
     } catch {
       /* ignore */
+    } finally {
+      setTimeout(() => {
+        programmaticMove = false;
+      }, 100);
     }
   });
 
-  // أي محاولة تحريك للنافذة بالماوس أو النظام تُلغى فوراً (ثابتة في المنتصف دائماً)
+  // منع تحريك النافذة بالماوس أو الكيبورد مع السماح فقط بالتكبير/التمركز البرمجي
   mainWindow.on("will-move", (e) => {
-    e.preventDefault();
+    if (!programmaticMove) {
+      e.preventDefault();
+    }
   });
 
   // تأكيد الخروج عند الضغط على Alt+F4 أو إغلاق من شريط المهام
@@ -771,24 +837,8 @@ ipcMain.on("win:minimize", () => {
 ipcMain.on("win:toggle-maximize", () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   try {
-    const isFull = mainWindow.isFullScreen() || mainWindow.isMaximized();
-    if (isFull) {
-      if (mainWindow.isFullScreen()) mainWindow.setFullScreen(false);
-      if (mainWindow.isMaximized()) mainWindow.unmaximize();
-      const area = screen.getPrimaryDisplay().workAreaSize;
-      const winW = Math.min(1260, Math.max(980, Math.round(area.width * 0.88)));
-      const winH = Math.min(760, Math.max(620, Math.round(area.height * 0.86)));
-      mainWindow.setSize(winW, winH);
-      mainWindow.center();
-      mainWindow.setResizable(false);
-      mainWindow.setMovable(false);
-      mainWindow.webContents.send("win:maximized", false);
-    } else {
-      mainWindow.setFullScreen(true);
-      mainWindow.setResizable(false);
-      mainWindow.setMovable(false);
-      mainWindow.webContents.send("win:maximized", true);
-    }
+    const currentlyFull = isWindowFullMode || mainWindow.isFullScreen() || mainWindow.isMaximized();
+    applyWindowMode(!currentlyFull);
   } catch {
     /* ignore */
   }
@@ -798,7 +848,7 @@ ipcMain.on("app:quit", () => {
   app.quit();
 });
 ipcMain.handle("win:is-maximized", () =>
-  mainWindow ? mainWindow.isFullScreen() || mainWindow.isMaximized() : true,
+  mainWindow ? Boolean(isWindowFullMode || mainWindow.isFullScreen() || mainWindow.isMaximized()) : true,
 );
 
 async function start() {

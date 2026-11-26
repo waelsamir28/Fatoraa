@@ -41,6 +41,7 @@ export function ShareInvoiceDialog({ invoice, onClose }: { invoice: Invoice; onC
   }, [invoice.id]);
 
   const remaining = Math.max(0, invoice.total - invoice.paid);
+  const excessDeducted = Math.max(0, Math.round((invoice.paid - invoice.total) * 100) / 100);
   const storeName = settings?.storeName || "FATORA";
   const currency = settings?.currency || "ج.م";
 
@@ -53,7 +54,11 @@ export function ShareInvoiceDialog({ invoice, onClose }: { invoice: Invoice; onC
     `عدد الأصناف: ${invoice.items?.length ?? 0}`,
     `الإجمالي: *${fmt(invoice.total)} ${currency}*`,
     `المدفوع: ${fmt(invoice.paid)} ${currency}`,
-    remaining > 0 ? `المتبقي: ${fmt(remaining)} ${currency}` : "✅ مسددة بالكامل",
+    remaining > 0
+      ? `المتبقي: ${fmt(remaining)} ${currency}`
+      : excessDeducted > 0
+        ? `✅ مسددة + تم تنزيل ${fmt(excessDeducted)} ${currency} من الحساب`
+        : "✅ مسددة بالكامل",
     "",
     qr?.url ? `رابط الفاتورة الإلكترونية:\n${qr.url}` : "",
     "",
